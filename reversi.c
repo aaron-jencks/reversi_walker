@@ -69,7 +69,7 @@ board clone_board(board b) {
     }
     else err(2, "Cannot clone an empty board pointer");
 
-    return b;
+    return bc;
 }
 
 void destroy_board(board b) {
@@ -190,6 +190,7 @@ void board_place_piece(board b, uint8_t row, uint8_t column) {
     if(b && row >= 0 && row < b->height && column >= 0 && column < b->width) {
         // Check each of the 8 directions going out from the requested coordinate
         // flip any captures found
+        board_put(b, row, column, b->player);
         int8_t counts = 0, cr, cc, count, bv;
         for(int8_t rd = -1; rd < 2; rd++) {
             for(int8_t cd = -1; cd < 2; cd++) {

@@ -12,17 +12,16 @@
  * @param buffer_size The number of extra bits to pad each array with when reallocating
  * @return bit_cache 
  */
-bit_cache create_bit_cache(uint8_t player_count, uint64_t upper_count, uint64_t lower_count, uint64_t buffer_size) {
+bit_cache create_bit_cache(uint8_t player_count, uint64_t buffer_size) {
     bit_cache c = malloc(sizeof(bit_cache_str));
     if(!c) err(1, "Memory Error while allocating bit cache\n");
+
+    c->buffer_size = buffer_size;
 
     // Allocate the bits
     c->bits = create_arraylist(player_count);
     for(uint8_t i = 0; i < player_count; i++) {
-        append_al(c->bits, create_arraylist(upper_count));
-        for(uint64_t j = 0; j < upper_count; j++) {
-            append_al(c->bits->data[i], create_arraylist(lower_count));
-        }
+        append_al(c->bits, create_arraylist(buffer_size));
     }
 
     return c;
@@ -57,35 +56,57 @@ void destroy_bit_cache(bit_cache c) {
  * @return uint8_t Returns 1 if the bit was inserted, and 0 otherwise
  */
 uint8_t conditional_insert_bit(bit_cache cache, cache_index index) {
-    uint64_t byte = (index->lower) >> 3;
+    uint64_t byte = (index->index) >> 3;
     uint8_t bit = byte % 8;
+
+    // if(index->player >= cache->bits->size) {
+    //     // Allocate more player space
+    //     insert_al(cache->bits, index->player, create_arraylist(index->upper + 64));
+    //     for(uint8_t i = 0; i < index->upper + 64; i++) append_al(cache->bits->data[index->player], create_arraylist(byte + 64)); 
+    // }
+
+    // arraylist d1page = (arraylist)cache->bits->data[index->player];
+
+    // if(index->upper >= d1page->size)
+    //     // Allocate more upper space
+    //     insert_al(d1page, index->upper, create_arraylist(byte + 64));
+
+    // arraylist d2page = (arraylist)d1page->data[index->upper];
+    // uint64_t ptr = byte >> 3;
+
+    // if(ptr >= d2page->size) {
+    //     // Allocate more bit space
+    //     insert_al(d2page, ptr, 0);
+    // }
+
+    // uint8_t* bytes = (uint8_t*)d2page->data;
+    // uint8_t selector = 1 << bit;
+
+    // if(!(bytes[byte] & selector)) {
+    //     bytes[byte] |= selector;
+    //     return 1;
+    // }
 
     if(index->player >= cache->bits->size) {
         // Allocate more player space
-        insert_al(cache->bits, index->player, create_arraylist(index->upper + 64));
-        for(uint8_t i = 0; i < index->upper + 64; i++) append_al(cache->bits->data[index->player], create_arraylist(byte + 64)); 
+        insert_al(cache->bits, index->player, create_arraylist((index->index >> 6) + cache->buffer_size));
     }
 
     arraylist d1page = (arraylist)cache->bits->data[index->player];
-
-    if(index->upper >= d1page->size)
-        // Allocate more upper space
-        insert_al(d1page, index->upper, create_arraylist(byte + 64));
-
-    arraylist d2page = (arraylist)d1page->data[index->upper];
     uint64_t ptr = byte >> 3;
 
-    if(ptr >= d2page->size) {
+    if(ptr >= d1page->size) {
         // Allocate more bit space
-        insert_al(d2page, ptr, 0);
+        insert_al(d1page, ptr, 0);
     }
 
-    uint8_t* bytes = (uint8_t*)d2page->data;
-    uint8_t selector = 1 << bit;
+    uint8_t* bytes = (uint8_t*)d1page->data;
+    uint8_t selector = ((uint8_t)1) << bit;
 
     if(!(bytes[byte] & selector)) {
         bytes[byte] |= selector;
         return 1;
     }
+
     return 0;
 }
