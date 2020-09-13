@@ -37,7 +37,7 @@ coord* find_next_boards(board b) {
                         append_ll(queue, create_coord(sr, sc));
                     else if(!visited[sr][sc] && board_get(b, psr, psc) != b->player) {
                         visited[sr][sc] = 1;
-                        if(board_is_legal(b, sr, sc))
+                        if(board_is_legal_move(b, sr, sc))
                             append_ll(edges, create_coord(sr, sc));
                     }
                 }

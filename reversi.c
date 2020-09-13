@@ -41,9 +41,9 @@ board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
      * +--+--+--+--+--+--+--+--+
      */
 
-    board_put(b, height >> 1 - 1, width >> 1 - 1, 2);
-    board_put(b, height >> 1 - 1, width >> 1, 1);
-    board_put(b, height >> 1, width >> 1 - 1, 1);
+    board_put(b, (height >> 1) - 1, (width >> 1) - 1, 2);
+    board_put(b, (height >> 1) - 1, width >> 1, 1);
+    board_put(b, height >> 1, (width >> 1) - 1, 1);
     board_put(b, height >> 1, width >> 1, 2);
 
     return b;
@@ -114,7 +114,7 @@ uint8_t board_get(board b, uint8_t row, uint8_t column) {
 void board_put(board b, uint8_t row, uint8_t column, uint8_t player) {
     if(b) {
         uint8_t total_bit = (row * (b->width << 1)) + (column << 1), 
-                byte = total_bit << 3, 
+                byte = total_bit >> 3, 
                 bit = (column % 4) << 1, 
                 bph = 192 >> bit;
 

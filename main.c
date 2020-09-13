@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
 
 #include "reversi.h"
 #include "cache.h"
@@ -65,7 +66,9 @@ int main() {
     linkedlist coords = create_ll();
     append_ll(coords, b);
     append_ll(coords, bc);
-    bit_cache cache = create_bit_cache(2, 1000000, 1000000, 64);
+    bit_cache cache = create_bit_cache(2, 100, 100, 64);
+
+    printf("Starting walk...\n");
 
     uint64_t count = 0;
     while(coords->size) {
@@ -85,7 +88,7 @@ int main() {
                 destroy_board(ccb);
 
             free(ci);
-            destroy_coord(m);
+            free(m);
         }
         free(next_moves);
 

@@ -41,11 +41,12 @@ void destroy_arraylist(arraylist l) {
  */
 void append_al(arraylist l, void* data) {
     if(l) {
-        if(l->pointer == l->size - 1) {
+        if(l->pointer >= l->size) {
             // re-allocate the array
-            l->size = l->size << 1;
+            l->size = (l->size) ? l->size << 1 : 1;
             l->data = realloc(l->data, l->size);
-            for(uint64_t i = l->pointer + 1; i < l->size; i++) l->data[i] = 0;
+            for(uint64_t i = l->pointer + 1; i < l->size; i++) 
+                l->data[i] = 0;
         }
         l->data[l->pointer++] = data;
     }
@@ -64,7 +65,8 @@ void insert_al(arraylist l, uint64_t index, void* data) {
             // re-allocate the array
             l->size = index + 65;
             l->data = realloc(l->data, l->size);
-            for(uint64_t i = l->pointer + 1; i < l->size; i++) l->data[i] = 0;
+            for(uint64_t i = l->pointer + 1; i < l->size; i++) 
+                l->data[i] = 0;
         }
         l->data[index] = data;
         l->pointer = index + 1;
