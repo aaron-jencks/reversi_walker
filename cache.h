@@ -6,8 +6,9 @@
 
 typedef struct _cache_index_str {
     uint8_t player;
-    uint64_t upper;
-    uint64_t lower;
+    // uint64_t upper;
+    // uint64_t lower;
+    __uint128_t index;
 } cache_index_str;
 
 /**
@@ -18,6 +19,7 @@ typedef cache_index_str* cache_index;
 
 typedef struct _bit_cache_str {
     arraylist bits;
+    uint64_t buffer_size;
 } bit_cache_str;
 
 /**
@@ -35,7 +37,7 @@ typedef bit_cache_str* bit_cache;
  * @param buffer_size The number of extra bits to pad each array with when reallocating
  * @return bit_cache 
  */
-bit_cache create_bit_cache(uint8_t player_count, uint64_t upper_count, uint64_t lower_count, uint64_t buffer_size);
+bit_cache create_bit_cache(uint8_t player_count, uint64_t buffer_size);
 
 /**
  * @brief Destroys a bit cache object
