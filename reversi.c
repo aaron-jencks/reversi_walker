@@ -57,6 +57,7 @@ board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
  */
 board clone_board(board b) {
     board bc = malloc(sizeof(board_str));
+    bc->board = malloc(((b->height * b->width) >> 2) * sizeof(char));
 
     if(!bc) err(1, "Memory Error Occured while allocating a board.");
 
@@ -103,7 +104,7 @@ uint8_t board_get(board b, uint8_t row, uint8_t column) {
     if(b) {
         uint8_t total_bit = (row * (b->width << 1)) + (column << 1), 
                 byte = total_bit >> 3, 
-                bit = (total_bit % 4) << 1;
+                bit = total_bit % 8;
 
         // (b'11' >> bit & board_value) >> (6 - bit)
         return ((192 >> bit) & b->board[byte]) >> (6 - bit);
@@ -115,7 +116,7 @@ void board_put(board b, uint8_t row, uint8_t column, uint8_t player) {
     if(b) {
         uint8_t total_bit = (row * (b->width << 1)) + (column << 1), 
                 byte = total_bit >> 3, 
-                bit = (column % 4) << 1, 
+                bit = total_bit % 8, 
                 bph = 192 >> bit;
 
         // Reset the value of the bits to 0
@@ -177,7 +178,7 @@ uint8_t board_is_legal_move(board b, uint8_t row, uint8_t column) {
             }
 
             // Return true if we capture at least 1 piece
-            return count > 0;
+            return counts > 0;
         }
     }
 

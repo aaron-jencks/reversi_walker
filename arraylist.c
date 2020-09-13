@@ -45,6 +45,7 @@ void append_al(arraylist l, void* data) {
             // re-allocate the array
             l->size = (l->size) ? l->size << 1 : 1;
             l->data = realloc(l->data, l->size);
+            if(!l->data) err(1, "Memory Error while allocating arraylist\n");
             for(uint64_t i = l->pointer + 1; i < l->size; i++) 
                 l->data[i] = 0;
         }
@@ -65,6 +66,7 @@ void insert_al(arraylist l, uint64_t index, void* data) {
             // re-allocate the array
             l->size = index + 65;
             l->data = realloc(l->data, l->size);
+            if(!l->data) err(1, "Memory Error while allocating arraylist\n");
             for(uint64_t i = l->pointer + 1; i < l->size; i++) 
                 l->data[i] = 0;
         }
