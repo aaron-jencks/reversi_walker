@@ -49,6 +49,28 @@ board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
     return b;
 }
 
+/**
+ * @brief Create a board object, copying another board
+ * 
+ * @param board Board to clone
+ * @return othelloboard 
+ */
+board clone_board(board b) {
+    board bc = malloc(sizeof(board_str));
+
+    if(!bc) err(1, "Memory Error Occured while allocating a board.");
+
+    if(b) {
+        bc->height = b->height;
+        bc->width = b->width;
+        bc->player = b->player;
+        for(char i = 0; i < 16; i++) bc->board[i] = b->board[i];
+    }
+    else err(2, "Cannot clone an empty board pointer");
+
+    return b;
+}
+
 void destroy_board(board b) {
     if(b) {
         if(b->board) free(b->board);

@@ -22,6 +22,14 @@ typedef board_str* board;
 board create_board(uint8_t starting_player, uint8_t height, uint8_t width);
 
 /**
+ * @brief Create a board object, copying another board
+ * 
+ * @param board Board to clone
+ * @return othelloboard 
+ */
+board clone_board(board b);
+
+/**
  * @brief Destroys a given board
  * 
  * @param b 
