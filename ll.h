@@ -53,6 +53,14 @@ void append_ll(linkedlist ll, void* data);
 void* pop_front_ll(linkedlist ll);
 
 /**
+ * @brief Returns the first item from a linkedlist object
+ * 
+ * @param ll 
+ * @return void* 
+ */
+void* get_front_ll(linkedlist ll);
+
+/**
  * @brief Removes the last item from a linkedlist object
  * 
  * @param ll 
