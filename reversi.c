@@ -186,7 +186,7 @@ uint8_t board_is_legal_move(board b, uint8_t row, uint8_t column) {
     return 0;
 }
 
-void board_place_piece(board b, uint8_t row, uint8_t column) {
+capture_count board_place_piece(board b, uint8_t row, uint8_t column) {
     if(b && row >= 0 && row < b->height && column >= 0 && column < b->width) {
         // Check each of the 8 directions going out from the requested coordinate
         // flip any captures found
@@ -246,5 +246,146 @@ void board_place_piece(board b, uint8_t row, uint8_t column) {
 
         // Flip the player to the opponent
         b->player = (b->player == 1) ? 2 : 1;
+    }
+}
+
+uint8_t capture_count_get_count(capture_count c, uint8_t direction) {
+    if(c) {
+        /*
+         * 0: upper-left
+         * 1: up
+         * 2: upper-right
+         * 3: left
+         * 4: right
+         * 5: lower-left
+         * 6: lower
+         * 7: lower-right
+         * 
+         * ---,---,--|-,---,---,-|--,---,---
+         *  0   1   2    3   4  5     6   7
+         * 
+         * No easy way around it, just do it by hand
+         */
+        uint8_t byte, ph, shift, result = 0;
+        switch(direction) {
+            case 0:
+                byte = 0;
+                ph = 224;
+                shift = 5;
+                break;
+            case 1:
+                byte = 0;
+                ph = 28;
+                shift = 2;
+                break;
+            case 2:
+                ph = 3;
+                result += (c->counts[0] & ph) << 1;
+                ph = 128;
+                result += (c->counts[1] & ph) ? 1 : 0;
+                return result;
+            case 3:
+                byte = 1;
+                ph = 112;
+                shift = 4;
+                break;
+            case 4:
+                byte = 1;
+                ph = 14;
+                shift = 1;
+                break;
+            case 5:
+                ph = 1;
+                result += (c->counts[1] & ph) << 2;
+                ph = 192;
+                result += (c->counts[2] & ph) >> 6;
+                return result;
+            case 6:
+                byte = 2;
+                ph = 56;
+                shift = 3;
+                break;
+            case 7:
+                byte = 2;
+                ph = 7;
+                shift = 0;
+                break;
+            default:
+                err(3, "Unknown direction in get_count\n");
+        }
+
+        return (c->counts[byte] & ph) >> shift;
+    }
+
+    return 0;
+}
+
+void capture_count_put_count(capture_count c, uint8_t direction, uint8_t count) {
+    if(c) {
+        /*
+         * 0: upper-left
+         * 1: up
+         * 2: upper-right
+         * 3: left
+         * 4: right
+         * 5: lower-left
+         * 6: lower
+         * 7: lower-right
+         * 
+         * ---,---,--|-,---,---,-|--,---,---
+         *  0   1   2    3   4  5     6   7
+         * 
+         * No easy way around it, just do it by hand
+         */
+        uint8_t byte, bit;
+        switch(direction) {
+            case 0:
+                byte = 0;
+                bit = 0;
+                break;
+            case 1:
+                byte = 0;
+                bit = 3;
+                break;
+            case 2:
+                bit = 252;
+                c->counts[0] &= bit;
+                c->counts[0] |= count >> 1;
+                bit = 127;
+                c->counts[1] &= bit;
+                c->counts[1] |= count << 7;
+                return;
+            case 3:
+                byte = 1;
+                bit = 1;
+                break;
+            case 4:
+                byte = 1;
+                bit = 4;
+                break;
+            case 5:
+                bit = 254;
+                c->counts[0] &= bit;
+                c->counts[0] |= count >> 2;
+                bit = 63;
+                c->counts[1] &= bit;
+                c->counts[1] |= count << 6;
+                return;
+            case 6:
+                byte = 2;
+                bit = 2;
+                break;
+            case 7:
+                byte = 2;
+                bit = 5;
+                break;
+            default:
+                err(3, "Unknown direction in put_count\n");
+        }
+
+        uint8_t ph = 255;
+        ph = ph << (8 - bit);
+        c->counts[byte] &= (((uint8_t)31) >> bit) + ph;
+        c->counts[byte] |= count << (8 - bit);
     }
 }
