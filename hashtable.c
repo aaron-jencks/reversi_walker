@@ -11,7 +11,7 @@
  * @param hash The hash function for hashing the data into the hashtable
  * @return hashtable 
  */
-hashtable create_hashtable(uint64_t initial_bin_count, uint64_t (*hash)(void*)) {
+hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*)) {
     assert(initial_bin_count);
     hashtable t = malloc(sizeof(hashtable_str));
     if(!t) err(1, "Memory Error while trying to allocate hashtable\n");
@@ -30,7 +30,8 @@ hashtable create_hashtable(uint64_t initial_bin_count, uint64_t (*hash)(void*)) 
  */
 void destroy_hashtable(hashtable t) {
     if(t) {
-        destroy_ll(t->bins);
+        for(linkedlist* l = t->bins; *l; l++) destroy_ll(*l);
+        free(t->bins);
         free(t);
     }
 }
@@ -39,9 +40,9 @@ void destroy_hashtable(hashtable t) {
  * @brief Get all of the pairs of keys and values from the hashtable
  * 
  * @param t The hashtable to extract the pairs from
- * @return keyval_pair* An array of key-value pairs that must be free'd by the user.
+ * @return __uint128_t* An array of keys that must be free'd by the user.
  */
-keyval_pair* get_pairs(hashtable t) {
+__uint128_t* get_pairs(hashtable t) {
     if(t) {
         linkedlist result = create_ll();
         for(uint64_t i = 0; i < t->bin_count; i++) {
@@ -52,7 +53,7 @@ keyval_pair* get_pairs(hashtable t) {
 
         void** resultarr = ll_to_arr(result);
         destroy_ll(result);
-        return resultarr;
+        return (__uint128_t*)resultarr;
     }
 }
 
@@ -63,46 +64,32 @@ keyval_pair* get_pairs(hashtable t) {
  * @param value The value to insert
  * @return uint64_t Returns the value of the key that value hashed to
  */
-uint64_t put_hs(hashtable t, void* value) {
+__uint128_t put_hs(hashtable t, void* value) {
     if(t) {
-        uint64_t k = t->hash(value);
+        __uint128_t k = t->hash(value);
+        if(!k) err(2, "Hit a hash value that is 0\n");
 
-        keyval_pair p = malloc(sizeof(keyval_pair_str));
+        __uint128_t* p = malloc(sizeof(__uint128_t));
         if(!p) err(1, "Memory Error while allocating key value pair\n");
-        p->key = k;
-        p->value = value;
+        *p = k;
 
         append_ll(t->bins[k % t->bin_count], p);
         
         if(++t->size > (t->bin_count << 15)) {
             //re-hash
-            keyval_pair* pairs = get_pairs(t);
+            __uint128_t* pairs = get_pairs(t);
 
             t->bins = realloc(t->bins, t->size + 64);
             if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
             for(uint64_t i = t->size; i < t->size + 64; i++) t->bins[i] = create_ll();
             t->bin_count = t->size + 64;
 
-            for(keyval_pair* p = pairs; *p; p++) append_ll(t->bins[(*p)->key % t->bin_count], *p);
+            for(__uint128_t* p = pairs; *p; p++) append_ll(t->bins[*p % t->bin_count], p);
         }
-    }
-}
 
-/**
- * @brief Retrieve a value from the hashtable using the given key
- * 
- * @param t The table to retrieve the value from
- * @param key The key to retrieve the value for
- * @return void* Returns the data that corresponds to the given key, or 0 if the key doesn't exist
- */
-void* get_hs(hashtable t, uint64_t key) {
-    if(t && t->size) {
-        linkedlist bin = t->bins[key % t->bin_count];
-        for(ll_node n = bin->head; n; n = n->next) {
-            keyval_pair p = n->data;
-            if(p->key == key) return p->value;
-        }
+        return k;
     }
+
     return 0;
 }
 
@@ -115,11 +102,13 @@ void* get_hs(hashtable t, uint64_t key) {
  */
 uint8_t exists_hs(hashtable t, void* value) {
     if(t && t->size) {
-        uint64_t key = t->hash(value);
+        __uint128_t key = t->hash(value);
+        if(!key) err(2, "Hit a hash value that is 0\n");
+
         linkedlist bin = t->bins[key % t->bin_count];
         for(ll_node n = bin->head; n; n = n->next) {
-            keyval_pair p = n->data;
-            if(p->key == key) return 1;
+            __uint128_t* p = n->data;
+            if(*p == key) return 1;
         }
     }
     return 0;

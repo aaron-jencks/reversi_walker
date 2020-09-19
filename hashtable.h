@@ -15,7 +15,7 @@ typedef struct _hashtable_str {
     linkedlist* bins;
     uint64_t bin_count;
     uint64_t size;
-    uint64_t (*hash)(void*);
+    __uint128_t (*hash)(void*);
 } hashtable_str;
 
 typedef hashtable_str* hashtable;
@@ -27,7 +27,7 @@ typedef hashtable_str* hashtable;
  * @param hash The hash function for hashing the data into the hashtable
  * @return hashtable 
  */
-hashtable create_hashtable(uint64_t initial_bin_count, uint64_t (*hash)(void*));
+hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*));
 
 /**
  * @brief Destroys the hashtable object
@@ -40,9 +40,9 @@ void destroy_hashtable(hashtable t);
  * @brief Get all of the pairs of keys and values from the hashtable
  * 
  * @param t The hashtable to extract the pairs from
- * @return keyval_pair* An array of key-value pairs that must be free'd by the user.
+ * @return __uint128_t* An array of keys that must be free'd by the user.
  */
-keyval_pair* get_pairs(hashtable t);
+__uint128_t* get_pairs(hashtable t);
 
 /**
  * @brief Inserts a value into the hash table
@@ -51,16 +51,7 @@ keyval_pair* get_pairs(hashtable t);
  * @param value The value to insert
  * @return uint64_t Returns the value of the key that value hashed to
  */
-uint64_t put_hs(hashtable t, void* value);
-
-/**
- * @brief Retrieve a value from the hashtable using the given key
- * 
- * @param t The table to retrieve the value from
- * @param key The key to retrieve the value for
- * @return void* Returns the data that corresponds to the given key or 0 if the key doesn't exist
- */
-void* get_hs(hashtable t, uint64_t key);
+__uint128_t put_hs(hashtable t, void* value);
 
 /**
  * @brief Checks if the given value exists in the hashtable
