@@ -190,12 +190,17 @@ capture_count board_place_piece(board b, uint8_t row, uint8_t column) {
     if(b && row >= 0 && row < b->height && column >= 0 && column < b->width) {
         // Check each of the 8 directions going out from the requested coordinate
         // flip any captures found
+        capture_count counts = malloc(sizeof(capture_count_str));
+        if(!counts) err(1, "Memory Error while allocating capture count struct\n");
+
         board_put(b, row, column, b->player);
-        int8_t counts = 0, cr, cc, count, bv;
+        int8_t cr, cc, bv;
+        uint8_t capture_direction, count;
         for(int8_t rd = -1; rd < 2; rd++) {
             for(int8_t cd = -1; cd < 2; cd++) {
                 // Avoid infinite loop when rd=cd=0
                 if(!rd && !cd) continue;
+                capture_direction = (rd) ? ((rd == 1) * 5) + (cd + 1) : 3 + (cd == 1);
 
                 // Take a step in the current direction
                 cr = row + rd;
@@ -229,6 +234,7 @@ capture_count board_place_piece(board b, uint8_t row, uint8_t column) {
                     }
                 }
                 
+                capture_count_put_count(counts, capture_direction, count);
                 if(count > 0) {
                     cr = row + rd;
                     cc = column + cd;
@@ -246,7 +252,10 @@ capture_count board_place_piece(board b, uint8_t row, uint8_t column) {
 
         // Flip the player to the opponent
         b->player = (b->player == 1) ? 2 : 1;
+        return counts;
     }
+
+    return 0;
 }
 
 uint8_t capture_count_get_count(capture_count c, uint8_t direction) {
