@@ -49,7 +49,7 @@ coord* find_next_boards(board b) {
     }
 
     destroy_ll(queue);
-    coord* result = ll_to_arr(edges);
+    coord* result = (coord*)ll_to_arr(edges);
     destroy_ll(edges);
     return result;
 }
