@@ -53,3 +53,30 @@ coord* find_next_boards(board b) {
     destroy_ll(edges);
     return result;
 }
+
+
+coord* find_next_boards_from_coord(board b, coord c) {
+    uint8_t sr, sc;
+    // TODO Use an arraylist here
+    linkedlist edges = create_ll();
+
+    for(int8_t rd = -1; rd < 2; rd++) {
+        for(int8_t cd = -1; cd < 2; cd++) {
+            if(!rd && !cd) continue;
+            
+            sr = c->row + rd;
+            sc = c->column + cd;
+
+            if(sr >= 0 && sr < b->height && sc >= 0 && sc < b->width) {
+                if(board_get(b, c->row, c->column) != b->player) {
+                    if(board_is_legal_move(b, sr, sc))
+                        append_ll(edges, create_coord(sr, sc));
+                }
+            }
+        }
+    }
+
+    coord* result = (coord*)ll_to_arr(edges);
+    destroy_ll(edges);
+    return result;
+}
