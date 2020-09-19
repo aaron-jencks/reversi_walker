@@ -3,7 +3,8 @@
 #include <err.h>
 
 #include "reversi.h"
-#include "cache.h"
+#include "hashtable.h"
+#include "lookup3.h"
 #include "walker.h"
 #include "ll.h"
 
@@ -19,75 +20,54 @@ void display_board(board b) {
     }
 }
 
-cache_index board_index_8(board b) {
-    cache_index ci = malloc(sizeof(cache_index_str));
-    if(!ci) err(1, "Memory Error while allocating cache index\n");
 
-    ci->player = b->player == 2;
+__uint128_t board_hash(void* brd) {
+    if(brd) {
+        board b = (board)brd;
 
-    // uint8_t counter = 0;
-    // ci->lower = 0;
-    // ci->upper = 0;
-    // for(uint8_t r = 0; r < b->height; r++) {
-    //     for(uint8_t c = 0; c < b->width; c++) {
-    //         if(counter++ < 32) {
-    //             ci->lower += board_get(b, r, c);
-    //             ci->lower = ci->lower << 2;
-    //         }
-    //         else {
-    //             ci->upper += board_get(b, r, c);
-    //             ci->upper = ci->upper << 2;
-    //         }
-    //     }
-    // }
+        __uint128_t result = 0;
 
-    // ci->lower -= 576;
+        result += b->player;
+        result = result << 2;
 
-    display_board(b);
+        // You can fit 2 spaces in 3 bits if you really try,
+        // so on an 8x8 board, 
+        // we end up only using 96 bits instead of the entire 128.
+        // well, 98 since we are including the player now
+        for(uint8_t r = 0; r < b->height; r++) {
+            for(uint8_t c = 0; c < b->width; c += 2) {
+                uint8_t s1 = board_get(b, r, c), 
+                        s2 = board_get(b, r, c + 1);
 
-    ci->index = 0;
-    for(uint8_t r = 0; r < b->height; r++) {
-        for(uint8_t c = 0; c < b->width; c++) {
-            ci->index += board_get(b, r, c);
-            ci->index = ci->index << 2;
-            printf("%lld, ", ci->index);
+                result += (!s1 && !s2) ? 4 : 
+                          (s1 == 1 && s2 == 1) ? 3 : 
+                          (s1 == 2 && s2 == 2) ? 0 : 
+                          (s1 == 2) ? 1 : 2;
+
+                result = result << 3;
+            }
         }
-        printf("\n");
+
+        // we still need to use the entire 128 bits though,
+        // because the hashing algorithm works best in powers of 2
+        uint32_t upperupper, upperlower, lowerupper, lowerlower;
+        hashlittle2(&result, 8, &upperupper, &upperlower);
+        hashlittle2(((char*)&result) + 8, 8, &lowerupper, &lowerlower);
+        result = 0;
+        result += upperupper;
+        result = result << 32;
+        result += upperlower;
+        result = result << 32;
+        result += lowerupper;
+        result = result << 32;
+        result += lowerlower;
+
+        return result;
     }
-
-    ci->index -= 432345564227567040;
-
-    printf("%lld\n", ci->index);
-
-    return ci;
+    return 0;
 }
 
-// cache_index board_index_6(board b) {
-//     cache_index ci = malloc(sizeof(cache_index_str));
-//     if(!ci) err(1, "Memory Error while allocating cache index\n");
 
-//     ci->player = b->player == 2;
-
-//     uint8_t counter = 0;
-//     ci->lower = 0;
-//     ci->upper = 0;
-//     for(uint8_t r = 0; r < b->height; r++) {
-//         for(uint8_t c = 0; c < b->width; c++) {
-//             if(counter++ < 32) {
-//                 ci->lower += board_get(b, r, c);
-//                 ci->lower = ci->lower << 2;
-//             }
-//             else {
-//                 ci->upper += board_get(b, r, c);
-//                 ci->upper = ci->upper << 2;
-//             }
-//         }
-//     }
-
-//     ci->lower -= 144;
-
-//     return ci;
-// }
 
 int main() {
     board b = create_board(1, 8, 8), bc = create_board(2, 8, 8);
@@ -95,7 +75,7 @@ int main() {
     linkedlist coords = create_ll();
     append_ll(coords, b);
     append_ll(coords, bc);
-    bit_cache cache = create_bit_cache(2, 64);
+    hashtable cache = create_hashtable(1000000, &board_hash);
 
     printf("Starting walk...\n");
 
@@ -107,20 +87,17 @@ int main() {
         for(char im = 0; next_moves[im]; im++) {
             coord m = next_moves[im];
             board ccb = clone_board(cb);
-            printf("Before placement\n");
-            display_board(ccb);
+            // printf("Before placement\n");
+            // display_board(ccb);
             board_place_piece(ccb, m->row, m->column);
-            printf("After placement\n");
-            display_board(ccb);
+            // printf("After placement\n");
+            // display_board(ccb);
 
-            cache_index ci = board_index_8(ccb);
-
-            if(conditional_insert_bit(cache, ci))
+            if(!exists_hs(cache, ccb)) {
+                put_hs(cache, ccb);
                 append_ll(coords, ccb);
-            else
-                destroy_board(ccb);
+            }
 
-            free(ci);
             free(m);
         }
         free(next_moves);
