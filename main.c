@@ -7,6 +7,7 @@
 #include "lookup3.h"
 #include "walker.h"
 #include "ll.h"
+#include "arraylist.h"
 
 void display_board(board b) {
     if(b) {
@@ -70,49 +71,93 @@ __uint128_t board_hash(void* brd) {
 
 
 int main() {
-    board b = create_board(1, 8, 8), bc = create_board(2, 8, 8);
-    // cache_index ci = board_index_8(b);
-    linkedlist search_stack = create_ll(), 
-               moves_whtie = create_ll(), moves_black = create_ll(), // Used to keep track of moves that were discovered in previous moves
-               previous_caps = create_ll(); // Keeps track of which pieces where captured when, for easy undoing during upward traversal
+    // TODO Convert to use a single global board
+    board b = create_board(1, 8, 8); // , bc = create_board(2, 8, 8);
+    
+    // TODO Convert these into arraylists
+    // TODO Convert the moves lists into uint64_t bit strings
+    // TODO Convert the parent index stacks to use some special list with data size of uint8_t
+    ptr_arraylist search_stack = create_ptr_arraylist(1000), 
+                  previous_caps = create_ptr_arraylist(1000); // Keeps track of which pieces where captured when, for easy undoing during upward traversal
+    uint8_arraylist parent_index_count_stack = create_uint8_arraylist(1000);
+    linkedlist moves_white = create_ll(), moves_black = create_ll(); // Used to keep track of moves that were discovered in previous moves
+               // previous_caps = create_ll(); // Keeps track of which pieces where captured when, for easy undoing during upward traversal
 
-    append_ll(search_stack, b);
-    append_ll(search_stack, bc);
+    coord* next_moves = find_next_boards(b);
+
+    uint8_t move_count = 0;
+    for(char im = 0; next_moves[im]; im++) {
+        coord m = next_moves[im];
+        append_ll(search_stack, m);
+        append_ll(moves_white, m);
+        move_count++;
+    }
+    append_cal(parent_index_count_stack, move_count);
+
+    free(next_moves);
+
+    // append_ll(search_stack, b);
+    // append_ll(search_stack, bc);
     hashtable cache = create_hashtable(1000000, &board_hash);
 
     printf("Starting walk...\n");
 
     uint64_t count = 0;
     while(search_stack->size) {
-        board cb = pop_back_ll(search_stack);
+        coord m = pop_back_ll(search_stack);
+        uint64_t parent_index = search_stack->size;
 
-        // TODO Use the previous_caps stack to make the move_finding algorithm faster
-        // Remember to eliminate non-legal moves from the stack as you go, 
-        // or not, 
-        // how will you handle that when traversing back up?
-        // Just keep the valid moves and check them all every time you play a piece to see if they're valid
-        coord* next_moves = find_next_boards(cb);
-        uint8_t move_count = 0;
-        for(char im = 0; next_moves[im]; im++) {
-            coord m = next_moves[im];
-            board ccb = clone_board(cb);
-            // printf("Before placement\n");
-            // display_board(ccb);
-            capture_count cc = board_place_piece(ccb, m->row, m->column);
-            // printf("After placement\n");
-            // display_board(ccb);
+        capture_count cc = board_place_piece(b, m->row, m->column);
+        parent_index_count_stack->data[parent_index_count_stack->pointer - 1]--;
 
-            if(!exists_hs(cache, ccb)) {
-                put_hs(cache, ccb);
-                append_ll(search_stack, ccb);
+        if(!exists_hs(cache, b)) {
+            append_ll(previous_caps, cc);
+
+            coord* next_moves = find_next_boards_from_coord(b, m);
+
+            move_count = 0;
+            for(char im = 0; next_moves[im]; im++) {
+                coord mm = next_moves[im];
+                append_ll((b->player == 1) ? moves_white : moves_black, mm); // TODO Perform existence check
+                append_pal(search_stack, mm);
                 move_count++;
-                // TODO Append the capture_count to the previous_caps stack
-                // TODO Find valid moves for the opposite color based on the newly place piece, then add them to the moves stack.
             }
 
-            free(m);
+            if(move_count) append_cal(parent_index_count_stack, move_count);
+
+            free(next_moves);
         }
-        free(next_moves);
+        else {
+            // TODO Undo move
+        }
+
+        // // TODO Use the previous_caps stack to make the move_finding algorithm faster
+        // // Remember to eliminate non-legal moves from the stack as you go, 
+        // // or not, 
+        // // how will you handle that when traversing back up?
+        // // Just keep the valid moves and check them all every time you play a piece to see if they're valid
+        // coord* next_moves = find_next_boards(cb);
+        // uint8_t move_count = 0;
+        // for(char im = 0; next_moves[im]; im++) {
+        //     coord m = next_moves[im];
+        //     board ccb = clone_board(cb);
+        //     // printf("Before placement\n");
+        //     // display_board(ccb);
+        //     capture_count cc = board_place_piece(ccb, m->row, m->column);
+        //     // printf("After placement\n");
+        //     // display_board(ccb);
+
+        //     if(!exists_hs(cache, ccb)) {
+        //         put_hs(cache, ccb);
+        //         append_ll(search_stack, ccb);
+        //         append_ll(previous_caps, cc);
+        //         move_count++;
+        //         // TODO Find valid moves for the opposite color, and the current color, based on the newly place piece, then add them to the moves stack.
+        //     }
+
+        //     free(m);
+        // }
+        // free(next_moves);
 
         // TODO if there are no moves, then pop from the previous_caps until its size matches the size of the search_stack and undo each move
         // that way we can use coords instead of boards in the search stack and just keep a singular board in memory at all times
