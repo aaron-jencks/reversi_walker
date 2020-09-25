@@ -21,7 +21,7 @@ typedef coord_str* coord;
  * @param b 
  * @return coord* Returns a zero-terminated array of coordinates that represent valid moves from this board
  */
- coord* find_next_boards(board b);
+coord* find_next_boards(board b);
 
 /**
  * @brief Finds the next set of boards that can be reached from this one,
@@ -31,4 +31,7 @@ typedef coord_str* coord;
  * @param c 
  * @return coord* Returns a zero-terminated array of coordinates that represent valid moves from this board
  */
- coord* find_next_boards_from_coord(board b, coord c);
+coord* find_next_boards_from_coord(board b, coord c);
+
+uint16_t coord_to_short(coord c);
+coord short_to_coord(uint16_t s);

@@ -80,3 +80,14 @@ coord* find_next_boards_from_coord(board b, coord c) {
     destroy_ll(edges);
     return result;
 }
+
+uint16_t coord_to_short(coord c) {
+    uint16_t r;
+    r += c->row;
+    r = (r << 8) + c->column;
+    return r;
+}
+
+coord short_to_coord(uint16_t s) {
+    coord r = create_coord(s >> 8, s);
+}
