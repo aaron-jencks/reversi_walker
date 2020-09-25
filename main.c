@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <err.h>
 
@@ -71,14 +72,11 @@ __uint128_t board_hash(void* brd) {
 
 
 int main() {
-    // TODO Convert to use a single global board
     board b = create_board(1, 8, 8); // , bc = create_board(2, 8, 8);
     
-    // TODO Convert these into arraylists
     // TODO Convert the moves lists into uint64_t bit strings
-    // TODO Convert the parent index stacks to use some special list with data size of uint8_t
-    ptr_arraylist search_stack = create_ptr_arraylist(1000), 
-                  previous_caps = create_ptr_arraylist(1000); // Keeps track of which pieces where captured when, for easy undoing during upward traversal
+    uint16_arraylist search_stack = create_uint16_arraylist(1000);
+    uint64_arraylist previous_caps = create_uint64_arraylist(1000); // Keeps track of which pieces where captured when, for easy undoing during upward traversal
     uint8_arraylist parent_index_count_stack = create_uint8_arraylist(1000);
     linkedlist moves_white = create_ll(), moves_black = create_ll(); // Used to keep track of moves that were discovered in previous moves
                // previous_caps = create_ll(); // Keeps track of which pieces where captured when, for easy undoing during upward traversal
@@ -104,14 +102,14 @@ int main() {
 
     uint64_t count = 0;
     while(search_stack->size) {
-        coord m = pop_back_ll(search_stack);
-        uint64_t parent_index = search_stack->size;
+        uint16_t sm = pop_back_sal(search_stack);
+        coord m = short_to_coord(sm);
 
-        capture_count cc = board_place_piece(b, m->row, m->column);
+        uint64_t cc = board_place_piece(b, m->row, m->column);
         parent_index_count_stack->data[parent_index_count_stack->pointer - 1]--;
 
         if(!exists_hs(cache, b)) {
-            append_ll(previous_caps, cc);
+            append_dal(previous_caps, cc);
 
             coord* next_moves = find_next_boards_from_coord(b, m);
 
@@ -119,17 +117,23 @@ int main() {
             for(char im = 0; next_moves[im]; im++) {
                 coord mm = next_moves[im];
                 append_ll((b->player == 1) ? moves_white : moves_black, mm); // TODO Perform existence check
-                append_pal(search_stack, mm);
+                // append_sal(search_stack, coord_to_short(mm));
                 move_count++;
             }
 
             if(move_count) append_cal(parent_index_count_stack, move_count);
+
+            // TODO Append all the current legal moves that aren't the current coordinate onto the search stack
+
+            // If the parent_index_count is 0, then we need to pop off the that parent index, as well as the parent available moves.
 
             free(next_moves);
         }
         else {
             // TODO Undo move
         }
+
+        free(m);
 
         // // TODO Use the previous_caps stack to make the move_finding algorithm faster
         // // Remember to eliminate non-legal moves from the stack as you go, 
