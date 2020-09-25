@@ -119,6 +119,64 @@ uint8_t pop_back_cal(uint8_arraylist l) {
 
 #pragma endregion
 
+#pragma region uint16
+
+uint16_arraylist create_uint16_arraylist(uint64_t initial_capacity) {
+    uint16_arraylist l = malloc(sizeof(uint16_arraylist_str));
+    if(!l) err(1, "Memory Error while allocating ptr_arraylist\n");
+    l->data = calloc(initial_capacity, sizeof(uint16_t));
+    if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
+    l->pointer = 0;
+    l->size = initial_capacity;
+    return l;
+}
+
+void destroy_uint16_arraylist(uint16_arraylist l) {
+    if(l) {
+        if(l->data) free(l->data);
+        free(l);
+    }
+}
+
+void append_sal(uint16_arraylist l, uint16_t data) {
+    if(l) {
+        if(l->pointer >= l->size) {
+            // re-allocate the array
+            l->size = (l->size) ? l->size << 1 : 1;
+            l->data = realloc(l->data, l->size);
+            if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
+            for(uint64_t i = l->pointer + 1; i < l->size; i++) 
+                l->data[i] = 0;
+        }
+        l->data[l->pointer++] = data;
+    }
+}
+
+void insert_sal(uint16_arraylist l, uint64_t index, uint16_t data) {
+    if(l) {
+        if(index >= l->size) {
+            // re-allocate the array
+            l->size = index + 65;
+            l->data = realloc(l->data, l->size);
+            if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
+            for(uint64_t i = l->pointer + 1; i < l->size; i++) 
+                l->data[i] = 0;
+        }
+        l->data[index] = data;
+        l->pointer = index + 1;
+    }
+}
+
+uint16_t pop_back_sal(uint16_arraylist l) {
+    if(l && l->size) {
+        uint16_t d = l->data[--(l->pointer)];
+        return d;
+    }
+    return 0;
+}
+
+#pragma endregion
+
 #pragma region double
 
 uint64_arraylist create_uint64_arraylist(uint64_t initial_capacity) {
