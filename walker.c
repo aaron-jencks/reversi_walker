@@ -82,9 +82,13 @@ coord* find_next_boards_from_coord(board b, coord c) {
 }
 
 uint16_t coord_to_short(coord c) {
+    return coord_to_short_ints(c->row, c->column);
+}
+
+uint16_t coord_to_short_ints(uint8_t row, uint8_t column) {
     uint16_t r;
-    r += c->row;
-    r = (r << 8) + c->column;
+    r += row;
+    r = (r << 8) + column;
     return r;
 }
 

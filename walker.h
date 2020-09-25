@@ -34,4 +34,5 @@ coord* find_next_boards(board b);
 coord* find_next_boards_from_coord(board b, coord c);
 
 uint16_t coord_to_short(coord c);
+uint16_t coord_to_short_ints(uint8_t r, uint8_t c);
 coord short_to_coord(uint16_t s);

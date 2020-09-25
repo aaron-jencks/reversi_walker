@@ -1,6 +1,6 @@
 cc=gcc
 cflags=-Ddebug -g
-objects=reversi.o cache.o ll.o walker.o arraylist.o hashtable.o lookup.o
+objects=reversi.o cache.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o
 
 all: main;
 
@@ -11,6 +11,9 @@ main.o: main.c $(objects)
 	$(cc) $(cflags) -o $@ -c $<
 
 reversi.o: reversi.c reversi.h
+	$(cc) $(cflags) -o $@ -c $<
+
+valid_moves.o: valid_moves.c valid_moves.h walker.o arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
 cache.o: cache.c cache.h arraylist.o
@@ -33,4 +36,4 @@ walker.o: walker.c walker.h reversi.o ll.o
 
 .PHONY : clean
 clean:
-	rm $(objects)
+	rm main main.o $(objects)
