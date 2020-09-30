@@ -86,7 +86,7 @@ uint16_t coord_to_short(coord c) {
 }
 
 uint16_t coord_to_short_ints(uint8_t row, uint8_t column) {
-    uint16_t r;
+    uint16_t r = 0;
     r += row;
     r = (r << 8) + column;
     return r;
@@ -94,4 +94,5 @@ uint16_t coord_to_short_ints(uint8_t row, uint8_t column) {
 
 coord short_to_coord(uint16_t s) {
     coord r = create_coord(s >> 8, s);
+    return r;
 }

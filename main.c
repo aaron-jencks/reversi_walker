@@ -75,10 +75,13 @@ __uint128_t board_hash(void* brd) {
 int main() {
     board b = create_board(1, 8, 8); // , bc = create_board(2, 8, 8);
     
+    // Setup the stacks
     uint16_arraylist search_stack = create_uint16_arraylist(1000);
     uint8_arraylist parent_index_count_stack = create_uint8_arraylist(1000);
     uint64_arraylist moves_white = create_uint64_arraylist(1000), moves_black = create_uint64_arraylist(1000);
 
+    // Populate the stacks with their initial data
+    // Populate the moves_white stack
     coord* next_moves = find_next_boards(b);
 
     uint64_t wmoves = 0;
@@ -93,6 +96,7 @@ int main() {
 
     free(next_moves);
 
+    // Populate the moves_black stack
     b->player = 2;
 
     next_moves = find_next_boards(b);
@@ -109,20 +113,24 @@ int main() {
 
     free(next_moves);
 
+    // Reset the player and create the cache
     b->player = 1;
 
     hashtable cache = create_hashtable(1000000, &board_hash);
 
     printf("Starting walk...\n");
 
-    uint64_t count = 0;
-    while(search_stack->size) {
+    uint64_t count = 0, iter = 0;
+    while(search_stack->pointer) {
         uint8_t ccount = --parent_index_count_stack->data[parent_index_count_stack->pointer - 1];
         uint64_t moves = pop_back_dal((b->player == 1) ? moves_white : moves_black), movesc;
         uint16_t sm = pop_back_sal(search_stack);
         coord m = short_to_coord(sm);
 
+        display_board(b);
+        printf("player is %u, move is (%u, %u)\n", b->player, m->row, m->column);
         uint64_t cc = board_place_piece(b, m->row, m->column);
+        printf("player is %u\n", b->player);
 
         if(cc && !exists_hs(cache, b)) {
 
@@ -158,6 +166,7 @@ int main() {
             }
             else {
                 // There were no valid moves for this color, switch to the other color and see if that works
+                printf("No moves for current player, trying opponent\n");
                 b->player = (b->player == 1) ? 2 : 1;
 
                 mlist = (b->player == 1) ? moves_white : moves_black;
@@ -183,6 +192,7 @@ int main() {
                     // Neither player has any moves the game has ended
                     if(!ccount) {
                         while(!ccount) {
+                            printf("Popped off a child, switching players\n");
                             pop_back_cal(parent_index_count_stack);
                             ccount = parent_index_count_stack->data[parent_index_count_stack->pointer - 1];
                             b->player = (b->player == 1) ? 2 : 1;
@@ -194,7 +204,8 @@ int main() {
         }
         else if(!cc) {
             // There were no valid moves for this color, switch to the other color and see if that works
-            b->player = (b->player == 1) ? 2 : 1;
+            printf("No captures for current player, trying opponent\n");
+            // b->player = (b->player == 1) ? 2 : 1;    // This was already done by place piece
 
             uint64_arraylist mlist = (b->player == 1) ? moves_white : moves_black;
 
@@ -219,6 +230,7 @@ int main() {
                 // Neither player has any moves the game has ended
                 if(!ccount) {
                     while(!ccount) {
+                        printf("Popped off a child, switching players\n");
                         pop_back_cal(parent_index_count_stack);
                         ccount = parent_index_count_stack->data[parent_index_count_stack->pointer - 1];
                         b->player = (b->player == 1) ? 2 : 1;
@@ -230,6 +242,7 @@ int main() {
         else {
             if(!ccount) {
                 while(!ccount) {
+                    printf("Popped off a child, switching players\n");
                     pop_back_cal(parent_index_count_stack);
                     ccount = parent_index_count_stack->data[parent_index_count_stack->pointer - 1];
                     b->player = (b->player == 1) ? 2 : 1;
@@ -239,7 +252,8 @@ int main() {
 
         free(m);
 
-        printf("\rFinished %ld boards", count++);
+        printf("\rFinished %ld boards, iteration: %ld", count, iter++);
+        fflush(stdout);
     }
 
     printf("There are %ld possible board states\n", count);

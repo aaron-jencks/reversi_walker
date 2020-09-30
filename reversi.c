@@ -190,7 +190,7 @@ uint64_t board_place_piece(board b, uint8_t row, uint8_t column) {
     if(b && row >= 0 && row < b->height && column >= 0 && column < b->width) {
         // Check each of the 8 directions going out from the requested coordinate
         // flip any captures found
-        uint64_t counts;
+        uint64_t counts = 0;
         // if(!counts) err(1, "Memory Error while allocating capture count struct\n");
 
         board_put(b, row, column, b->player);
