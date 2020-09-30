@@ -1,6 +1,6 @@
 cc=gcc
 cflags=-Ddebug -g
-objects=reversi.o cache.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o
+objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o
 
 all: main;
 

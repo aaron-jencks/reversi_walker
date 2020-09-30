@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <err.h>
 
 #include "valid_moves.h"
@@ -43,7 +44,7 @@ uint64_t find_valid_positions_from_coord(uint64_t bi, board b, uint8_t row, uint
         result = encode_valid_position(result, c->row, c->column);
         free(c);
     }
-    destroy_sal(edges);
+    destroy_uint16_arraylist(edges);
     
     return result;
 }
@@ -66,7 +67,7 @@ coord* retrieve_all_valid_positions(uint64_t b) {
     }
 
     coord* arr = 0;
-    if(res->size) arr = res->data;
+    if(res->size) arr = (coord*)(res->data);
     free(res);
     
     return arr;

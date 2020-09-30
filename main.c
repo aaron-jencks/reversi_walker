@@ -95,9 +95,9 @@ int main() {
 
     b->player = 2;
 
-    coord* next_moves = find_next_boards(b);
+    next_moves = find_next_boards(b);
 
-    uint64_t wmoves = 0;
+    wmoves = 0;
     for(char im = 0; next_moves[im]; im++) {
         coord m = next_moves[im];
         uint16_t sm = coord_to_short(m);
@@ -115,7 +115,7 @@ int main() {
 
     printf("Starting walk...\n");
 
-    __uint128_t count = 0;
+    uint64_t count = 0;
     while(search_stack->size) {
         uint8_t ccount = --parent_index_count_stack->data[parent_index_count_stack->pointer - 1];
         uint64_t moves = pop_back_dal((b->player == 1) ? moves_white : moves_black), movesc;
@@ -126,7 +126,7 @@ int main() {
 
         if(cc && !exists_hs(cache, b)) {
 
-            uint16_arraylist mlist = (b->player == 1) ? moves_white : moves_black;
+            uint64_arraylist mlist = (b->player == 1) ? moves_white : moves_black;
 
             next_moves = find_next_boards_from_coord(b, m);
 
@@ -196,7 +196,7 @@ int main() {
             // There were no valid moves for this color, switch to the other color and see if that works
             b->player = (b->player == 1) ? 2 : 1;
 
-            uint16_arraylist mlist = (b->player == 1) ? moves_white : moves_black;
+            uint64_arraylist mlist = (b->player == 1) ? moves_white : moves_black;
 
             // Retrieve the parent valid moves
             movesc = mlist->data[mlist->pointer - 1];

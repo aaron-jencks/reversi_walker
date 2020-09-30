@@ -81,9 +81,9 @@ uint8_t board_is_legal_move(board b, uint8_t row, uint8_t column);
  * @param b The board to place the piece on
  * @param row The row to place the piece at
  * @param column The column to place the piece at
- * @return capture_count Returns a struct representing how many pieces in each direction the move captured
+ * @return uint64_t Returns a struct representing how many pieces in each direction the move captured
  */
-capture_count board_place_piece(board b, uint8_t row, uint8_t column);
+uint64_t board_place_piece(board b, uint8_t row, uint8_t column);
 
 /**
  * @brief Finds the count for the given capture_count struct in the given direction, the directions are:
@@ -100,7 +100,7 @@ capture_count board_place_piece(board b, uint8_t row, uint8_t column);
  * @param direction 
  * @return uint8_t Returns the number of pieces captured in the given direction
  */
-uint8_t capture_count_get_count(capture_count c, uint8_t direction);
+uint8_t capture_count_get_count(uint64_t c, uint8_t direction);
 
 /**
  * @brief Inserts a capture count into the given capture_count struct for the given direction and count,
@@ -118,4 +118,4 @@ uint8_t capture_count_get_count(capture_count c, uint8_t direction);
  * @param direction 
  * @param count The number of pieces captured, must be in the interval (0,6)
  */
-void capture_count_put_count(capture_count c, uint8_t direction, uint8_t count);
+uint64_t capture_count_put_count(uint64_t c, uint8_t direction, uint8_t count);

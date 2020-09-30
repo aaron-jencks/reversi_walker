@@ -358,7 +358,7 @@ uint64_t capture_count_put_count(uint64_t c, uint8_t direction, uint8_t count) {
             bit = 127;
             ((uint8_t*)(&c))[1] &= bit;
             ((uint8_t*)(&c))[1] |= count << 7;
-            return;
+            return c;
         case 3:
             byte = 1;
             bit = 1;
@@ -374,7 +374,7 @@ uint64_t capture_count_put_count(uint64_t c, uint8_t direction, uint8_t count) {
             bit = 63;
             ((uint8_t*)(&c))[1] &= bit;
             ((uint8_t*)(&c))[1] |= count << 6;
-            return;
+            return c;
         case 6:
             byte = 2;
             bit = 2;
