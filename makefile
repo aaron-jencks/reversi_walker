@@ -1,13 +1,20 @@
 cc=gcc
 cflags=-Ddebug -g
 objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o
+test_objects=capturecounts_test.o
 
 all: main;
 
 main: main.o $(objects)
 	$(cc) $(cflags) -o $@ $< $(objects)
 
+tester: tester.o $(objects) $(test_objects)
+	$(cc) $(cflags) -o $@ $< $(objects) $(test_objects)
+
 main.o: main.c $(objects)
+	$(cc) $(cflags) -o $@ -c $<
+
+tester.o: tester.c $(objects) $(test_objects)
 	$(cc) $(cflags) -o $@ -c $<
 
 reversi.o: reversi.c reversi.h
@@ -34,6 +41,16 @@ arraylist.o: arraylist.c arraylist.h
 walker.o: walker.c walker.h reversi.o ll.o
 	$(cc) $(cflags) -o $@ -c $<
 
+# Tests
+
+capturecounts_test.o: tests/capturecounts_test.c tests/capturecounts_test.h reversi.o
+	$(cc) $(cflags) -o $@ -c $<
+
 .PHONY : clean
 clean:
 	rm main main.o $(objects)
+
+.PHONY : tests
+tests: tester $(objects) $(test_objects)
+	./tester
+	rm tester tester.o $(objects) $(test_objects)
