@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <err.h>
+#include <stdio.h>
 
 board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
     board b = calloc(1, sizeof(board_str));
@@ -369,11 +370,11 @@ uint64_t capture_count_put_count(uint64_t c, uint8_t direction, uint8_t count) {
             break;
         case 5:
             bit = 254;
-            ((uint8_t*)(&c))[0] &= bit;
-            ((uint8_t*)(&c))[0] |= count >> 2;
-            bit = 63;
             ((uint8_t*)(&c))[1] &= bit;
-            ((uint8_t*)(&c))[1] |= count << 6;
+            ((uint8_t*)(&c))[1] |= count >> 2;
+            bit = 63;
+            ((uint8_t*)(&c))[2] &= bit;
+            ((uint8_t*)(&c))[2] |= count << 6;
             return c;
         case 6:
             byte = 2;
@@ -389,7 +390,9 @@ uint64_t capture_count_put_count(uint64_t c, uint8_t direction, uint8_t count) {
 
     uint8_t ph = 255;
     ph = ph << (8 - bit);
+
     ((uint8_t*)(&c))[byte] &= (((uint8_t)31) >> bit) + ph;
-    ((uint8_t*)(&c))[byte] |= count << (8 - bit);
+    ((uint8_t*)(&c))[byte] |= count << (5 - bit);
+
     return c;
 }
