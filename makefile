@@ -1,7 +1,7 @@
 cc=gcc
 cflags=-Ddebug -g
 objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o
-test_objects=capturecounts_test.o
+test_objects=capturecounts_test.o legal_moves_test.o
 
 all: main;
 
@@ -44,6 +44,9 @@ walker.o: walker.c walker.h reversi.o ll.o
 # Tests
 
 capturecounts_test.o: tests/capturecounts_test.c tests/capturecounts_test.h reversi.o
+	$(cc) $(cflags) -o $@ -c $<
+
+legal_moves_test.o: tests/legal_moves_test.c tests/legal_moves_test.h reversi.o walker.o
 	$(cc) $(cflags) -o $@ -c $<
 
 .PHONY : clean
