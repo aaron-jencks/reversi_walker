@@ -11,6 +11,7 @@
 #include "arraylist.h"
 #include "valid_moves.h"
 
+
 void display_board(board b) {
     if(b) {
         for(uint8_t r = 0; r < b->height; r++) {
@@ -21,6 +22,53 @@ void display_board(board b) {
         }
         printf("\n");
     }
+}
+
+
+void display_capture_counts(uint64_t cc) {
+    /*
+    * 0: upper-left
+    * 1: up
+    * 2: upper-right
+    * 3: left
+    * 4: right
+    * 5: lower-left
+    * 6: lower
+    * 7: lower-right
+    */
+    printf("Capture Counts:\n");
+    uint8_t c;
+    for(uint8_t i = 0; i < 8; i++) {
+        c = capture_count_get_count(cc, i);
+        switch(i) {
+            case 0:
+                printf("\tNorthwest: ");
+                break;
+            case 1:
+                printf("\tNorth: ");
+                break;
+            case 2:
+                printf("\tNortheast: ");
+                break;
+            case 3:
+                printf("\tWest: ");
+                break;
+            case 4:
+                printf("\tEast: ");
+                break;
+            case 5:
+                printf("\tSouthwest: ");
+                break;
+            case 6:
+                printf("\tSouth: ");
+                break;
+            case 7:
+                printf("\tSoutheast: ");
+                break;
+        }
+        printf("%u\n", c);
+    }
+    printf("\n");
 }
 
 
@@ -114,7 +162,7 @@ int main() {
     free(next_moves);
 
     // Reset the player and create the cache
-    b->player = 1;
+    // b->player = 1;
 
     hashtable cache = create_hashtable(1000000, &board_hash);
 
@@ -131,6 +179,7 @@ int main() {
         printf("player is %u, move is (%u, %u)\n", b->player, m->row, m->column);
         uint64_t cc = board_place_piece(b, m->row, m->column);
         printf("player is %u\n", b->player);
+        display_capture_counts(cc);
 
         if(cc && !exists_hs(cache, b)) {
 
@@ -145,7 +194,7 @@ int main() {
                 // Encode the new valid moves
                 for(char im = 0; next_moves[im]; im++) {
                     coord mm = next_moves[im];
-                    encode_valid_position(movesc, mm->row, mm->column);
+                    movesc = encode_valid_position(movesc, mm->row, mm->column);
                     free(mm);
                 }
 
@@ -154,10 +203,22 @@ int main() {
                 // Find all of the coordinates
                 next_moves = retrieve_all_valid_positions(movesc);
 
+                #ifdef debug
+                    printf("%s\n", (next_moves[0]) ? "Found possible positions" : "Did not find any positions");
+                #endif
+
                 // If the move is legal, then append it to the search stack
                 for(char im = 0; next_moves[im]; im++) {
                     coord mm = next_moves[im];
-                    if(board_is_legal_move(b, mm->row, mm->column)) append_sal(search_stack, coord_to_short(mm));
+                    #ifdef debug
+                        printf("Checking move at (%u, %u)\n", mm->row, mm->column);
+                    #endif
+                    if(board_is_legal_move(b, mm->row, mm->column)) {
+                        #ifdef debug
+                            printf("Found a valid move at (%u, %u)\n", mm->row, mm->column);
+                        #endif
+                        append_sal(search_stack, coord_to_short(mm));
+                    }
                     append_dal(mlist, movesc);
                     free(mm);
                 }
@@ -240,6 +301,7 @@ int main() {
             }
         }
         else {
+            printf("The given board is already counted\n");
             if(!ccount) {
                 while(!ccount) {
                     printf("Popped off a child, switching players\n");
@@ -252,7 +314,7 @@ int main() {
 
         free(m);
 
-        printf("\rFinished %ld boards, iteration: %ld", count, iter++);
+        printf("Finished %ld boards, iteration: %ld\n", count, iter++);
         fflush(stdout);
     }
 
