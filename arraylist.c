@@ -27,7 +27,7 @@ void append_pal(ptr_arraylist l, void* data) {
         if(l->pointer >= l->size) {
             // re-allocate the array
             l->size = (l->size) ? l->size << 1 : 1;
-            l->data = realloc(l->data, l->size);
+            l->data = realloc(l->data, l->size * sizeof(void*));
             if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
             for(uint64_t i = l->pointer + 1; i < l->size; i++) 
                 l->data[i] = 0;
@@ -41,7 +41,7 @@ void insert_pal(ptr_arraylist l, uint64_t index, void* data) {
         if(index >= l->size) {
             // re-allocate the array
             l->size = index + 65;
-            l->data = realloc(l->data, l->size);
+            l->data = realloc(l->data, l->size * sizeof(void*));
             if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
             for(uint64_t i = l->pointer + 1; i < l->size; i++) 
                 l->data[i] = 0;
@@ -143,7 +143,7 @@ void append_sal(uint16_arraylist l, uint16_t data) {
         if(l->pointer >= l->size) {
             // re-allocate the array
             l->size = (l->size) ? l->size << 1 : 1;
-            l->data = realloc(l->data, l->size);
+            l->data = realloc(l->data, l->size << 1);
             if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
             for(uint64_t i = l->pointer + 1; i < l->size; i++) 
                 l->data[i] = 0;
@@ -157,7 +157,7 @@ void insert_sal(uint16_arraylist l, uint64_t index, uint16_t data) {
         if(index >= l->size) {
             // re-allocate the array
             l->size = index + 65;
-            l->data = realloc(l->data, l->size);
+            l->data = realloc(l->data, l->size << 1);
             if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
             for(uint64_t i = l->pointer + 1; i < l->size; i++) 
                 l->data[i] = 0;
@@ -201,7 +201,7 @@ void append_dal(uint64_arraylist l, uint64_t data) {
         if(l->pointer >= l->size) {
             // re-allocate the array
             l->size = (l->size) ? l->size << 1 : 1;
-            l->data = realloc(l->data, l->size);
+            l->data = realloc(l->data, l->size << 3);
             if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
             for(uint64_t i = l->pointer + 1; i < l->size; i++) 
                 l->data[i] = 0;
@@ -215,7 +215,7 @@ void insert_dal(uint64_arraylist l, uint64_t index, uint64_t data) {
         if(index >= l->size) {
             // re-allocate the array
             l->size = index + 65;
-            l->data = realloc(l->data, l->size);
+            l->data = realloc(l->data, l->size << 3);
             if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
             for(uint64_t i = l->pointer + 1; i < l->size; i++) 
                 l->data[i] = 0;
