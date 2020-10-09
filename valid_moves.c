@@ -20,7 +20,7 @@ uint8_t is_valid_position(uint64_t b, uint8_t row, uint8_t column) {
 
 uint64_t find_valid_positions_from_coord(uint64_t bi, board b, uint8_t row, uint8_t column) {
     int8_t sr, sc, rd, cd;
-    uint16_arraylist edges = create_uint16_arraylist(8);
+    uint16_arraylist edges = create_uint16_arraylist(9);
 
     for(rd = -1; rd < 2; rd++) {
         for(cd = -1; cd < 2; cd++) {
@@ -50,7 +50,7 @@ uint64_t find_valid_positions_from_coord(uint64_t bi, board b, uint8_t row, uint
 }
 
 coord* retrieve_all_valid_positions(uint64_t b) {
-    ptr_arraylist res = create_ptr_arraylist(64);
+    ptr_arraylist res = create_ptr_arraylist(65);
 
     for(uint8_t row = 0; row < 8; row++) {
         for(uint8_t column = 0; column < 8; column++) {
