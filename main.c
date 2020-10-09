@@ -204,18 +204,18 @@ int main() {
                 next_moves = retrieve_all_valid_positions(movesc);
 
                 #ifdef debug
-                    printf("%s\n", (next_moves[0]) ? "Found possible positions" : "Did not find any positions");
+                    // printf("%s\n", (next_moves[0]) ? "Found possible positions" : "Did not find any positions");
                 #endif
 
                 // If the move is legal, then append it to the search stack
                 for(char im = 0; next_moves[im]; im++) {
                     coord mm = next_moves[im];
                     #ifdef debug
-                        printf("Checking move at (%u, %u)\n", mm->row, mm->column);
+                        // printf("Checking move at (%u, %u)\n", mm->row, mm->column);
                     #endif
                     if(board_is_legal_move(b, mm->row, mm->column)) {
                         #ifdef debug
-                            printf("Found a valid move at (%u, %u)\n", mm->row, mm->column);
+                            // printf("Found a valid move at (%u, %u)\n", mm->row, mm->column);
                         #endif
                         append_sal(search_stack, coord_to_short(mm));
                     }
@@ -224,6 +224,9 @@ int main() {
                 }
 
                 free(next_moves);
+
+                // TODO if the board is full, or the next player has no moves, then do something about it. 
+                // Traverse upwards if necessary
             }
             else {
                 // There were no valid moves for this color, switch to the other color and see if that works
