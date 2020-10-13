@@ -43,4 +43,6 @@ void lm_test_from_coord() {
         printf("Testing coordinate (%u, %u)\n", (*ct)->row, (*ct)->column);
         assert(is_valid_coord(*ct, acceptance));
     }
+
+    destroy_board(b);
 }

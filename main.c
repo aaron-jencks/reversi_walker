@@ -119,14 +119,15 @@ __uint128_t board_hash(void* brd) {
 }
 
 
-
+// TODO make work on a 6x6
+// Modify to copy boards, instead of 
 int main() {
-    board b = create_board(1, 8, 8); // , bc = create_board(2, 8, 8);
+    board b = create_board(1, 6, 6); // , bc = create_board(2, 8, 8);
     
     // Setup the stacks
-    uint16_arraylist search_stack = create_uint16_arraylist(1000);
-    uint8_arraylist parent_index_count_stack = create_uint8_arraylist(1000);
-    uint64_arraylist moves_white = create_uint64_arraylist(1000), moves_black = create_uint64_arraylist(1000);
+    ptr_arraylist search_stack = create_ptr_arraylist(1000);
+    // uint16_arraylist coord_pairs = create_uint16_arraylist(1000);
+    // uint64_arraylist moves_white = create_uint64_arraylist(1000), moves_black = create_uint64_arraylist(1000), overrides = create_uint64_arraylist(1000);
 
     // Populate the stacks with their initial data
     // Populate the moves_white stack
@@ -136,11 +137,13 @@ int main() {
     for(char im = 0; next_moves[im]; im++) {
         coord m = next_moves[im];
         uint16_t sm = coord_to_short(m);
-        append_sal(search_stack, sm);
-        encode_valid_position(wmoves, m->row, m->column);
+        board cb = clone_board(b);
+        board_place_piece(cb, m->row, m->column);
+        append_pal(search_stack, cb);
+        // append_sal(coord_pairs, sm);
+        // wmoves = encode_valid_position(wmoves, m->row, m->column);
     }
-    for(char im = 0; next_moves[im]; im++) append_dal(moves_white, wmoves);
-    append_cal(parent_index_count_stack, 4);
+    // for(char im = 0; next_moves[im]; im++) append_dal(moves_white, wmoves);
 
     free(next_moves);
 
@@ -153,11 +156,13 @@ int main() {
     for(char im = 0; next_moves[im]; im++) {
         coord m = next_moves[im];
         uint16_t sm = coord_to_short(m);
-        append_sal(search_stack, sm);
-        encode_valid_position(wmoves, m->row, m->column);
+        board cb = clone_board(b);
+        board_place_piece(cb, m->row, m->column);
+        append_pal(search_stack, cb);
+        // append_sal(coord_pairs, sm);
+        wmoves = encode_valid_position(wmoves, m->row, m->column);
     }
-    for(char im = 0; next_moves[im]; im++) append_dal(moves_black, wmoves);
-    append_cal(parent_index_count_stack, 4);
+    // for(char im = 0; next_moves[im]; im++) append_dal(moves_black, wmoves);
 
     free(next_moves);
 
@@ -168,158 +173,154 @@ int main() {
 
     printf("Starting walk...\n");
 
-    uint64_t count = 0, iter = 0;
+    uint64_t count = 0, iter = 0, intercap = 0;
     while(search_stack->pointer) {
-        uint8_t ccount = --parent_index_count_stack->data[parent_index_count_stack->pointer - 1];
-        uint64_t moves = pop_back_dal((b->player == 1) ? moves_white : moves_black), movesc;
-        uint16_t sm = pop_back_sal(search_stack);
-        coord m = short_to_coord(sm);
+        // uint64_t moves = pop_back_dal((b->player == 1) ? moves_white : moves_black), movesc, movescc, movesccc;
+        board sb = pop_back_pal(search_stack), bc;
 
-        display_board(b);
-        printf("player is %u, move is (%u, %u)\n", b->player, m->row, m->column);
-        uint64_t cc = board_place_piece(b, m->row, m->column);
-        printf("player is %u\n", b->player);
-        display_capture_counts(cc);
+        #ifdef debug
+            display_board(sb);
+        #endif
 
-        if(cc && !exists_hs(cache, b)) {
+        if(!exists_hs(cache, sb)) {
+            // uint64_arraylist mlist = (b->player == 1) ? moves_white : moves_black;  // TODO Needs to be the opposing color
 
-            uint64_arraylist mlist = (b->player == 1) ? moves_white : moves_black;
+            // if(!overrides->pointer) movesc = pop_back_dal(mlist);
+            // else movesc = pop_back_dal(overrides);
 
-            next_moves = find_next_boards_from_coord(b, m);
+            // next_moves = retrieve_all_valid_positions(movesc);
 
-            if(next_moves) {
-                // Retrieve the parent valid moves
-                movesc = mlist->data[mlist->pointer - 1];
+            next_moves = find_next_boards(sb);
 
-                // Encode the new valid moves
-                for(char im = 0; next_moves[im]; im++) {
+            if(next_moves[0]) {
+                uint8_t move_count = 0;
+                // If the move is legal, then append it to the search stack
+                for(uint8_t im = 0; next_moves[im]; im++) {
                     coord mm = next_moves[im];
-                    movesc = encode_valid_position(movesc, mm->row, mm->column);
+                    bc = clone_board(sb);
+                    // movescc = movesc;   // TODO needs to be opposite color
+
+                    if(board_is_legal_move(bc, mm->row, mm->column)) {
+                        board_place_piece(bc, mm->row, mm->column);
+                        append_pal(search_stack, bc);
+                        move_count++;
+
+                        // // Figure out if the current move also generated new valid moves for the current player
+                        // b->player = (b->player == 1) ? 2 : 1;
+                        // mlist = (b->player == 1) ? moves_white : moves_black;
+                        // movesccc = pop_back_dal(mlist); // TODO needs to be the current color
+
+                        // coord* next_moves_1 = find_next_boards_from_coord_opposing_player(b, mm);
+
+                        // // Encode the new valid moves
+                        // for(char im = 0; next_moves_1[im]; im++) {
+                        //     coord mmm = next_moves_1[im];
+                        //     movesccc = encode_valid_position(movesccc, mmm->row, mmm->column);
+                        //     free(mmm);
+                        // }
+
+                        // if(movesccc != movesc) append_dal(overrides, movesccc);
+
+                        // free(next_moves_1);
+
+                        // // Find the valid moves that were generated from this move
+                        // movescc = find_valid_positions_from_coord(
+                        //     remove_valid_position(movescc, mm->row, mm->column), 
+                        //     bc, mm->row, mm->column);
+                        // append_dal(mlist, movescc); //  TODO needs to be opposing color
+                    }
+                    else {
+                        destroy_board(bc);
+                    }
+
                     free(mm);
                 }
-
-                free(next_moves);
-
-                // Find all of the coordinates
-                next_moves = retrieve_all_valid_positions(movesc);
 
                 #ifdef debug
-                    // printf("%s\n", (next_moves[0]) ? "Found possible positions" : "Did not find any positions");
+                    printf("Found %u moves\n", move_count);
                 #endif
 
-                // If the move is legal, then append it to the search stack
-                for(char im = 0; next_moves[im]; im++) {
-                    coord mm = next_moves[im];
-                    #ifdef debug
-                        // printf("Checking move at (%u, %u)\n", mm->row, mm->column);
-                    #endif
-                    if(board_is_legal_move(b, mm->row, mm->column)) {
-                        #ifdef debug
-                            // printf("Found a valid move at (%u, %u)\n", mm->row, mm->column);
-                        #endif
-                        append_sal(search_stack, coord_to_short(mm));
-                    }
-                    append_dal(mlist, movesc);
-                    free(mm);
-                }
-
                 free(next_moves);
-
-                // TODO if the board is full, or the next player has no moves, then do something about it. 
-                // Traverse upwards if necessary
             }
             else {
-                // There were no valid moves for this color, switch to the other color and see if that works
-                printf("No moves for current player, trying opponent\n");
-                b->player = (b->player == 1) ? 2 : 1;
+                // The opponenet has no moves, try the other player
+                #ifdef debug
+                    printf("No moves for opponent, switching back to the current player\n");
+                #endif
+                sb->player = (sb->player == 1) ? 2 : 1;
 
-                mlist = (b->player == 1) ? moves_white : moves_black;
+                next_moves = find_next_boards(sb);
 
-                // Retrieve the parent valid moves
-                movesc = mlist->data[mlist->pointer - 1];
-
-                // Find all of the coordinates
-                next_moves = retrieve_all_valid_positions(movesc);
-
-                if(next_moves) {
+                if(next_moves[0]) {
+                    uint8_t move_count = 0;
                     // If the move is legal, then append it to the search stack
-                    for(char im = 0; next_moves[im]; im++) {
+                    for(uint8_t im = 0; next_moves[im]; im++) {
                         coord mm = next_moves[im];
-                        if(board_is_legal_move(b, mm->row, mm->column)) append_sal(search_stack, coord_to_short(mm));
-                        append_dal(mlist, movesc);
+                        bc = clone_board(sb);
+                        // movescc = movesc;   // TODO needs to be opposite color
+
+                        if(board_is_legal_move(bc, mm->row, mm->column)) {
+                            board_place_piece(bc, mm->row, mm->column);
+                            append_pal(search_stack, bc);
+                            move_count++;
+
+                            // // Figure out if the current move also generated new valid moves for the current player
+                            // b->player = (b->player == 1) ? 2 : 1;
+                            // mlist = (b->player == 1) ? moves_white : moves_black;
+                            // movesccc = pop_back_dal(mlist); // TODO needs to be the current color
+
+                            // coord* next_moves_1 = find_next_boards_from_coord_opposing_player(b, mm);
+
+                            // // Encode the new valid moves
+                            // for(char im = 0; next_moves_1[im]; im++) {
+                            //     coord mmm = next_moves_1[im];
+                            //     movesccc = encode_valid_position(movesccc, mmm->row, mmm->column);
+                            //     free(mmm);
+                            // }
+
+                            // if(movesccc != movesc) append_dal(overrides, movesccc);
+
+                            // free(next_moves_1);
+
+                            // // Find the valid moves that were generated from this move
+                            // movescc = find_valid_positions_from_coord(
+                            //     remove_valid_position(movescc, mm->row, mm->column), 
+                            //     bc, mm->row, mm->column);
+                            // append_dal(mlist, movescc); //  TODO needs to be opposing color
+                        }
+                        else {
+                            destroy_board(bc);
+                        }
+
                         free(mm);
                     }
 
                     free(next_moves);
                 }
                 else {
-                    // Neither player has any moves the game has ended
-                    if(!ccount) {
-                        while(!ccount) {
-                            printf("Popped off a child, switching players\n");
-                            pop_back_cal(parent_index_count_stack);
-                            ccount = parent_index_count_stack->data[parent_index_count_stack->pointer - 1];
-                            b->player = (b->player == 1) ? 2 : 1;
-                        }
-                    }
+                    // The opponenet has no moves, try the other player
+                    #ifdef debug
+                        printf("No moves for anybody, game has ended.\n");
+                    #endif
                     count++;
                 }
             }
-        }
-        else if(!cc) {
-            // There were no valid moves for this color, switch to the other color and see if that works
-            printf("No captures for current player, trying opponent\n");
-            // b->player = (b->player == 1) ? 2 : 1;    // This was already done by place piece
 
-            uint64_arraylist mlist = (b->player == 1) ? moves_white : moves_black;
-
-            // Retrieve the parent valid moves
-            movesc = mlist->data[mlist->pointer - 1];
-
-            // Find all of the coordinates
-            next_moves = retrieve_all_valid_positions(movesc);
-
-            if(next_moves) {
-                // If the move is legal, then append it to the search stack
-                for(char im = 0; next_moves[im]; im++) {
-                    coord mm = next_moves[im];
-                    if(board_is_legal_move(b, mm->row, mm->column)) append_sal(search_stack, coord_to_short(mm));
-                    append_dal(mlist, movesc);
-                    free(mm);
-                }
-
-                free(next_moves);
-            }
-            else {
-                // Neither player has any moves the game has ended
-                if(!ccount) {
-                    while(!ccount) {
-                        printf("Popped off a child, switching players\n");
-                        pop_back_cal(parent_index_count_stack);
-                        ccount = parent_index_count_stack->data[parent_index_count_stack->pointer - 1];
-                        b->player = (b->player == 1) ? 2 : 1;
-                    }
-                }
-                count++;
-            }
+            // Insert the board into the cache
+            put_hs(cache, sb);
+        
         }
         else {
-            printf("The given board is already counted\n");
-            if(!ccount) {
-                while(!ccount) {
-                    printf("Popped off a child, switching players\n");
-                    pop_back_cal(parent_index_count_stack);
-                    ccount = parent_index_count_stack->data[parent_index_count_stack->pointer - 1];
-                    b->player = (b->player == 1) ? 2 : 1;
-                }
-            }
+            #ifdef debug
+                printf("The given board is already counted\n");
+            #endif
         }
 
-        free(m);
+        destroy_board(sb);
 
-        printf("Finished %ld boards, iteration: %ld\n", count, iter++);
+        printf("\rFinished %ld boards, iteration: %ld", count, iter++);
         fflush(stdout);
     }
 
-    printf("There are %ld possible board states\n", count);
+    printf("\nThere are %ld possible board states\n", count);
 }

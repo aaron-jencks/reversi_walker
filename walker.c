@@ -1,5 +1,6 @@
 #include "walker.h"
 #include "ll.h"
+#include "arraylist.h"
 
 #include <stdlib.h>
 #include <err.h>
@@ -14,7 +15,8 @@ coord create_coord(uint8_t row, uint8_t col) {
 
 coord* find_next_boards(board b) {
     uint8_t sr = (b->height >> 1) - 1, sc = (b->width >> 1) - 1, visited[b->height][b->width];
-    linkedlist edges = create_ll(), queue = create_ll();
+    ptr_arraylist edges = create_ptr_arraylist(65);
+    linkedlist queue = create_ll();
 
     for(uint8_t i = 0; i < b->height; i++) 
         for(uint8_t j = 0; j < b->width; j++) 
@@ -39,7 +41,7 @@ coord* find_next_boards(board b) {
                     else if(!v && board_get(b, c->row, c->column) != b->player) {
                         visited[sr][sc] = 1;
                         if(board_is_legal_move(b, sr, sc))
-                            append_ll(edges, create_coord(sr, sc));
+                            append_pal(edges, create_coord(sr, sc));
                     }
                 }
             }
@@ -49,8 +51,8 @@ coord* find_next_boards(board b) {
     }
 
     destroy_ll(queue);
-    coord* result = (coord*)ll_to_arr(edges);
-    destroy_ll(edges);
+    coord* result = (coord*)(edges->data);
+    free(edges);
     return result;
 }
 
@@ -78,6 +80,33 @@ coord* find_next_boards_from_coord(board b, coord c) {
 
     coord* result = (coord*)ll_to_arr(edges);
     destroy_ll(edges);
+    return result;
+}
+
+coord* find_next_boards_from_coord_opposing_player(board b, coord c) {
+    uint8_t sr, sc;
+    ptr_arraylist edges = create_ptr_arraylist(9);
+
+    uint8_t found, bv;
+    for(int8_t rd = -1; rd < 2; rd++) {
+        for(int8_t cd = -1; cd < 2; cd++) {
+            found = 0;
+            if(!rd && !cd) continue;
+            
+            sr = c->row + rd;
+            sc = c->column + cd;
+
+            if(sr >= 0 && sr < b->height && sc >= 0 && sc < b->width) {
+                bv = board_get(b, c->row, c->column);
+                if(bv == b->player) found = 1;
+                else if(!bv && found) append_pal(edges, create_coord(sr, sc));
+                else continue;
+            }
+        }
+    }
+
+    coord* result = (coord*)edges->data;
+    free(edges);
     return result;
 }
 

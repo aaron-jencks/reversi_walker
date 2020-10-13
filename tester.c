@@ -4,12 +4,14 @@
 
 #include "tests/capturecounts_test.h"
 #include "tests/legal_moves_test.h"
+#include "tests/board_placement.h"
 
-uint64_t test_count = 3;
-void (*tests[3])() = {
+uint64_t test_count = 4;
+void (*tests[4])() = {
     cc_test_directions,
     lm_test_initial,
-    lm_test_from_coord
+    lm_test_from_coord,
+    board_placement_test
 };
 
 
