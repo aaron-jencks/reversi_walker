@@ -11,6 +11,32 @@
 #include "arraylist.h"
 #include "valid_moves.h"
 
+/**
+ * I had to get rid of the stacks because I had no way to keep track of when a move generates new moves for BOTH colors .W.
+ * or when a capture generates new moves
+ * 
+ * ie.
+ * 
+ * 00000000
+ * 00000000
+ * 00012000
+ * 00021000
+ * 00000000
+ * 00000000
+ * 
+ * --->
+ * 
+ * 00000000
+ * 00001000
+ * 00011000
+ * 00021000
+ * 00x00000 <-- Where x is a new move generated for white by a captured piece -___-
+ * 00000000
+ * 
+ * I need to optimize the linkedlists in the hashtable, and optimize the memory usage of the DFS stack by getting rid of the pointers.
+ * 
+ */
+
 
 void display_board(board b) {
     if(b) {
@@ -182,13 +208,71 @@ int main() {
             display_board(sb);
         #endif
 
-        if(!exists_hs(cache, sb)) {
-            // uint64_arraylist mlist = (b->player == 1) ? moves_white : moves_black;  // TODO Needs to be the opposing color
+        // uint64_arraylist mlist = (b->player == 1) ? moves_white : moves_black;  // TODO Needs to be the opposing color
 
-            // if(!overrides->pointer) movesc = pop_back_dal(mlist);
-            // else movesc = pop_back_dal(overrides);
+        // if(!overrides->pointer) movesc = pop_back_dal(mlist);
+        // else movesc = pop_back_dal(overrides);
 
-            // next_moves = retrieve_all_valid_positions(movesc);
+        // next_moves = retrieve_all_valid_positions(movesc);
+
+        next_moves = find_next_boards(sb);
+
+        if(next_moves[0]) {
+            uint8_t move_count = 0;
+            // If the move is legal, then append it to the search stack
+            for(uint8_t im = 0; next_moves[im]; im++) {
+                coord mm = next_moves[im];
+                bc = clone_board(sb);
+                // movescc = movesc;   // TODO needs to be opposite color
+
+                if(board_is_legal_move(bc, mm->row, mm->column)) {
+                    board_place_piece(bc, mm->row, mm->column);
+                    append_pal(search_stack, bc);
+                    move_count++;
+
+                    // // Figure out if the current move also generated new valid moves for the current player
+                    // b->player = (b->player == 1) ? 2 : 1;
+                    // mlist = (b->player == 1) ? moves_white : moves_black;
+                    // movesccc = pop_back_dal(mlist); // TODO needs to be the current color
+
+                    // coord* next_moves_1 = find_next_boards_from_coord_opposing_player(b, mm);
+
+                    // // Encode the new valid moves
+                    // for(char im = 0; next_moves_1[im]; im++) {
+                    //     coord mmm = next_moves_1[im];
+                    //     movesccc = encode_valid_position(movesccc, mmm->row, mmm->column);
+                    //     free(mmm);
+                    // }
+
+                    // if(movesccc != movesc) append_dal(overrides, movesccc);
+
+                    // free(next_moves_1);
+
+                    // // Find the valid moves that were generated from this move
+                    // movescc = find_valid_positions_from_coord(
+                    //     remove_valid_position(movescc, mm->row, mm->column), 
+                    //     bc, mm->row, mm->column);
+                    // append_dal(mlist, movescc); //  TODO needs to be opposing color
+                }
+                else {
+                    destroy_board(bc);
+                }
+
+                free(mm);
+            }
+
+            #ifdef debug
+                printf("Found %u moves\n", move_count);
+            #endif
+
+            free(next_moves);
+        }
+        else {
+            // The opponenet has no moves, try the other player
+            #ifdef debug
+                printf("No moves for opponent, switching back to the current player\n");
+            #endif
+            sb->player = (sb->player == 1) ? 2 : 1;
 
             next_moves = find_next_boards(sb);
 
@@ -236,84 +320,23 @@ int main() {
                     free(mm);
                 }
 
-                #ifdef debug
-                    printf("Found %u moves\n", move_count);
-                #endif
-
                 free(next_moves);
             }
             else {
                 // The opponenet has no moves, try the other player
                 #ifdef debug
-                    printf("No moves for opponent, switching back to the current player\n");
+                    printf("No moves for anybody, game has ended.\n");
                 #endif
-                sb->player = (sb->player == 1) ? 2 : 1;
-
-                next_moves = find_next_boards(sb);
-
-                if(next_moves[0]) {
-                    uint8_t move_count = 0;
-                    // If the move is legal, then append it to the search stack
-                    for(uint8_t im = 0; next_moves[im]; im++) {
-                        coord mm = next_moves[im];
-                        bc = clone_board(sb);
-                        // movescc = movesc;   // TODO needs to be opposite color
-
-                        if(board_is_legal_move(bc, mm->row, mm->column)) {
-                            board_place_piece(bc, mm->row, mm->column);
-                            append_pal(search_stack, bc);
-                            move_count++;
-
-                            // // Figure out if the current move also generated new valid moves for the current player
-                            // b->player = (b->player == 1) ? 2 : 1;
-                            // mlist = (b->player == 1) ? moves_white : moves_black;
-                            // movesccc = pop_back_dal(mlist); // TODO needs to be the current color
-
-                            // coord* next_moves_1 = find_next_boards_from_coord_opposing_player(b, mm);
-
-                            // // Encode the new valid moves
-                            // for(char im = 0; next_moves_1[im]; im++) {
-                            //     coord mmm = next_moves_1[im];
-                            //     movesccc = encode_valid_position(movesccc, mmm->row, mmm->column);
-                            //     free(mmm);
-                            // }
-
-                            // if(movesccc != movesc) append_dal(overrides, movesccc);
-
-                            // free(next_moves_1);
-
-                            // // Find the valid moves that were generated from this move
-                            // movescc = find_valid_positions_from_coord(
-                            //     remove_valid_position(movescc, mm->row, mm->column), 
-                            //     bc, mm->row, mm->column);
-                            // append_dal(mlist, movescc); //  TODO needs to be opposing color
-                        }
-                        else {
-                            destroy_board(bc);
-                        }
-
-                        free(mm);
-                    }
-
-                    free(next_moves);
-                }
-                else {
-                    // The opponenet has no moves, try the other player
-                    #ifdef debug
-                        printf("No moves for anybody, game has ended.\n");
-                    #endif
+                if(!exists_hs(cache, sb)) {
+                    put_hs(cache, sb);
                     count++;
                 }
+                else {
+                    #ifdef debug
+                        printf("The given board is already counted\n");
+                    #endif
+                }
             }
-
-            // Insert the board into the cache
-            put_hs(cache, sb);
-        
-        }
-        else {
-            #ifdef debug
-                printf("The given board is already counted\n");
-            #endif
         }
 
         destroy_board(sb);
