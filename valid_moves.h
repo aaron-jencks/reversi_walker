@@ -15,6 +15,16 @@
 uint64_t encode_valid_position(uint64_t b, uint8_t row, uint8_t column);
 
 /**
+ * @brief Removes the corresponding bit in the given board int, setting it to 0
+ * 
+ * @param b 
+ * @param row 
+ * @param column 
+ * @return uint64_t returns a copy of the board b with the corresponding bit set low
+ */
+uint64_t remove_valid_position(uint64_t b, uint8_t row, uint8_t column);
+
+/**
  * @brief Determines if the given position is a valid move position
  * 
  * @param b 

@@ -11,6 +11,16 @@ uint64_t encode_valid_position(uint64_t b, uint8_t row, uint8_t column) {
     return b;
 }
 
+uint64_t remove_valid_position(uint64_t b, uint8_t row, uint8_t column) {
+    if(is_valid_position(b, row, column)) {
+        uint8_t* bytes = (uint8_t*)&b;
+        uint8_t ph = 1 << column;
+        bytes[row] ^= ph;
+    }
+
+    return b;
+}
+
 uint8_t is_valid_position(uint64_t b, uint8_t row, uint8_t column) {
     uint8_t* bytes = (uint8_t*)&b;
     uint8_t ph = 1 << column;
