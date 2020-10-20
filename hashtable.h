@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ll.h"
+#include "arraylist.h"
 
 #include <stdint.h>
 
@@ -12,7 +13,7 @@ typedef struct _keyval_pair_str {
 typedef keyval_pair_str* keyval_pair;
 
 typedef struct _hashtable_str {
-    linkedlist* bins;
+    uint128_arraylist* bins;
     uint64_t bin_count;
     uint64_t size;
     __uint128_t (*hash)(void*);

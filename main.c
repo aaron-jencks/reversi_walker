@@ -35,6 +35,8 @@
  * 
  * I need to optimize the linkedlists in the hashtable, and optimize the memory usage of the DFS stack by getting rid of the pointers.
  * 
+ * Re work the hashtable so that it doesn't error out when the size gets too big.
+ * 
  */
 
 

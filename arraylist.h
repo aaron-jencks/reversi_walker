@@ -52,6 +52,18 @@ typedef struct _uint64_arr_list_str {
  */
 typedef uint64_arraylist_str* uint64_arraylist;
 
+typedef struct _uint128_arr_list_str {
+    __uint128_t* data;
+    uint64_t size;
+    uint64_t pointer;
+} uint128_arraylist_str;
+
+/**
+ * @brief Represents an array list of 128-bit longs
+ * 
+ */
+typedef uint128_arraylist_str* uint128_arraylist;
+
 #pragma endregion
 
 #pragma region pointer
@@ -235,5 +247,51 @@ void insert_dal(uint64_arraylist l, uint64_t index, uint64_t data);
  * @return void* Returns the last element of the arraylist, or 0 if there isn't one
  */
 uint64_t pop_back_dal(uint64_arraylist l);
+
+#pragma endregion
+
+#pragma region uint128
+
+/**
+ * @brief Create a arraylist object
+ * 
+ * @param initial_capacity The initial maximum capacity for this list,
+ * the capacity is automatically adjusted once it runs out of room, 
+ * be careful not to overflow a 64 bit int though.
+ * @return arraylist 
+ */
+uint128_arraylist create_uint128_arraylist(uint64_t initial_capacity);
+
+/**
+ * @brief Destroys an arraylist
+ * 
+ * @param l 
+ */
+void destroy_uint128_arraylist(uint128_arraylist l);
+
+/**
+ * @brief Appends an item to the array list, re allocating the array if necessary
+ * 
+ * @param l 
+ * @param data Data to insert
+ */
+void append_ddal(uint128_arraylist l, __uint128_t data);
+
+/**
+ * @brief Inserts an item into the array list, re allocating the array if necessary
+ * 
+ * @param l 
+ * @param data Data to insert
+ * @param index The position to insert this data at
+ */
+void insert_ddal(uint128_arraylist l, uint64_t index, __uint128_t data);
+
+/**
+ * @brief Removes the last element from the arraylist, if there is one
+ * 
+ * @param l 
+ * @return void* Returns the last element of the arraylist, or 0 if there isn't one
+ */
+__uint128_t pop_back_ddal(uint128_arraylist l);
 
 #pragma endregion
