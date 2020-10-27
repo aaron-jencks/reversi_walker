@@ -11,7 +11,7 @@ board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
     b->height = height;
     b->width = width;
 
-    b->board = calloc((height * width) >> 2, sizeof(char));
+    b->board = calloc((height * width) >> 2, sizeof(uint8_t));
     if(!b->board) err(1, "Memory Error while allocating board's board array\n");
 
     /* <1 byte> 
@@ -58,15 +58,16 @@ board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
  */
 board clone_board(board b) {
     board bc = malloc(sizeof(board_str));
-    bc->board = malloc(((b->height * b->width) >> 2) * sizeof(char));
+    bc->board = calloc((b->height * b->width) >> 2, sizeof(uint8_t));
 
     if(!bc) err(1, "Memory Error Occured while allocating a board.");
+    if(!bc->board) err(1, "Memory Error Occured while allocating a board.");
 
     if(b) {
         bc->height = b->height;
         bc->width = b->width;
         bc->player = b->player;
-        for(char i = 0; i < 16; i++) bc->board[i] = b->board[i];
+        for(uint8_t i = 0; i < ((b->height * b->width) >> 2); i++) bc->board[i] = b->board[i];
     }
     else err(2, "Cannot clone an empty board pointer");
 

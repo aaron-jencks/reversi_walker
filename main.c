@@ -11,6 +11,8 @@
 #include "arraylist.h"
 #include "valid_moves.h"
 
+// TODO you can use the previous two board states to predict the next set of valid moves.
+
 /**
  * I had to get rid of the stacks because I had no way to keep track of when a move generates new moves for BOTH colors .W.
  * or when a capture generates new moves
@@ -129,7 +131,7 @@ __uint128_t board_hash(void* brd) {
 
         // we still need to use the entire 128 bits though,
         // because the hashing algorithm works best in powers of 2
-        uint32_t upperupper, upperlower, lowerupper, lowerlower;
+        uint32_t upperupper = 0, upperlower = 0, lowerupper = 0, lowerlower = 0;
         hashlittle2(&result, 8, &upperupper, &upperlower);
         hashlittle2(((char*)&result) + 8, 8, &lowerupper, &lowerlower);
         result = 0;
@@ -170,6 +172,7 @@ int main() {
         append_pal(search_stack, cb);
         // append_sal(coord_pairs, sm);
         // wmoves = encode_valid_position(wmoves, m->row, m->column);
+        free(m);
     }
     // for(char im = 0; next_moves[im]; im++) append_dal(moves_white, wmoves);
 
@@ -189,6 +192,7 @@ int main() {
         append_pal(search_stack, cb);
         // append_sal(coord_pairs, sm);
         wmoves = encode_valid_position(wmoves, m->row, m->column);
+        free(m);
     }
     // for(char im = 0; next_moves[im]; im++) append_dal(moves_black, wmoves);
 
@@ -276,6 +280,7 @@ int main() {
             #endif
             sb->player = (sb->player == 1) ? 2 : 1;
 
+            free(next_moves);
             next_moves = find_next_boards(sb);
 
             if(next_moves[0]) {
@@ -329,6 +334,9 @@ int main() {
                 #ifdef debug
                     printf("No moves for anybody, game has ended.\n");
                 #endif
+
+                free(next_moves);
+
                 if(!exists_hs(cache, sb)) {
                     put_hs(cache, sb);
                     count++;
