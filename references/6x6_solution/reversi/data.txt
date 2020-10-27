@@ -1,0 +1,296 @@
+//valueZeroWindow()
+00:00.050 e=-30 empty=16 c1 nodes 5.38e+005         538,445 00:00.730
+00:00.340 e=-16 empty=16 c0 nodes 4.19e+006       4,190,759 00:01.070
+00:00.270 e=  0 empty=17 c1 nodes 3.40e+006       3,404,928 00:01.340
+00:00.260 e=-32 empty=17 c0 nodes 3.07e+006       3,074,343 00:01.600
+00:01.840 e= 30 empty=18 c1 nodes 2.21e+007      22,132,905 00:03.440
+00:00.850 e= 14 empty=18 c0 nodes 1.13e+007      11,347,439 00:04.290
+00:00.380 e= -8 empty=19 c1 nodes 4.74e+006       4,741,391 00:04.670
+00:00.090 e=-10 empty=19 c0 nodes 9.76e+005         975,567 00:04.760
+00:02.110 e= 20 empty=20 c1 nodes 2.64e+007      26,367,086 00:06.870
+00:03.280 e=-26 empty=20 c0 nodes 4.05e+007      40,513,335 00:10.150
+00:19.141 e= 26 empty=21 c1 nodes 2.38e+008     237,709,650 00:29.291
+00:12.400 e=  2 empty=21 c0 nodes 1.54e+008     153,857,346 00:41.691
+03:06.461 e= 30 empty=22 c1 nodes 2.32e+009   2,324,757,090 03:48.152
+00:18.130 e=-10 empty=22 c0 nodes 2.25e+008     224,973,886 04:06.282
+01:45.232 e= -6 empty=23 c1 nodes 1.37e+009   1,369,539,213 05:51.514
+02:15.513 e= 16 empty=23 c0 nodes 1.74e+009   1,740,906,946 08:07.027
+01:01.781 e=-14 empty=24 c1 nodes 7.73e+008     773,203,443 09:08.808
+00:45.170 e= 13 empty=24 c0 nodes 5.73e+008     573,342,938 09:53.978
+05:29.677 e= 24 empty=25 c1 nodes 4.09e+009   4,092,044,540 15:23.655
+const int HASH_BITS=27;const int TURNS_LEFT=8;
+
+//zeroWindow() [0,1]
+00:00.040 e=  1 empty=20 c1 nodes 5.17e+005         516,812 00:01.150
+00:00.070 e=  0 empty=20 c0 nodes 9.44e+005         944,429 00:01.220
+00:00.270 e=  1 empty=21 c1 nodes 3.36e+006       3,356,979 00:01.490
+00:03.360 e=  1 empty=21 c0 nodes 4.06e+007      40,597,209 00:04.850
+00:01.460 e=  1 empty=22 c1 nodes 1.76e+007      17,642,218 00:06.310
+00:02.260 e=  0 empty=22 c0 nodes 2.70e+007      26,957,836 00:08.580
+00:07.910 e=  0 empty=23 c1 nodes 9.68e+007      96,811,520 00:16.490
+00:09.410 e=  1 empty=23 c0 nodes 1.18e+008     118,451,260 00:25.900
+00:06.070 e=  0 empty=24 c1 nodes 7.52e+007      75,210,651 00:31.970
+00:04.350 e=  1 empty=24 c0 nodes 5.45e+007      54,498,554 00:36.320
+00:15.420 e=  1 empty=25 c1 nodes 1.94e+008     193,951,697 00:51.740
+20:36.321 e=  1 empty=25 c0 nodes 1.51e+010  15,113,153,736 21:28.061
+
+[A1  9][B1 10][C1 11][D1 12][E1 13][F1 14]
+[A2 17][B2 18][C2 19][D2 20][E2 21][F2 22]
+[A3 25][B3 26][C3 27][D3 28][E3 29][F3 30]
+[A4 33][B4 34][C4 35][D4 36][E4 37][F4 38]
+[A5 41][B5 42][C5 43][D5 44][E5 45][F5 46]
+[A6 49][B6 50][C6 51][D6 52][E6 53][F6 54]
+
+[a1  7][b1  8][c1  9][d1 10]
+[a2 13][b2 14][c2 15][d2 16]
+[a3 19][b3 20][c3 21][d3 22]
+[a4 25][b4 26][c4 27][d4 28]
+	
+countAllNodes table6x6 type0 symmetry0 minEmpties19
+32              1 bf=1.00
+31              4 bf=4.00
+30             12 bf=3.00	
+29             56 bf=4.67
+28            244 bf=4.36
+27          1,364 bf=5.59
+26          7,604 bf=5.57
+25         47,740 bf=6.28
+24        308,716 bf=6.47
+23      2,115,128 bf=6.85	
+22     14,978,496 bf=7.08
+21    108,843,480 bf=7.27	
+20    811,367,624 bf=7.45
+19  6,080,743,752 bf=7.49	
+the end total time 95:00
+
+countAllNodes table6x6 type2 symmetry0 minEmpties19
+32              1 bf=1.00
+31              4 bf=4.00
+30             14 bf=3.50
+29             68 bf=4.86
+28            292 bf=4.29
+27          1,634 bf=5.60
+26          9,020 bf=5.52
+25         55,610 bf=6.17
+24        355,530 bf=6.39
+23      2,394,188 bf=6.73
+22     16,820,860 bf=7.03
+21    120,411,620 bf=7.16
+20    893,804,782 bf=7.42
+19  6,616,811,326 bf=7.40
+the end total time 103:33
+
+countAllNodesSymmetry table6x6 type0 code5:off useOwnSet:on setSize130mn
+32              1 bf=1.00 time 00:00:00
+31              1 bf=1.00 time 00:00:00 layer time 00:00:00
+30              3 bf=3.00 time 00:00:00 layer time 00:00:00
+29             14 bf=4.67 time 00:00:00 layer time 00:00:00
+28             60 bf=4.29 time 00:00:00 layer time 00:00:00
+27            314 bf=5.23 time 00:00:00 layer time 00:00:00
+26          1,632 bf=5.20 time 00:00:00 layer time 00:00:00
+25          9,069 bf=5.56 time 00:00:00 layer time 00:00:00
+24         51,964 bf=5.73 time 00:00:00 layer time 00:00:00
+23        292,967 bf=5.64 time 00:00:02 layer time 00:00:02
+22      1,706,297 bf=5.82 time 00:00:15 layer time 00:00:12
+21      9,290,580 bf=5.44 time 00:01:28 layer time 00:01:13
+20     51,083,523 bf=5.50 time 00:08:19 layer time 00:06:51
+19    125,580,690 bf=2.46 time 00:46:03 layer time 00:37:48 class 1/2
+19    125,584,286 bf=2.46 time 01:23:56 layer time 01:15:41 class 2/2
+**    313,601,401 time 01:23:56
+short game turns [9 d2c2b4e4f4b3b2d5d6 10 d2c2b3a4b4e4e3e2c5c6 10 d2e4f5f4c5c2b1b4a4f6] - minEmpties = tableSize^2-5-max(9,10,10) = 11
+
+countAllNodesSymmetry table6x6 type2 code5:off useOwnSet:on setSize130mn
+32              1 bf=1.00 time 00:00:00
+31              2 bf=2.00 time 00:00:00 layer time 00:00:00
+30              7 bf=3.50 time 00:00:00 layer time 00:00:00
+29             33 bf=4.71 time 00:00:00 layer time 00:00:00
+28            139 bf=4.21 time 00:00:00 layer time 00:00:00
+27            702 bf=5.05 time 00:00:00 layer time 00:00:00
+26          3,541 bf=5.04 time 00:00:00 layer time 00:00:00
+25         18,686 bf=5.28 time 00:00:00 layer time 00:00:00
+24        103,490 bf=5.54 time 00:00:01 layer time 00:00:00
+23        558,406 bf=5.40 time 00:00:05 layer time 00:00:04
+22      3,155,544 bf=5.65 time 00:00:27 layer time 00:00:22
+21     16,531,560 bf=5.24 time 00:02:34 layer time 00:02:06
+20     88,046,142 bf=5.33 time 00:14:00 layer time 00:11:25
+19    104,006,053 bf=1.18 time 01:16:28 layer time 01:01:57 class 1/4
+19    104,000,895 bf=1.18 time 02:18:19 layer time 02:03:47 class 2/4
+19    104,006,580 bf=1.18 time 03:20:53 layer time 03:06:21 class 3/4
+19    103,985,288 bf=1.18 time 04:24:23 layer time 04:09:51 class 4/4
+**    524,417,069 time 04:24:23
+short game turns [7 c5b4a3c2c1d2e3 10 c5d2e4f5e3b4d5d6e5f4 9 c5d2e3f4e1c1f2b4a5] - minEmpties = tableSize^2-5-max(7,10,9) = 11
+
+1day = 86400.0secs
+1day*8kernels =86400.0*8 = 691200.0 ~ 6.912000e+005
+1,000,000sec=1,000,000/86400/8 = 1.44 days for 8 kernels
+
+countAllNodes table4x4 type0 symmetry0 minEmpties0
+12              1 bf=1.00
+11              4 bf=4.00
+10             12 bf=3.00
+ 9             44 bf=3.67
+ 8            128 bf=2.91
+ 7            436 bf=3.41
+ 6          1,296 bf=2.97
+ 5          3,784 bf=2.92
+ 4          9,756 bf=2.58
+ 3         22,152 bf=2.27
+ 2         41,296 bf=1.86
+ 1         58,912 bf=1.43
+ 0         53,580 bf=0.91
+total time 00:00 total nodes=191,401
+
+countAllNodes table4x4 type2 symmetry0 minEmpties0
+12              1 bf=1.00
+11              4 bf=4.00
+10             12 bf=3.00
+ 9             50 bf=4.17
+ 8            138 bf=2.76
+ 7            480 bf=3.48
+ 6          1,322 bf=2.75
+ 5          4,076 bf=3.08
+ 4          9,922 bf=2.43
+ 3         24,064 bf=2.43
+ 2         44,694 bf=1.86
+ 1         65,646 bf=1.47
+ 0         58,720 bf=0.89
+total time 00:00 total nodes=209,129
+
+countAllNodesSymmetry table4x4 type0 code5:off useOwnSet:on setSize90mn
+12              1 bf=1.00 time 00:00:00
+11              1 bf=1.00 time 00:00:00 layer time 00:00:00
+10              3 bf=3.00 time 00:00:00 layer time 00:00:00
+ 9             11 bf=3.67 time 00:00:00 layer time 00:00:00
+ 8             31 bf=2.82 time 00:00:00 layer time 00:00:00
+ 7             98 bf=3.16 time 00:00:00 layer time 00:00:00
+ 6            274 bf=2.80 time 00:00:00 layer time 00:00:00
+ 5            669 bf=2.44 time 00:00:00 layer time 00:00:00
+ 4          1,552 bf=2.32 time 00:00:00 layer time 00:00:00
+ 3          2,703 bf=1.74 time 00:00:00 layer time 00:00:00
+ 2          3,559 bf=1.32 time 00:00:00 layer time 00:00:00
+ 1          2,802 bf=0.79 time 00:00:00 layer time 00:00:00
+ 0            999 bf=0.36 time 00:00:00 layer time 00:00:00
+**         12,703 time 00:00:00
+short game turns [10 c1b1a1d3a4a3b4d4a2d2 10 c1d1d2b1a3d4a2d3a1a4 6 c1b1a1d1d3a4]
+
+countAllNodesSymmetry table4x4 type2 code5:off useOwnSet:on setSize90mn
+12              1 bf=1.00 time 00:00:00
+11              2 bf=2.00 time 00:00:00 layer time 00:00:00
+10              6 bf=3.00 time 00:00:00 layer time 00:00:00
+ 9             24 bf=4.00 time 00:00:00 layer time 00:00:00
+ 8             65 bf=2.71 time 00:00:00 layer time 00:00:00
+ 7            196 bf=3.02 time 00:00:00 layer time 00:00:00
+ 6            510 bf=2.60 time 00:00:00 layer time 00:00:00
+ 5          1,243 bf=2.44 time 00:00:00 layer time 00:00:00
+ 4          2,649 bf=2.13 time 00:00:00 layer time 00:00:00
+ 3          4,582 bf=1.73 time 00:00:00 layer time 00:00:00
+ 2          5,770 bf=1.26 time 00:00:00 layer time 00:00:00
+ 1          4,162 bf=0.72 time 00:00:00 layer time 00:00:00
+ 0          1,329 bf=0.32 time 00:00:00 layer time 00:00:00
+**         20,539 time 00:00:00
+short game turns [9 a4c1d1a3b1d2d3b4a2 9 b4a1d3d4a2a3c4a4d2 5 a4a3c4c1a2]
+
+countAllNodesSymmetry table5x5 type0 code5:on useOwnSet:on setSize150mn
+21              1 bf=1.00 time 00:00:00
+20              2 bf=2.00 time 00:00:00 layer time 00:00:00
+19              6 bf=3.00 time 00:00:00 layer time 00:00:00
+18             22 bf=3.67 time 00:00:00 layer time 00:00:00
+17             76 bf=3.45 time 00:00:00 layer time 00:00:00
+16            321 bf=4.22 time 00:00:01 layer time 00:00:00
+15          1,266 bf=3.94 time 00:00:01 layer time 00:00:00
+14          5,334 bf=4.21 time 00:00:01 layer time 00:00:00
+13         22,111 bf=4.15 time 00:00:01 layer time 00:00:00
+12         88,945 bf=4.02 time 00:00:01 layer time 00:00:00
+11        348,895 bf=3.92 time 00:00:03 layer time 00:00:01
+10      1,241,215 bf=3.56 time 00:00:10 layer time 00:00:06
+ 9      4,107,830 bf=3.31 time 00:00:33 layer time 00:00:23
+ 8     11,428,066 bf=2.78 time 00:01:51 layer time 00:01:17
+ 7     27,843,248 bf=2.44 time 00:05:22 layer time 00:03:30
+ 6     52,528,599 bf=1.89 time 00:13:39 layer time 00:08:16
+ 5     80,638,589 bf=1.54 time 00:28:57 layer time 00:15:18
+ 4     88,041,539 bf=1.09 time 00:51:15 layer time 00:22:17
+ 3     70,101,561 bf=0.80 time 01:14:28 layer time 00:23:13
+ 2     34,901,145 bf=0.50 time 01:32:13 layer time 00:17:44
+ 1     10,027,673 bf=0.29 time 01:40:31 layer time 00:08:18
+ 0      1,196,200 bf=0.12 time 01:42:46 layer time 00:02:14
+**    382,522,644 time 01:42:46
+short game turns [9 c1d3a4b1a1a3a2d1e3 11 c1b1a2d1c4a3d2a1d3b4b5 9 c1d3a4b1a1a3d1a5e3] //minEmpties=9 is sufficient = tableSize^2-5-max(9,11,9)
+
+countAllNodesSymmetry table5x5 type1 code5:on useOwnSet:on setSize110mn
+21              1 bf=1.00 time 00:00:00
+20              2 bf=2.00 time 00:00:00 layer time 00:00:00
+19              6 bf=3.00 time 00:00:00 layer time 00:00:00
+18             23 bf=3.83 time 00:00:00 layer time 00:00:00
+17             79 bf=3.43 time 00:00:00 layer time 00:00:00
+16            332 bf=4.20 time 00:00:00 layer time 00:00:00
+15          1,389 bf=4.18 time 00:00:00 layer time 00:00:00
+14          5,858 bf=4.22 time 00:00:00 layer time 00:00:00
+13         24,853 bf=4.24 time 00:00:01 layer time 00:00:00
+12         99,898 bf=4.02 time 00:00:01 layer time 00:00:00
+11        390,506 bf=3.91 time 00:00:03 layer time 00:00:01
+10      1,379,807 bf=3.53 time 00:00:10 layer time 00:00:07
+ 9      4,530,230 bf=3.28 time 00:00:36 layer time 00:00:25
+ 8     12,562,403 bf=2.77 time 00:02:00 layer time 00:01:23
+ 7     30,416,061 bf=2.42 time 00:05:45 layer time 00:03:45
+ 6     57,567,633 bf=1.89 time 00:14:52 layer time 00:09:06
+ 5     88,250,892 bf=1.53 time 00:31:29 layer time 00:16:36
+ 4     96,635,604 bf=1.10 time 00:56:25 layer time 00:24:56
+ 3     77,100,596 bf=0.80 time 01:22:14 layer time 00:25:49
+ 2     38,023,442 bf=0.49 time 01:42:12 layer time 00:19:57
+ 1     10,851,868 bf=0.29 time 01:51:25 layer time 00:09:13
+ 0      1,266,489 bf=0.12 time 01:53:54 layer time 00:02:29
+**    419,107,972 time 01:53:54
+short game turns [9 d3d2a1a4a3b4d1a2a5 9 b1a1d3c1a2a3e3c4c5 9 d3b4a5d1a3a4b1a2a1]
+
+countAllNodesSymmetry table5x5 type2 code5:on useOwnSet:on setSize150mn
+21              1 bf=1.00 time 00:00:00
+20              4 bf=4.00 time 00:00:00 layer time 00:00:00
+19             14 bf=3.50 time 00:00:00 layer time 00:00:00
+18             57 bf=4.07 time 00:00:01 layer time 00:00:00
+17            206 bf=3.61 time 00:00:01 layer time 00:00:00
+16            755 bf=3.67 time 00:00:01 layer time 00:00:00
+15          3,248 bf=4.30 time 00:00:01 layer time 00:00:00
+14         11,793 bf=3.63 time 00:00:01 layer time 00:00:00
+13         51,787 bf=4.39 time 00:00:01 layer time 00:00:00
+12        186,800 bf=3.61 time 00:00:02 layer time 00:00:01
+11        749,354 bf=4.01 time 00:00:06 layer time 00:00:03
+10      2,470,021 bf=3.30 time 00:00:20 layer time 00:00:14
+ 9      8,011,746 bf=3.24 time 00:01:07 layer time 00:00:46
+ 8     20,966,727 bf=2.62 time 00:03:37 layer time 00:02:30
+ 7     48,033,977 bf=2.29 time 00:10:04 layer time 00:06:27
+ 6     85,681,096 bf=1.78 time 00:24:43 layer time 00:14:39
+ 5    121,366,247 bf=1.42 time 00:50:05 layer time 00:25:21
+ 4    125,708,160 bf=1.04 time 01:24:58 layer time 00:34:52
+ 3     93,156,172 bf=0.74 time 01:59:08 layer time 00:34:10
+ 2     43,874,264 bf=0.47 time 02:23:00 layer time 00:23:51
+ 1     11,933,162 bf=0.27 time 02:33:28 layer time 00:10:28
+ 0      1,351,490 bf=0.11 time 02:36:11 layer time 00:02:43
+**    563,557,081 time 02:36:27
+short game turns [9 a4a3a2b1c1d3a1d1e3 8 a4a1a2a3c4c1a5c5 9 c4d3a4c1e3a3b1a5d1]
+
+countAllNodesSymmetry table5x5 type3 code5:on useOwnSet:on setSize150mn
+21              1 bf=1.00 time 00:00:00
+20              4 bf=4.00 time 00:00:00 layer time 00:00:00
+19             12 bf=3.00 time 00:00:00 layer time 00:00:00
+18             55 bf=4.58 time 00:00:00 layer time 00:00:00
+17            171 bf=3.11 time 00:00:01 layer time 00:00:00
+16            792 bf=4.63 time 00:00:01 layer time 00:00:00
+15          2,762 bf=3.49 time 00:00:01 layer time 00:00:00
+14         12,349 bf=4.47 time 00:00:01 layer time 00:00:00
+13         46,117 bf=3.73 time 00:00:01 layer time 00:00:00
+12        190,425 bf=4.13 time 00:00:02 layer time 00:00:00
+11        698,978 bf=3.67 time 00:00:06 layer time 00:00:03
+10      2,450,533 bf=3.51 time 00:00:19 layer time 00:00:13
+ 9      7,753,110 bf=3.16 time 00:01:05 layer time 00:00:45
+ 8     20,435,027 bf=2.64 time 00:03:30 layer time 00:02:25
+ 7     47,668,835 bf=2.33 time 00:09:44 layer time 00:06:13
+ 6     83,032,792 bf=1.74 time 00:24:14 layer time 00:14:30
+ 5    121,432,067 bf=1.46 time 00:48:44 layer time 00:24:29
+ 4    122,659,054 bf=1.01 time 01:23:26 layer time 00:34:42
+ 3     92,847,316 bf=0.76 time 01:56:39 layer time 00:33:12
+ 2     43,667,276 bf=0.47 time 02:20:33 layer time 00:23:54
+ 1     11,918,164 bf=0.27 time 02:31:07 layer time 00:10:34
+ 0      1,357,428 bf=0.11 time 02:33:50 layer time 00:02:43
+**    556,173,268 time 02:34:07
+short game turns [6 a1a2c1c4a3c5 9 b1a4d2d1a3a2c1a1d3 8 a1a2c1c4c5d5a3b5]
+

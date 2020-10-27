@@ -1,0 +1,2 @@
+6apr2018
+source updated for gcc 7.3.0 gtk 3.22.28

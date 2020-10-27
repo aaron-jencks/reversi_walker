@@ -1,0 +1,37 @@
+
+window {
+	background-image:url("img/bg0.jpg");
+}
+
+textview,textview text{
+	background:transparent;
+}
+
+label,textview {
+	font-family: Times New Roman;
+	font-size: 14pt;
+}
+
+:disabled{
+	color: #000000;
+}
+
+.toolbar {
+	border-width: 0;
+	background: -gtk-gradient(linear, left top, left bottom, from(#ffffff), to(#cccccc));
+}
+
+/*somehow it applicable for combobox image and text*/
+@define-color selected_bg_color #d0d0d0;
+menuitem:hover {
+    background-image: -gtk-gradient (linear,left top, left bottom,
+		 from (shade (@selected_bg_color, 1.1)),
+		 to (shade (@selected_bg_color, 0.9)));
+	transition: 200ms linear;		 
+}
+
+menuitem{
+	color:rgb(0,0,0);
+	border-left: solid 1px rgb(157,157,153); 
+	border-right: solid 1px rgb(157,157,153); 
+}
