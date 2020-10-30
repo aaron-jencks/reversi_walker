@@ -1,4 +1,5 @@
 #include "hashtable.h"
+#include "arraylist.h"
 
 #include <stdlib.h>
 #include <err.h>
@@ -15,12 +16,17 @@ hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*
     assert(initial_bin_count);
     hashtable t = malloc(sizeof(hashtable_str));
     if(!t) err(1, "Memory Error while trying to allocate hashtable\n");
-    t->bins = calloc(initial_bin_count, sizeof(uint128_arraylist));
-    for(uint64_t i = 0; i < initial_bin_count; i++) t->bins[i] = create_uint128_arraylist(65);
+    t->bins = create_mempage(1000000000, initial_bin_count); // calloc(initial_bin_count, sizeof(uint128_arraylist));
+    for(uint64_t i = 0; i < initial_bin_count; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
     t->bin_count = initial_bin_count;
     t->size = 0;
     t->hash = hash;
     return t;
+}
+
+void clear_bins(hashtable t) {
+    for(__uint128_t l = 0; l < t->bin_count; l++) destroy_uint128_arraylist((uint128_arraylist)mempage_get(t->bins, l));
+    destroy_mempage(t->bins);
 }
 
 /**
@@ -30,8 +36,7 @@ hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*
  */
 void destroy_hashtable(hashtable t) {
     if(t) {
-        for(uint128_arraylist* l = t->bins; *l; l++) destroy_uint128_arraylist(*l);
-        free(t->bins);
+        clear_bins(t);
         free(t);
     }
 }
@@ -46,8 +51,9 @@ __uint128_t* get_pairs(hashtable t) {
     if(t) {
         uint128_arraylist result = create_uint128_arraylist(t->size + 1);
         for(uint64_t i = 0; i < t->bin_count; i++) {
-            __uint128_t* arr = t->bins[i]->data;
-            for(uint64_t j = 0; j < t->bins[i]->pointer; j++) append_ddal(result, arr[j]);
+            uint128_arraylist alist = (uint128_arraylist)mempage_get(t->bins, i);
+            __uint128_t* arr = alist->data;
+            for(uint64_t j = 0; j < alist->pointer; j++) append_ddal(result, arr[j]);
             // free(arr);
         }
 
@@ -69,18 +75,20 @@ __uint128_t put_hs(hashtable t, void* value) {
         __uint128_t k = t->hash(value);
         if(!k) err(2, "Hit a hash value that is 0\n");
 
-        append_ddal(t->bins[k % t->bin_count], k);
+        append_ddal((uint128_arraylist)mempage_get(t->bins, k % t->bin_count), k);
         
         if(++t->size > (t->bin_count << 15)) {
             //re-hash
             __uint128_t* pairs = get_pairs(t);
 
-            t->bins = realloc(t->bins, t->size + 64);
-            if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
-            for(uint64_t i = t->size; i < t->size + 64; i++) t->bins[i] = create_uint128_arraylist(65);
+            clear_bins(t);
+
+            t->bins = create_mempage(1000000000, t->size + 64);
+            // if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
+            for(uint64_t i = t->size; i < t->size + 64; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
             t->bin_count = t->size + 64;
 
-            for(__uint128_t* p = pairs; *p; p++) append_ddal(t->bins[*p % t->bin_count], *p);
+            for(__uint128_t* p = pairs; *p; p++) append_ddal((uint128_arraylist)mempage_get(t->bins, *p % t->bin_count), *p);
         }
 
         return k;
@@ -101,7 +109,7 @@ uint8_t exists_hs(hashtable t, void* value) {
         __uint128_t key = t->hash(value);
         if(!key) err(2, "Hit a hash value that is 0\n");
 
-        uint128_arraylist bin = t->bins[key % t->bin_count];
+        uint128_arraylist bin = mempage_get(t->bins, key % t->bin_count);
         for(__uint128_t* n = bin->data; *n; n++) {
             __uint128_t p = *n;
             if(p == key) return 1;
