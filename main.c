@@ -41,6 +41,13 @@
  *  - TODO Add mempage system to speed up search in bins
  *  - TODO integrate mempage into hashtable.c
  * 
+ * make hashtable so that it uses arraylists for the bins, until they get too big, then switch the bins over to arraylists
+ * 
+ * Use pthread library to multithread project
+ * mutex locks: pthread_mutex_t
+ * use about 2 processes per core
+ * Use pthread_yield instead of sleeping
+ * 
  */
 
 
@@ -175,30 +182,31 @@ int main() {
         // append_sal(coord_pairs, sm);
         // wmoves = encode_valid_position(wmoves, m->row, m->column);
         free(m);
+        break;
     }
     // for(char im = 0; next_moves[im]; im++) append_dal(moves_white, wmoves);
 
     free(next_moves);
 
     // Populate the moves_black stack
-    b->player = 2;
+    // b->player = 2;
 
-    next_moves = find_next_boards(b);
+    // next_moves = find_next_boards(b);
 
-    wmoves = 0;
-    for(char im = 0; next_moves[im]; im++) {
-        coord m = next_moves[im];
-        uint16_t sm = coord_to_short(m);
-        board cb = clone_board(b);
-        board_place_piece(cb, m->row, m->column);
-        append_pal(search_stack, cb);
-        // append_sal(coord_pairs, sm);
-        wmoves = encode_valid_position(wmoves, m->row, m->column);
-        free(m);
-    }
-    // for(char im = 0; next_moves[im]; im++) append_dal(moves_black, wmoves);
+    // wmoves = 0;
+    // for(char im = 0; next_moves[im]; im++) {
+    //     coord m = next_moves[im];
+    //     uint16_t sm = coord_to_short(m);
+    //     board cb = clone_board(b);
+    //     board_place_piece(cb, m->row, m->column);
+    //     append_pal(search_stack, cb);
+    //     // append_sal(coord_pairs, sm);
+    //     wmoves = encode_valid_position(wmoves, m->row, m->column);
+    //     free(m);
+    // }
+    // // for(char im = 0; next_moves[im]; im++) append_dal(moves_black, wmoves);
 
-    free(next_moves);
+    // free(next_moves);
 
     // Reset the player and create the cache
     // b->player = 1;
