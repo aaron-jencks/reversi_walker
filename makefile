@@ -1,6 +1,6 @@
 cc=gcc
-cflags= # -Ddebug -g
-objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o
+cflags=  #-Ddebug -g
+objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o
 
 all: main;
@@ -32,11 +32,14 @@ lookup.o: lookup3.c lookup3.h
 ll.o: ll.c ll.h
 	$(cc) $(cflags) -o $@ -c $<
 
-hashtable.o: hashtable.c hashtable.h ll.o
+hashtable.o: hashtable.c hashtable.h mempage.o arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
 arraylist.o: arraylist.c arraylist.h
-	 $(cc) $(cflags) -o $@ -c $<
+	$(cc) $(cflags) -o $@ -c $<
+
+mempage.o: mempage.c mempage.h arraylist.o
+	$(cc) $(cflags) -o $@ -c $<
 
 walker.o: walker.c walker.h reversi.o ll.o arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
