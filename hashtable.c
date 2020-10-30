@@ -16,7 +16,7 @@ hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*
     assert(initial_bin_count);
     hashtable t = malloc(sizeof(hashtable_str));
     if(!t) err(1, "Memory Error while trying to allocate hashtable\n");
-    t->bins = create_mempage(500000000, initial_bin_count); // calloc(initial_bin_count, sizeof(uint128_arraylist));
+    t->bins = create_mempage(1000000, initial_bin_count); // calloc(initial_bin_count, sizeof(uint128_arraylist));
     for(uint64_t i = 0; i < initial_bin_count; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
     t->bin_count = initial_bin_count;
     t->size = 0;
@@ -83,7 +83,7 @@ __uint128_t put_hs(hashtable t, void* value) {
 
             clear_bins(t);
 
-            t->bins = create_mempage(500000000, t->size + 64);
+            t->bins = create_mempage(1000000, t->size + 64);
             // if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
             for(uint64_t i = t->size; i < t->size + 64; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
             t->bin_count = t->size + 64;
