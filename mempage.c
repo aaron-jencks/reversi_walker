@@ -11,7 +11,7 @@ mempage create_mempage(size_t page_max, __uint128_t elements) {
     __uint128_t pages = (elements / page_max) + 1;
 
     // mp->pages = create_ll();
-    mp->pages = create_ptr_arraylist(pages);
+    mp->pages = create_ptr_arraylist(pages + 1);
     mp->count_per_page = page_max;
     mp->num_elements = elements;
 
@@ -30,7 +30,7 @@ void destroy_mempage(mempage mp) {
 }
 
 void* mempage_get(mempage mp, __uint128_t index) {
-    __uint128_t page = index / mp->count_per_page, page_index = index % mp->count_per_page;
+    uint32_t page = index / mp->count_per_page, page_index = index % mp->count_per_page;
 
     // Extract the page
     ptr_arraylist l = (ptr_arraylist)mp->pages->data[page];
@@ -40,7 +40,7 @@ void* mempage_get(mempage mp, __uint128_t index) {
 }
 
 void mempage_put(mempage mp, __uint128_t index, void* data) {
-    __uint128_t page = index / mp->count_per_page, page_index = index % mp->count_per_page;
+    uint32_t page = index / mp->count_per_page, page_index = index % mp->count_per_page;
 
     // Extract the page
     ptr_arraylist l = (ptr_arraylist)mp->pages->data[page];

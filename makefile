@@ -1,12 +1,12 @@
 cc=gcc
-cflags=  #-Ddebug -g
+cflags= -g #-Ddebug -g
 objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o
-test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o
+test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o
 
 all: main;
 
 main: main.o $(objects)
-	$(cc) $(cflags) -o $@ $< $(objects)
+	$(cc) $(cflags) -o $@ $< $(objects) -lmcheck
 
 tester: tester.o $(objects) $(test_objects)
 	$(cc) $(cflags) -o $@ $< $(objects) $(test_objects)
@@ -53,6 +53,9 @@ legal_moves_test.o: tests/legal_moves_test.c tests/legal_moves_test.h reversi.o 
 	$(cc) $(cflags) -o $@ -c $<
 
 board_placement_test.o: tests/board_placement.c tests/board_placement.h reversi.o
+	$(cc) $(cflags) -o $@ -c $<
+
+mempage_test.o: tests/mempage_test.c tests/mempage_test.h mempage.o
 	$(cc) $(cflags) -o $@ -c $<
 
 .PHONY : clean

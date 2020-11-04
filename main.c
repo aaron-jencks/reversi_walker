@@ -41,12 +41,18 @@
  *  - TODO Add mempage system to speed up search in bins
  *  - TODO integrate mempage into hashtable.c
  * 
- * make hashtable so that it uses arraylists for the bins, until they get too big, then switch the bins over to arraylists
+ * [DONE] make hashtable so that it uses arraylists for the bins, until they get too big, then switch the bins over to arraylists
  * 
  * Use pthread library to multithread project
  * mutex locks: pthread_mutex_t
  * use about 2 processes per core
  * Use pthread_yield instead of sleeping
+ * 
+ * put locks on the bins in the hashtable
+ * 
+ * do bfs to find the number of moves necessary to fill all the workers, then switch to dfs with n workers for each entry in the search queue
+ * 
+ * use 'ulimit -c unlimited' to make core dump
  * 
  */
 
