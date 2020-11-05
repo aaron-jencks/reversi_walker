@@ -200,8 +200,13 @@ int main() {
         break;
     }
 
+    for(char im = 1; next_moves[im]; im++) {
+        coord m = next_moves[im];
+        free(m);
+    }
+
     free(next_moves);
-    free(b);
+    destroy_board(b);
 
     // Perform the BFS
     while(search_queue->pointer < procs) {
@@ -218,7 +223,7 @@ int main() {
         }
 
         free(next_moves);
-        free(b);
+        destroy_board(b);
     }
 
     printf("Found %ld initial board states\n", search_queue->pointer);
@@ -232,9 +237,9 @@ int main() {
 
         processor_args args = create_processor_args(t, search_queue->data[t], cache, &count, &counter_lock);
 
-        walker_processor(args);
-        // pthread_create(thread_id, 0, walker_processor, (void*)args);
-        // append_pal(threads, thread_id);
+        // walker_processor(args);
+        pthread_create(thread_id, 0, walker_processor, (void*)args);
+        append_pal(threads, thread_id);
     }
 
     // for(uint64_t t = 0; t < threads->pointer; t++) pthread_join(*(pthread_t*)(threads->data[0]), 0);

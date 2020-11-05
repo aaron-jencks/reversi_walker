@@ -16,16 +16,16 @@ coord create_coord(uint8_t row, uint8_t col) {
 
 coord* find_next_boards(board b) {
     uint8_t sr = (b->height >> 1) - 1, sc = (b->width >> 1) - 1, visited[b->height][b->width];
-    ptr_arraylist edges = create_ptr_arraylist(65);
-    linkedlist queue = create_ll();
+    ptr_arraylist edges = create_ptr_arraylist(65), queue = create_ptr_arraylist(65);
 
     for(uint8_t i = 0; i < b->height; i++) 
         for(uint8_t j = 0; j < b->width; j++) 
             visited[i][j] = 0;
 
-    append_ll(queue, create_coord(sr, sc));
-    while(queue->size) {
-        coord c = pop_front_ll(queue);
+    append_pal(queue, create_coord(sr, sc));
+
+    while(queue->pointer) {
+        coord c = pop_front_pal(queue);
         visited[c->row][c->column] = 1;
 
         for(int8_t rd = -1; rd < 2; rd++) {
@@ -38,7 +38,7 @@ coord* find_next_boards(board b) {
                 if(sr >= 0 && sr < b->height && sc >= 0 && sc < b->width) {
                     uint8_t v = visited[sr][sc];
                     if(board_get(b, sr, sc) && !v) 
-                        append_ll(queue, create_coord(sr, sc));
+                        append_pal(queue, create_coord(sr, sc));
                     else if(!v && board_get(b, c->row, c->column) != b->player) {
                         visited[sr][sc] = 1;
                         if(board_is_legal_move(b, sr, sc))
@@ -51,7 +51,8 @@ coord* find_next_boards(board b) {
         free(c);
     }
 
-    destroy_ll(queue);
+    for(uint64_t i = 0; i < queue->pointer; i++) free(queue->data[i]);  // In case I missed one?
+    destroy_ptr_arraylist(queue);
     coord* result = (coord*)(edges->data);
     free(edges);
     return result;

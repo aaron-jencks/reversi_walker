@@ -1,12 +1,12 @@
 cc=gcc
-cflags= -g #-Ddebug -g
+cflags= #-Ddebug -g
 objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o
 
 all: main;
 
 main: main.o $(objects)
-	$(cc) $(cflags) -o $@ $< $(objects) -lmcheck -lpthread
+	$(cc) $(cflags) -o $@ $< $(objects) -pthread
 
 tester: tester.o $(objects) $(test_objects)
 	$(cc) $(cflags) -o $@ $< $(objects) $(test_objects)
