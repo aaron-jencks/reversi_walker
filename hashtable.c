@@ -16,6 +16,7 @@ hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*
     assert(initial_bin_count);
     hashtable t = malloc(sizeof(hashtable_str));
     if(!t) err(1, "Memory Error while trying to allocate hashtable\n");
+    if(pthread_mutex_init(&t->table_lock, 0) != 0) err(4, "Hashtable mutex init has failed\n");
     t->bins = create_mempage(1000000, initial_bin_count); // calloc(initial_bin_count, sizeof(uint128_arraylist));
     for(uint64_t i = 0; i < initial_bin_count; i++) mempage_put(t->bins, i, create_uint128_arraylist(16));
     t->bin_count = initial_bin_count;
@@ -36,6 +37,7 @@ void clear_bins(hashtable t) {
  */
 void destroy_hashtable(hashtable t) {
     if(t) {
+        pthread_mutex_destroy(&t->table_lock);
         clear_bins(t);
         free(t);
     }
@@ -72,26 +74,33 @@ __uint128_t* get_pairs(hashtable t) {
  */
 __uint128_t put_hs(hashtable t, void* value) {
     if(t) {
-        __uint128_t k = t->hash(value), b = k % (t->bin_count);
-        if(!k) err(2, "Hit a hash value that is 0\n");
+        while(1) {
+            if(!pthread_mutex_trylock(&t->table_lock)){
+                __uint128_t k = t->hash(value), b = k % (t->bin_count);
+                if(!k) err(2, "Hit a hash value that is 0\n");
 
-        append_ddal((uint128_arraylist)mempage_get(t->bins, b), k);
-        
-        if(++t->size > (t->bin_count * 15)) {
-            //re-hash
-            __uint128_t* pairs = get_pairs(t);
+                append_ddal((uint128_arraylist)mempage_get(t->bins, b), k);
+                
+                if(++t->size > (t->bin_count * 15)) {
+                    //re-hash
+                    __uint128_t* pairs = get_pairs(t);
 
-            clear_bins(t);
+                    clear_bins(t);
 
-            t->bins = create_mempage(1000000, t->size + 64);
-            // if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
-            for(uint64_t i = 0; i < t->size + 64; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
-            t->bin_count = t->size + 64;
+                    t->bins = create_mempage(1000000, t->size + 64);
+                    // if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
+                    for(uint64_t i = 0; i < t->size + 64; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
+                    t->bin_count = t->size + 64;
 
-            for(__uint128_t* p = pairs; *p; p++) append_ddal((uint128_arraylist)mempage_get(t->bins, *p % t->bin_count), *p);
+                    for(__uint128_t* p = pairs; *p; p++) append_ddal((uint128_arraylist)mempage_get(t->bins, *p % t->bin_count), *p);
+                }
+
+                pthread_mutex_unlock(&t->table_lock);
+
+                return k;
+            }
+            sched_yield();
         }
-
-        return k;
     }
 
     return 0;
@@ -106,13 +115,26 @@ __uint128_t put_hs(hashtable t, void* value) {
  */
 uint8_t exists_hs(hashtable t, void* value) {
     if(t && t->size) {
-        __uint128_t key = t->hash(value);
-        if(!key) err(2, "Hit a hash value that is 0\n");
+        while(1) {
+            if(!pthread_mutex_trylock(&t->table_lock)) {
+                __uint128_t key = t->hash(value);
+                if(!key) err(2, "Hit a hash value that is 0\n");
 
-        uint128_arraylist bin = mempage_get(t->bins, key % t->bin_count);
-        for(__uint128_t* n = bin->data; *n; n++) {
-            __uint128_t p = *n;
-            if(p == key) return 1;
+                uint128_arraylist bin = mempage_get(t->bins, key % t->bin_count);
+                for(__uint128_t* n = bin->data; *n; n++) {
+                    __uint128_t p = *n;
+                    if(p == key) {
+                        pthread_mutex_unlock(&t->table_lock);
+                        return 1;
+                    }
+                }
+
+                pthread_mutex_unlock(&t->table_lock);
+
+                return 0;
+            }
+
+            sched_yield();
         }
     }
     return 0;

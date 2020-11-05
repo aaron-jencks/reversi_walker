@@ -1,8 +1,10 @@
 #pragma once
 
 #include "reversi.h"
+#include "hashtable.h"
 
 #include <stdint.h>
+#include <pthread.h>
 
 typedef struct _coord_str {
     uint8_t row;
@@ -14,6 +16,20 @@ typedef struct _coord_str {
  * 
  */
 typedef coord_str* coord;
+
+typedef struct _processor_args_str {
+    uint32_t identifier;
+    board starting_board;
+    hashtable cache; 
+    uint64_t* counter;
+    pthread_mutex_t* counter_lock;
+} processor_args_str;
+
+/**
+ * @brief Represents a wrapper for passing arguments to the walker processor using pthreads
+ * 
+ */
+typedef processor_args_str* processor_args;
 
 /**
  * @brief Finds the next set of boards that can be reached from this one
@@ -47,3 +63,20 @@ coord create_coord(uint8_t row, uint8_t column);
 uint16_t coord_to_short(coord c);
 uint16_t coord_to_short_ints(uint8_t r, uint8_t c);
 coord short_to_coord(uint16_t s);
+
+processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, uint64_t* counter, pthread_mutex_t* counter_lock);
+
+/**
+ * @brief Used to launch child threads, accepts a board to start from and a pointer to the cache to use
+ * 
+ * @param args The args are a struct containing the following information:
+ * 
+ * @param identifier the identifier for this processor
+ * @param starting_board Board to start from
+ * @param cache The existence cache to use
+ * @param counter a pointer to the current board counter
+ * @param counter_lock a lock for the board counter
+ * 
+ * @return uint64_t Returns the number of boards that this thread counted.
+ */
+void* walker_processor(void* args);

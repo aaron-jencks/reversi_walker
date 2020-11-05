@@ -110,6 +110,14 @@ void insert_pal(ptr_arraylist l, uint64_t index, void* data);
  */
 void* pop_back_pal(ptr_arraylist l);
 
+/**
+ * @brief Removes the last element from the arraylist, if there is one
+ * 
+ * @param l 
+ * @return void* Returns the last element of the arraylist, or 0 if there isn't one
+ */
+void* pop_front_pal(ptr_arraylist l);
+
 #pragma endregion
 
 #pragma region uint8

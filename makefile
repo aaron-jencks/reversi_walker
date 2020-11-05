@@ -6,7 +6,7 @@ test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o memp
 all: main;
 
 main: main.o $(objects)
-	$(cc) $(cflags) -o $@ $< $(objects) -lmcheck
+	$(cc) $(cflags) -o $@ $< $(objects) -lmcheck -lpthread
 
 tester: tester.o $(objects) $(test_objects)
 	$(cc) $(cflags) -o $@ $< $(objects) $(test_objects)

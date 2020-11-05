@@ -54,6 +54,17 @@ void insert_pal(ptr_arraylist l, uint64_t index, void* data) {
 void* pop_back_pal(ptr_arraylist l) {
     if(l && l->size) {
         void* d = l->data[--(l->pointer)];
+        l->data[l->pointer] = 0;
+        return d;
+    }
+    return 0;
+}
+
+void* pop_front_pal(ptr_arraylist l) {
+    if(l && l->size) {
+        void* d = l->data[0];
+        for(uint64_t i = 1; i < l->pointer; i++) l->data[i - 1] = l->data[i];
+        l->data[--(l->pointer)] = 0;
         return d;
     }
     return 0;

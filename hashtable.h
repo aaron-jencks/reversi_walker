@@ -3,6 +3,7 @@
 #include "mempage.h"
 
 #include <stdint.h>
+#include <pthread.h>
 
 typedef struct _keyval_pair_str {
     uint64_t key;
@@ -12,6 +13,7 @@ typedef struct _keyval_pair_str {
 typedef keyval_pair_str* keyval_pair;
 
 typedef struct _hashtable_str {
+    pthread_mutex_t table_lock;
     mempage bins;
     uint64_t bin_count;
     uint64_t size;
