@@ -30,6 +30,8 @@ void destroy_mempage(mempage mp) {
 }
 
 void* mempage_get(mempage mp, __uint128_t index) {
+    if(index >= mp->num_elements) err(4, "Index out of bounds in mempage\n");
+
     uint32_t page = index / mp->count_per_page, page_index = index % mp->count_per_page;
 
     // Extract the page
@@ -40,6 +42,8 @@ void* mempage_get(mempage mp, __uint128_t index) {
 }
 
 void mempage_put(mempage mp, __uint128_t index, void* data) {
+    if(index >= mp->num_elements) err(4, "Index out of bounds in mempage\n");
+    
     uint32_t page = index / mp->count_per_page, page_index = index % mp->count_per_page;
 
     // Extract the page

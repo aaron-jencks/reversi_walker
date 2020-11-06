@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <err.h>
 #include <assert.h>
+#include <stdio.h>
 
 /**
  * @brief Create a hashtable object
@@ -82,6 +83,10 @@ __uint128_t put_hs(hashtable t, void* value) {
                 append_ddal((uint128_arraylist)mempage_get(t->bins, b), k);
                 
                 if(++t->size > (t->bin_count * 15)) {
+                    #ifdef hashdebug
+                        printf("Rehashing hashtable\n");
+                    #endif
+
                     //re-hash
                     __uint128_t* pairs = get_pairs(t);
 
@@ -93,6 +98,8 @@ __uint128_t put_hs(hashtable t, void* value) {
                     t->bin_count = t->size + 64;
 
                     for(__uint128_t* p = pairs; *p; p++) append_ddal((uint128_arraylist)mempage_get(t->bins, *p % t->bin_count), *p);
+
+                    free(pairs);
                 }
 
                 pthread_mutex_unlock(&t->table_lock);
@@ -116,25 +123,23 @@ __uint128_t put_hs(hashtable t, void* value) {
 uint8_t exists_hs(hashtable t, void* value) {
     if(t && t->size) {
         while(1) {
-            if(!pthread_mutex_trylock(&t->table_lock)) {
-                __uint128_t key = t->hash(value);
-                if(!key) err(2, "Hit a hash value that is 0\n");
+            while(pthread_mutex_trylock(&t->table_lock)) sched_yield();
 
-                uint128_arraylist bin = mempage_get(t->bins, key % t->bin_count);
-                for(__uint128_t* n = bin->data; *n; n++) {
-                    __uint128_t p = *n;
-                    if(p == key) {
-                        pthread_mutex_unlock(&t->table_lock);
-                        return 1;
-                    }
+            __uint128_t key = t->hash(value), b = key % t->bin_count;
+            if(!key) err(2, "Hit a hash value that is 0\n");
+
+            uint128_arraylist bin = mempage_get(t->bins, b);
+            for(uint32_t n = 0; n < bin->pointer; n++) {
+                __uint128_t p = bin->data[n];
+                if(p == key) {
+                    pthread_mutex_unlock(&t->table_lock);
+                    return 1;
                 }
-
-                pthread_mutex_unlock(&t->table_lock);
-
-                return 0;
             }
 
-            sched_yield();
+            pthread_mutex_unlock(&t->table_lock);
+
+            return 0;
         }
     }
     return 0;

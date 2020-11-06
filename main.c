@@ -169,7 +169,11 @@ __uint128_t board_hash(void* brd) {
 // TODO make work on a 6x6
 // Modify to copy boards, instead of 
 int main() {
-    hashtable cache = create_hashtable(1000000, &board_hash);
+    #ifdef smallcache
+        hashtable cache = create_hashtable(10, &board_hash);
+    #else
+        hashtable cache = create_hashtable(1000000, &board_hash);
+    #endif
     uint64_t count = 0;
     pthread_mutex_t counter_lock;
 
@@ -179,7 +183,9 @@ int main() {
 
     uint32_t procs = get_nprocs();
     printf("Running on %d processors, using %d threads\n", procs, procs << 1);
-    procs = procs << 1;
+    #ifndef limitprocs
+        procs = procs << 1;
+    #endif
 
     // Perform BFS to get the desired number of initial states
     board b = create_board(1, 6, 6);
