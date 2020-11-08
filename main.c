@@ -255,6 +255,7 @@ int main() {
 
     // for(uint64_t t = 0; t < threads->pointer; t++) pthread_join(*(pthread_t*)(threads->data[0]), 0);
     time_t start = time(0), current;
+    clock_t cstart = clock();
     uint32_t cpu_time, cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
              run_time, run_days, run_hours, run_minutes, run_seconds;
     while(1) {
@@ -264,13 +265,14 @@ int main() {
         run_hours = (run_time / 3600) % 24;
         run_minutes = (run_time / 60) % 60;
         run_seconds = run_time % 60;
-        cpu_time = (uint32_t)(((double)run_time) / CLOCKS_PER_SEC);
+        cpu_time = (uint32_t)(((double)(clock() - cstart)) / CLOCKS_PER_SEC);
         cpu_days = cpu_time / 86400;
         cpu_hours = (cpu_time / 3600) % 24;
         cpu_minutes = (cpu_time / 60) % 60;
         cpu_seconds = cpu_time % 60;
-        printf("\rFound %ld final board states. Explored %ld boards. Runtime: %0d:%02d:%02d:%02d", count, explored_count,
-               run_days, run_hours, run_minutes, run_seconds);
+        printf("\rFound %ld final board states. Explored %ld boards. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d", count, explored_count,
+               run_days, run_hours, run_minutes, run_seconds,
+               cpu_days, cpu_hours, cpu_minutes, cpu_seconds);
         fflush(stdout);
         sched_yield();
     }
