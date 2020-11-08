@@ -117,8 +117,8 @@ void* walker_processor(void* args) {
     processor_args pargs = (processor_args)args;
     board starting_board = pargs->starting_board;
     hashtable cache = pargs->cache;
-    uint64_t* counter = pargs->counter;
-    pthread_mutex_t* counter_lock = pargs->counter_lock;
+    uint64_t* counter = pargs->counter, *explored = pargs->explored_counter;
+    pthread_mutex_t* counter_lock = pargs->counter_lock, *explored_lock = pargs->explored_lock;
 
     if(starting_board && cache) {
         printf("Processor %d has started\n", pargs->identifier);
@@ -207,10 +207,12 @@ void* walker_processor(void* args) {
 
                     if(!exists_hs(cache, sb)) {
                         put_hs(cache, sb);
-                        count++;
                         while(pthread_mutex_trylock(counter_lock)) sched_yield();
-                        (*counter)++;
+                        *counter += 1;
+                        *explored += count;
                         pthread_mutex_unlock(counter_lock);
+
+                        count = 0;
                     }
                     else {
                         #ifdef debug
@@ -219,6 +221,8 @@ void* walker_processor(void* args) {
                     }
                 }
             }
+
+            count++;
 
             destroy_board(sb);
         }
@@ -245,7 +249,9 @@ coord short_to_coord(uint16_t s) {
     return r;
 }
 
-processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, uint64_t* counter, pthread_mutex_t* counter_lock) {
+processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, 
+                                     uint64_t* counter, pthread_mutex_t* counter_lock,
+                                     uint64_t* explored_counter, pthread_mutex_t* explored_lock) {
     processor_args args = malloc(sizeof(processor_args_str));
     if(!args) err(1, "Memory error while allocating processor args\n");
 
@@ -254,6 +260,8 @@ processor_args create_processor_args(uint32_t identifier, board starting_board, 
     args->cache = cache;
     args->counter = counter;
     args->counter_lock = counter_lock;
+    args->explored_counter = explored_counter;
+    args->explored_lock = explored_lock;
 
     return args;
 }

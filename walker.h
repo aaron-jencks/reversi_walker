@@ -23,6 +23,8 @@ typedef struct _processor_args_str {
     hashtable cache; 
     uint64_t* counter;
     pthread_mutex_t* counter_lock;
+    uint64_t* explored_counter;
+    pthread_mutex_t* explored_lock;
 } processor_args_str;
 
 /**
@@ -64,7 +66,9 @@ uint16_t coord_to_short(coord c);
 uint16_t coord_to_short_ints(uint8_t r, uint8_t c);
 coord short_to_coord(uint16_t s);
 
-processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, uint64_t* counter, pthread_mutex_t* counter_lock);
+processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, 
+                                     uint64_t* counter, pthread_mutex_t* counter_lock,
+                                     uint64_t* explored_counter, pthread_mutex_t* explored_lock);
 
 /**
  * @brief Used to launch child threads, accepts a board to start from and a pointer to the cache to use
