@@ -57,6 +57,9 @@
  * 
  * use 'ulimit -c unlimited' to make core dump
  * 
+ * TODO add ability to make checkpoints to save progress
+ *  - Interpret Ctrl+C interrupt signal and cause a save
+ * 
  */
 
 
@@ -178,7 +181,7 @@ int main() {
     uint64_t count = 0, explored_count = 1;
     pthread_mutex_t counter_lock, explored_lock;
 
-    if(pthread_mutex_init(&counter_lock, 0) && pthread_mutex_init(&explored_lock, 0)) err(4, "Initialization of counter mutex failed\n");
+    if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0)) err(4, "Initialization of counter mutex failed\n");
 
     printf("Starting walk...\n");
 

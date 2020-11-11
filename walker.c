@@ -209,8 +209,12 @@ void* walker_processor(void* args) {
                         put_hs(cache, sb);
                         while(pthread_mutex_trylock(counter_lock)) sched_yield();
                         *counter += 1;
-                        *explored += count;
+                        // *explored += count;
                         pthread_mutex_unlock(counter_lock);
+
+                        // while(pthread_mutex_trylock(explored_lock)) sched_yield();
+                        // *explored += count;
+                        // pthread_mutex_unlock(explored_lock);
 
                         count = 0;
                     }
@@ -222,7 +226,9 @@ void* walker_processor(void* args) {
                 }
             }
 
-            count++;
+            while(pthread_mutex_trylock(explored_lock)) sched_yield();
+            *explored += 1;
+            pthread_mutex_unlock(explored_lock);
 
             destroy_board(sb);
         }
