@@ -3,6 +3,7 @@
 #include "mempage.h"
 
 #include <stdint.h>
+#include <stdio.h>
 #include <pthread.h>
 
 typedef struct _keyval_pair_str {
@@ -63,3 +64,14 @@ __uint128_t put_hs(hashtable t, void* value);
  * @return uint8_t Returns 1 if the value exists, and 0 otherwise
  */
 uint8_t exists_hs(hashtable t, void* value);
+
+#pragma region file io
+
+/**
+ * @brief Converts the hashtable into a byte string and then appends it to the file given
+ * 
+ * @param t The hashtable to convert
+ */
+void to_file_hs(FILE* fp, hashtable t);
+
+#pragma endregion

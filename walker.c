@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <err.h>
 
+uint8_t SAVING_FLAG = 0;
+
 coord create_coord(uint8_t row, uint8_t col) {
     coord c = malloc(sizeof(coord_str));
     if(!c) err(1, "Memory error while allocating a coordinate\n");
@@ -231,6 +233,14 @@ void* walker_processor(void* args) {
             pthread_mutex_unlock(explored_lock);
 
             destroy_board(sb);
+
+            if(SAVING_FLAG) {
+                while(pthread_mutex_trylock(pargs->file_lock)) sched_yield();
+                walker_to_file(*(pargs->checkpoint_file), search_stack);
+                *(pargs->saving_counter)++;
+                pthread_mutex_unlock(pargs->file_lock);
+                while(SAVING_FLAG) sched_yield();
+            }
         }
 
         printf("Processor %d has finished\n", pargs->identifier);
@@ -257,7 +267,8 @@ coord short_to_coord(uint16_t s) {
 
 processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
-                                     uint64_t* explored_counter, pthread_mutex_t* explored_lock) {
+                                     uint64_t* explored_counter, pthread_mutex_t* explored_lock,
+                                     uint8_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock) {
     processor_args args = malloc(sizeof(processor_args_str));
     if(!args) err(1, "Memory error while allocating processor args\n");
 
@@ -268,6 +279,48 @@ processor_args create_processor_args(uint32_t identifier, board starting_board, 
     args->counter_lock = counter_lock;
     args->explored_counter = explored_counter;
     args->explored_lock = explored_lock;
+    args->checkpoint_file = checkpoint_file;
+    args->file_lock = file_lock;
+    args->saving_counter = saving_counter;
 
     return args;
+}
+
+void walker_to_file(FILE* fp, ptr_arraylist search_stack) {
+    if(search_stack) {
+        __uint128_t result;
+
+        for(board* ptr = (board*)search_stack->data; *ptr; ptr++) {
+            board b = *ptr;
+
+            result = 0;
+
+            result += b->player;
+            result = result << 2;
+
+            // You can fit 2 spaces in 3 bits if you really try,
+            // so on an 8x8 board, 
+            // we end up only using 96 bits instead of the entire 128.
+            // well, 98 since we are including the player now
+            for(uint8_t r = 0; r < b->height; r++) {
+                for(uint8_t c = 0; c < b->width; c += 2) {
+                    uint8_t s1 = board_get(b, r, c), 
+                            s2 = board_get(b, r, c + 1);
+
+                    result += (!s1 && !s2) ? 4 : 
+                            (s1 == 1 && s2 == 1) ? 3 : 
+                            (s1 == 2 && s2 == 2) ? 0 : 
+                            (s1 == 2) ? 1 : 2;
+
+                    result = result << 3;
+                }
+            }
+
+            fwrite(&result, sizeof(__uint128_t), 1, fp);
+        }
+
+        result = 0;
+
+        fwrite(&result, sizeof(__uint128_t), 1, fp);
+    }
 }

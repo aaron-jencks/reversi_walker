@@ -4,6 +4,7 @@
 #include "hashtable.h"
 
 #include <stdint.h>
+#include <stdio.h>
 #include <pthread.h>
 
 typedef struct _coord_str {
@@ -25,6 +26,9 @@ typedef struct _processor_args_str {
     pthread_mutex_t* counter_lock;
     uint64_t* explored_counter;
     pthread_mutex_t* explored_lock;
+    uint8_t* saving_counter;
+    FILE** checkpoint_file;
+    pthread_mutex_t* file_lock;
 } processor_args_str;
 
 /**
@@ -32,6 +36,12 @@ typedef struct _processor_args_str {
  * 
  */
 typedef processor_args_str* processor_args;
+
+/**
+ * @brief when set to > 0, will cause all walker_processor calls to save their work.
+ * 
+ */
+uint8_t SAVING_FLAG;
 
 /**
  * @brief Finds the next set of boards that can be reached from this one
@@ -68,7 +78,8 @@ coord short_to_coord(uint16_t s);
 
 processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
-                                     uint64_t* explored_counter, pthread_mutex_t* explored_lock);
+                                     uint64_t* explored_counter, pthread_mutex_t* explored_lock,
+                                     uint8_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock);
 
 /**
  * @brief Used to launch child threads, accepts a board to start from and a pointer to the cache to use
@@ -84,3 +95,11 @@ processor_args create_processor_args(uint32_t identifier, board starting_board, 
  * @return uint64_t Returns the number of boards that this thread counted.
  */
 void* walker_processor(void* args);
+
+/**
+ * @brief Writes a thread to file, saves the search stack
+ * 
+ * @param fp 
+ * @param search_stack 
+ */
+void walker_to_file(FILE* fp, ptr_arraylist search_stack);

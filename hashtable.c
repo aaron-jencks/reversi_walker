@@ -144,3 +144,18 @@ uint8_t exists_hs(hashtable t, void* value) {
     }
     return 0;
 }
+
+void to_file_hs(FILE* fp, hashtable t) {
+    if(t) {
+        __uint128_t* pairs = get_pairs(t);
+
+        for(__uint128_t* p = pairs; *p; p++) {
+            fwrite(p, sizeof(__uint128_t), 1, fp);
+        }
+
+        __uint128_t spacer = 0;
+        fwrite(&spacer, sizeof(__uint128_t), 1, fp);
+        fwrite(&t->bin_count, sizeof(t->bin_count), 1, fp);
+        fwrite(&t->size, sizeof(t->size), 1, fp);
+    }
+}
