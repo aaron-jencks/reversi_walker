@@ -7,6 +7,7 @@
 #include <err.h>
 
 uint8_t SAVING_FLAG = 0;
+pthread_mutex_t saving_lock;
 
 coord create_coord(uint8_t row, uint8_t col) {
     coord c = malloc(sizeof(coord_str));
@@ -236,10 +237,26 @@ void* walker_processor(void* args) {
 
             if(SAVING_FLAG) {
                 while(pthread_mutex_trylock(pargs->file_lock)) sched_yield();
+
+                #ifdef debug
+                    printf("Saving thread\n");
+                #endif
+
                 walker_to_file(*(pargs->checkpoint_file), search_stack);
-                *(pargs->saving_counter)++;
+                *(pargs->saving_counter) += 1;
                 pthread_mutex_unlock(pargs->file_lock);
-                while(SAVING_FLAG) sched_yield();
+
+                #ifdef debug
+                    printf("Finished saving thread\n");
+                #endif
+
+                uint8_t temp_saving_flag = SAVING_FLAG;
+                while(temp_saving_flag) {
+                    while(pthread_mutex_trylock(&saving_lock)) sched_yield();
+                    temp_saving_flag = SAVING_FLAG;
+                    pthread_mutex_unlock(&saving_lock);
+                    sched_yield();
+                }
             }
         }
 

@@ -42,6 +42,7 @@ typedef processor_args_str* processor_args;
  * 
  */
 uint8_t SAVING_FLAG;
+pthread_mutex_t saving_lock;
 
 /**
  * @brief Finds the next set of boards that can be reached from this one
