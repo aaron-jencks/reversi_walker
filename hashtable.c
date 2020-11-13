@@ -153,6 +153,8 @@ void to_file_hs(FILE* fp, hashtable t) {
             fwrite(p, sizeof(__uint128_t), 1, fp);
         }
 
+        free(pairs);
+
         __uint128_t spacer = 0;
         fwrite(&spacer, sizeof(__uint128_t), 1, fp);
         fwrite(&t->bin_count, sizeof(t->bin_count), 1, fp);
