@@ -28,6 +28,24 @@ typedef capture_count_str* capture_count;
 board create_board(uint8_t starting_player, uint8_t height, uint8_t width);
 
 /**
+ * @brief Create an 8x8 board object, unhashing from a uint128, must be an 8x8 board or smaller
+ * 
+ * @param starting_player 1 for white start, 0 for black start
+ * @param key The key to unhash the board from
+ * @return board 
+ */
+board create_board_unhash_8(uint8_t starting_player, __uint128_t key);
+
+/**
+ * @brief Create a 6x6 board object, unhashing from a uint128, must be an 8x8 board or smaller
+ * 
+ * @param starting_player 1 for white start, 0 for black start
+ * @param key The key to unhash the board from
+ * @return board 
+ */
+board create_board_unhash_6(uint8_t starting_player, __uint128_t key);
+
+/**
  * @brief Create a board object, copying another board
  * 
  * @param board Board to clone

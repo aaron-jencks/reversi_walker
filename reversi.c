@@ -50,6 +50,52 @@ board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
     return b;
 }
 
+board create_board_unhash_8(uint8_t starting_player, __uint128_t key) {
+    board b = calloc(1, sizeof(board_str));
+    if(!b) err(1, "Memory Error while allocating the board\n");
+    b->player = starting_player;
+    b->height = 8;
+    b->width = 8;
+
+    b->board = calloc(32, sizeof(uint8_t));
+    if(!b->board) err(1, "Memory Error while allocating board's board array\n");
+
+    uint8_t r = 0, c = 0;
+    while(key) {
+        uint8_t color = key % 3; // returns either 0,1,2
+        if(color) board_put(b, r, c, color);
+        if(++c == 8) {
+            c = 0;
+            r++;
+        }
+    }
+
+    return b;
+}
+
+board create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
+    board b = calloc(1, sizeof(board_str));
+    if(!b) err(1, "Memory Error while allocating the board\n");
+    b->player = starting_player;
+    b->height = 6;
+    b->width = 6;
+
+    b->board = calloc(18, sizeof(uint8_t));
+    if(!b->board) err(1, "Memory Error while allocating board's board array\n");
+
+    uint8_t r = 0, c = 0;
+    while(key) {
+        uint8_t color = key % 3; // returns either 0,1,2
+        if(color) board_put(b, r, c, color);
+        if(++c == 6) {
+            c = 0;
+            r++;
+        }
+    }
+
+    return b;
+}
+
 /**
  * @brief Create a board object, copying another board
  * 

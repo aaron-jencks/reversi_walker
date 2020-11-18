@@ -334,7 +334,9 @@ void walker_to_file(FILE* fp, ptr_arraylist search_stack) {
         }
 
         result = 0;
+        char spaceholder = 0;
 
+        fwrite(&spaceholder, sizeof(uint8_t), 1, fp);
         fwrite(&result, sizeof(__uint128_t), 1, fp);
     }
 }
