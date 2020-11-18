@@ -312,24 +312,21 @@ void walker_to_file(FILE* fp, ptr_arraylist search_stack) {
 
             result = 0;
 
-            result += b->player;
+            fwrite(&b->player, sizeof(uint8_t), 1, fp);
             result = result << 2;
 
+            // NO YOU CAN'T, but luckily, I don't actually need the player
             // You can fit 2 spaces in 3 bits if you really try,
             // so on an 8x8 board, 
             // we end up only using 96 bits instead of the entire 128.
-            // well, 98 since we are including the player now
+            // well
             for(uint8_t r = 0; r < b->height; r++) {
-                for(uint8_t c = 0; c < b->width; c += 2) {
-                    uint8_t s1 = board_get(b, r, c), 
-                            s2 = board_get(b, r, c + 1);
+                for(uint8_t c = 0; c < b->width; c++) {
+                    uint8_t s1 = board_get(b, r, c);
 
-                    result += (!s1 && !s2) ? 4 : 
-                            (s1 == 1 && s2 == 1) ? 3 : 
-                            (s1 == 2 && s2 == 2) ? 0 : 
-                            (s1 == 2) ? 1 : 2;
+                    result += s1;
 
-                    result = result << 3;
+                    if(c < b->width - 1) result = result << 2;
                 }
             }
 
