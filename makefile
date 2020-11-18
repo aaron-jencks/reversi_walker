@@ -1,5 +1,5 @@
 cc=gcc
-cflags= -Dlimitprocs -Dcheckpointdebug -Dhashdebug -g
+cflags= -Dlimitprocs -Dcheckpointdebug -Dhashdebug -Dfiledebug -g
 objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o
 

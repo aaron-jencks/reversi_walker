@@ -165,7 +165,9 @@ void to_file_hs(FILE* fp, hashtable t) {
 
 hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
     uint64_t bin_count, size;
-    fscanf(fp, "%lu%lu", &bin_count, &size);
+    fread(&bin_count, sizeof(uint64_t), 1, fp);
+    fread(&size, sizeof(uint64_t), 1, fp);
+    // fscanf(fp, "%lu%lu", &bin_count, &size);
 
     uint128_arraylist keys = create_uint128_arraylist(size + 1);
     __uint128_t bk;

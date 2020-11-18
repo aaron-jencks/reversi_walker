@@ -83,13 +83,15 @@ board create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
     b->board = calloc(18, sizeof(uint8_t));
     if(!b->board) err(1, "Memory Error while allocating board's board array\n");
 
-    uint8_t r = 0, c = 0;
+    uint8_t r = 5, c = 5;
+    // key = key << 56;
     while(key) {
         uint8_t color = key % 3; // returns either 0,1,2
+        key = key >> 2;
         if(color) board_put(b, r, c, color);
-        if(++c == 6) {
-            c = 0;
-            r++;
+        if(--c == 256) {
+            c = 5;
+            r--;
         }
     }
 

@@ -6,6 +6,20 @@
 #include <stdio.h>
 #include <err.h>
 
+#ifdef filedebug
+void display_board_w(board b) {
+    if(b) {
+        for(uint8_t r = 0; r < b->height; r++) {
+            for(uint8_t c = 0; c < b->width; c++) {
+                printf("%c", board_get(b, r, c) + '0');
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
+}
+#endif
+
 uint8_t SAVING_FLAG = 0;
 pthread_mutex_t saving_lock;
 
@@ -318,13 +332,18 @@ void walker_to_file(FILE* fp, ptr_arraylist search_stack) {
     if(search_stack) {
         __uint128_t result;
 
+        #ifdef filedebug
+            printf("Writing %lu boards to file from processor\n", search_stack->pointer);
+        #endif
+
+        // fwrite(&search_stack->pointer, sizeof(search_stack->pointer), 1, fp);
         for(board* ptr = (board*)search_stack->data; *ptr; ptr++) {
             board b = *ptr;
 
             result = 0;
 
-            fwrite(&b->player, sizeof(uint8_t), 1, fp);
-            result = result << 2;
+            if(!fwrite(&b->player, sizeof(uint8_t), 1, fp)) err(8, "Writing to the file failed\n");
+            // result = result << 2;
 
             // NO YOU CAN'T, but luckily, I don't actually need the player
             // You can fit 2 spaces in 3 bits if you really try,
@@ -337,15 +356,20 @@ void walker_to_file(FILE* fp, ptr_arraylist search_stack) {
 
                     result += s1;
 
-                    if(c < b->width - 1) result = result << 2;
+                    if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
                 }
             }
+
+            #ifdef filedebug
+                printf("Writing board %u: %lu %lu\n", b->player, ((uint64_t*)(&result))[1], ((uint64_t*)(&result))[0]);
+                display_board_w(b);
+            #endif
 
             fwrite(&result, sizeof(__uint128_t), 1, fp);
         }
 
         result = 0;
-        char spaceholder = 0;
+        uint8_t spaceholder = 0;
 
         fwrite(&spaceholder, sizeof(uint8_t), 1, fp);
         fwrite(&result, sizeof(__uint128_t), 1, fp);

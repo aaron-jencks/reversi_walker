@@ -5,6 +5,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef filedebug
+void display_board_f(board b) {
+    if(b) {
+        for(uint8_t r = 0; r < b->height; r++) {
+            for(uint8_t c = 0; c < b->width; c++) {
+                printf("%c", board_get(b, r, c) + '0');
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
+}
+#endif
+
 /**
  * @brief Generates a unique filename in the /tmp directory for checkpoint saving
  * 
@@ -80,18 +94,20 @@ void save_progress(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* fil
 }
 
 processed_file restore_progress(char* filename, __uint128_t (*hash)(void*)) {
-    FILE* fp = fopen(filename, "wb+");
+    FILE* fp = fopen(filename, "rb+");
     if(!fp) err(7, "Cannot find/open given restore file %s\n", filename);
 
     printf("Restoring from file %s\n", filename);
 
-    processed_file result = malloc(sizeof(processed_file_str));
+    processed_file result = calloc(1, sizeof(processed_file_str));
     if(!result) err(1, "Memory error while allocating processed file\n");
 
     // Read the counters
-    fscanf(fp, "%lu%lu%lu", &result->found_counter, &result->explored_counter, &result->num_processors);
+    fread(&result->found_counter, sizeof(result->found_counter), 1, fp);
+    fread(&result->explored_counter, sizeof(result->explored_counter), 1, fp);
+    fread(&result->num_processors, sizeof(result->num_processors), 1, fp);
     result->processor_stacks = create_ptr_arraylist(result->num_processors + 1);
-    printf("Saved progress, %lu final boards found, %lu boards explored, %lu processors\n", 
+    printf("Restored progress, %lu final boards found, %lu boards explored, %lu processors\n", 
            result->found_counter, result->explored_counter, result->num_processors);
 
     // Read the processors
@@ -102,15 +118,27 @@ processed_file restore_progress(char* filename, __uint128_t (*hash)(void*)) {
         ptr_arraylist stack = create_ptr_arraylist(1000);
 
         while(1) {
-            fscanf(fp, "%c%lu%lu", &player, &board_upper, &board_lower);
+            player = 0;
+            board_key = 0;
 
-            // Combine the upper and lower keys
-            board_key = board_upper;
-            board_key = board_key << 64;
-            board_key += board_lower;
+            fread(&player, sizeof(uint8_t), 1, fp);
+            fread(&board_key, sizeof(__uint128_t), 1, fp);
+            // fscanf(fp, "%c%lu%lu", &player, &board_upper, &board_lower);
+
+            printf("Found board %u: %lu %lu\n", player, ((uint64_t*)(&board_key))[1], ((uint64_t*)(&board_key))[0]);
+
+            // // Combine the upper and lower keys
+            // board_key = board_upper;
+            // board_key = board_key << 64;
+            // board_key += board_lower;
 
             if(player || board_key) {
                 board b = create_board_unhash_6(player, board_key);
+
+                #ifdef filedebug
+                    display_board_f(b);
+                #endif
+
                 append_pal(stack, b);
             }
             else {

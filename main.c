@@ -198,6 +198,8 @@ int main() {
     uint32_t procs = get_nprocs();
     #ifndef limitprocs
         procs = procs << 1;
+    #else
+        procs = 2;
     #endif
 
     // Setup the locks
@@ -268,8 +270,9 @@ int main() {
     ptr_arraylist threads;
 
     if(d == 'y') {
-        char** restore_filename;
-        scanf("Please enter a file to restore from: %ms", restore_filename);
+        char** restore_filename = malloc(sizeof(char*));
+        printf("Please enter a file to restore from: ");
+        scanf("%ms", restore_filename);
         processed_file pf = restore_progress(*restore_filename, &board_hash);
 
         while(1) {
@@ -379,7 +382,7 @@ int main() {
     while(1) {
         current = time(0);
         run_time = current - start;
-        save_time = (current - save_timer) / 60;
+        save_time = (current - save_timer) / 5;
         fps_update_time = (current - fps_timer) / 1;
 
         run_days = run_time / 86400;
