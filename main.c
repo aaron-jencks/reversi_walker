@@ -188,6 +188,7 @@ int main() {
     }
 
     getc(stdin);    // Read the extra \n character
+    // while(!feof(stdin)) getc(stdin);    // Read the extra \n character
 
     // Allocate all of the stack parameters necessary for file restoration
     hashtable cache;
@@ -273,11 +274,13 @@ int main() {
         char** restore_filename = malloc(sizeof(char*));
         printf("Please enter a file to restore from: ");
         scanf("%ms", restore_filename);
+        getc(stdin);    // Read the extra \n character
         processed_file pf = restore_progress(*restore_filename, &board_hash);
 
         while(1) {
             printf("Would you like to continue saving to this checkpoint?(y/N): ");
             d = getc(stdin);
+            // printf("%c\n", d);
             if(d == '\n' || d == 'n' || d == 'N') {
                 checkpoint_filename = find_temp_filename("checkpoint.bin\0");
                 break;
@@ -301,16 +304,24 @@ int main() {
 
         ptr_arraylist stacks = pf->processor_stacks;
         if(procs != pf->num_processors) {
+            printf("Redistributing workload to match core count\n");
             // Redistribute workload
             ptr_arraylist all_current_boards = create_ptr_arraylist(procs * 1000), important_boards = create_ptr_arraylist(pf->num_processors + 1);
             for(ptr_arraylist* p = (ptr_arraylist*)pf->processor_stacks->data; *p; p++) {
-                for(uint64_t pb = 0; pb < (*p)->pointer; pb++) append_pal((pb) ? all_current_boards : important_boards, (*p)->data[pb]);
+                for(uint64_t pb = 0; pb < (*p)->pointer; pb++) {
+                    board b = (*p)->data[pb];
+                    // printf("Collected\n"); display_board(b);
+                    append_pal((pb) ? all_current_boards : important_boards, b);
+                }
                 destroy_ptr_arraylist(*p);
             }
 
             while(stacks->pointer) pop_back_pal(stacks);
+
+            // printf("Distributing %lu boards\n", all_current_boards->pointer + important_boards->pointer);
             
             for(uint64_t p = 0; p < procs; p++) append_pal(stacks, create_ptr_arraylist(1000));
+
             uint64_t p_ptr = 0;
 
             while(important_boards->pointer) {
@@ -333,7 +344,11 @@ int main() {
             pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
             if(!thread_id) err(1, "Memory error while allocating thread id\n");
 
-            processor_args args = create_processor_args(t, stacks->data[t], cache, 
+            printf("%p %s with %lu elements\n", stacks->data[t], 
+                                                (((ptr_arraylist)(stacks->data[t]))) ? "Valid" : "Not Valid",
+                                                ((ptr_arraylist)(stacks->data[t]))->pointer);
+
+            processor_args args = create_processor_args(t, stacks->data[t], pf->cache, 
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
                                                         &saving_counter, checkpoint_file, &file_lock);

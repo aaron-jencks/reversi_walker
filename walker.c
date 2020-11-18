@@ -288,6 +288,8 @@ void* walker_processor_pre_stacked(void* args) {
 
         return 0;
     }
+
+    printf("Either the cache or stack is 0\n");
     return (void*)1;
 }
 
