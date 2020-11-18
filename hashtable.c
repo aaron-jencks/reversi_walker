@@ -147,6 +147,9 @@ uint8_t exists_hs(hashtable t, void* value) {
 
 void to_file_hs(FILE* fp, hashtable t) {
     if(t) {
+        fwrite(&t->bin_count, sizeof(t->bin_count), 1, fp);
+        fwrite(&t->size, sizeof(t->size), 1, fp);
+
         __uint128_t* pairs = get_pairs(t);
 
         for(__uint128_t* p = pairs; *p; p++) {
@@ -157,7 +160,27 @@ void to_file_hs(FILE* fp, hashtable t) {
 
         __uint128_t spacer = 0;
         fwrite(&spacer, sizeof(__uint128_t), 1, fp);
-        fwrite(&t->bin_count, sizeof(t->bin_count), 1, fp);
-        fwrite(&t->size, sizeof(t->size), 1, fp);
     }
+}
+
+hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
+    uint64_t bin_count, size;
+    fscanf(fp, "%lu%lu", &bin_count, &size);
+
+    uint128_arraylist keys = create_uint128_arraylist(size + 1);
+    __uint128_t bk;
+    for(uint64_t k = 0; k < size; k++) {
+        fread(&bk, sizeof(__uint128_t), 1, fp);
+        if(bk) append_ddal(keys, bk);
+        else break;
+    }
+
+    hashtable ht = create_hashtable(bin_count, hash);
+    
+    // Insert the keys
+    for(__uint128_t* p = keys; *p; p++) append_ddal((uint128_arraylist)mempage_get(ht->bins, *p % ht->bin_count), *p);
+
+    printf("Read in a hashtable with %lu entries and %lu bins\n", keys->pointer, bin_count);
+
+    return ht;
 }

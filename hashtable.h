@@ -74,4 +74,13 @@ uint8_t exists_hs(hashtable t, void* value);
  */
 void to_file_hs(FILE* fp, hashtable t);
 
+/**
+ * @brief Reads in a hashtable from the byte string starting from the current position in the file given
+ * 
+ * @param fp The file pointer to read from
+ * @param hash The hash function to use, because that can't be saved
+ * @return hashtable Returns a hashtable containing the keys hashed in the given string
+ */
+hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*));
+
 #pragma endregion
