@@ -178,7 +178,7 @@ hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
     hashtable ht = create_hashtable(bin_count, hash);
     
     // Insert the keys
-    for(__uint128_t* p = keys; *p; p++) append_ddal((uint128_arraylist)mempage_get(ht->bins, *p % ht->bin_count), *p);
+    for(__uint128_t* p = keys->data; *p; p++) append_ddal((uint128_arraylist)mempage_get(ht->bins, *p % ht->bin_count), *p);
 
     printf("Read in a hashtable with %lu entries and %lu bins\n", keys->pointer, bin_count);
 

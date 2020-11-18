@@ -124,7 +124,7 @@ void* walker_processor(void* args) {
         pargs->starting_board = (board)search_stack;
         return walker_processor_pre_stacked(pargs);
     }
-    return -1;
+    return (void*)1;
 }
 
 void* walker_processor_pre_stacked(void* args) {
@@ -274,7 +274,7 @@ void* walker_processor_pre_stacked(void* args) {
 
         return 0;
     }
-    return -1;
+    return (void*)1;
 }
 
 uint16_t coord_to_short(coord c) {
