@@ -1,6 +1,6 @@
 cc=gcc
 cflags= -Dlimitprocs -Dcheckpointdebug -Dhashdebug -g
-objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o
+objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o
 
 all: main;
@@ -42,6 +42,9 @@ mempage.o: mempage.c mempage.h arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
 walker.o: walker.c walker.h reversi.o ll.o arraylist.o
+	$(cc) $(cflags) -o $@ -c $<
+
+fileio.o: fileio.c fileio.h walker.o
 	$(cc) $(cflags) -o $@ -c $<
 
 # Tests

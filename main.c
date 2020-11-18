@@ -15,6 +15,7 @@
 #include "ll.h"
 #include "arraylist.h"
 #include "valid_moves.h"
+#include "fileio.h"
 
 // TODO you can use the previous two board states to predict the next set of valid moves.
 
@@ -178,17 +179,10 @@ int main() {
     pthread_mutex_t counter_lock, explored_lock, file_lock;
 
     // Setup the checkpoint saving system
-    char temp_str[] = "/tmp/reversi.XXXXXX\0", *filename = "checkpoint.bin\0", *final_result = calloc(35, sizeof(char));
-    char* dir_ptr = mkdtemp(temp_str);
-    strncat(final_result, dir_ptr, 20);
-    final_result[19] = '/';
-    strncat(final_result + 20, filename, 14);
-    #ifdef checkpointdebug
-        printf("Saving to %s\n", final_result);
-    #endif
+    char* checkpoint_filename = find_temp_filename("checkpoint.bin\0");
     FILE** checkpoint_file = malloc(sizeof(FILE*));
     if(!checkpoint_file) err(1, "Memory error while allocating checkpoint file pointer\n");
-    uint8_t saving_counter;
+    uint64_t saving_counter;
 
 
     if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || 
@@ -293,47 +287,8 @@ int main() {
                (save_time) ? "Saving..." : "");
         fflush(stdout);
         if(save_time) {
-            printf("\nStarting save...\n");
-            *checkpoint_file = fopen(final_result, "wb+");
-            if(!*checkpoint_file) err(7, "Unable to open or create file %s\n", final_result);
-            // printf("Saving child thread search queues\n");
-            saving_counter = 0;
-
-            // Save the counts
-            printf("Saving the walk counters\n");
-            while(pthread_mutex_trylock(&file_lock)) sched_yield();
-            fwrite(&count, sizeof(count), 1, *checkpoint_file);
-            fwrite(&explored_count, sizeof(explored_count), 1, *checkpoint_file);
-            fwrite(&(search_queue->pointer), sizeof(search_queue->pointer), 1, *checkpoint_file);
-            pthread_mutex_unlock(&file_lock);
-
-            // Save the threads
-            printf("Saving child thread search queues\n");
-            while(pthread_mutex_trylock(&saving_lock)) sched_yield();
-            SAVING_FLAG = 1;
-            pthread_mutex_unlock(&saving_lock);
-
-            uint8_t temp_saving_counter = 0;
-            while(temp_saving_counter < search_queue->pointer) {
-                while(pthread_mutex_trylock(&file_lock)) sched_yield();
-                printf("\r%0u/%ld", saving_counter, search_queue->pointer);
-                temp_saving_counter = saving_counter;
-                pthread_mutex_unlock(&file_lock);
-                sched_yield();
-            }
-
-            // Save the hashtable
-            printf("\nSaving the hashtable\n");
-            while(pthread_mutex_trylock(&file_lock)) sched_yield();
-            to_file_hs(*checkpoint_file, cache);
-            pthread_mutex_unlock(&file_lock);
-
-            fclose(*checkpoint_file);
+            save_progress(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, search_queue->pointer);
             save_timer = time(0);
-
-            while(pthread_mutex_trylock(&saving_lock)) sched_yield();
-            SAVING_FLAG = 0;
-            pthread_mutex_unlock(&saving_lock);
         }
         sched_yield();
     }
