@@ -369,33 +369,40 @@ int main() {
     printf("Running on %d threads\n", procs);
 
     // for(uint64_t t = 0; t < threads->pointer; t++) pthread_join(*(pthread_t*)(threads->data[0]), 0);
-    time_t start = time(0), current, save_timer = time(0);
+    time_t start = time(0), current, save_timer = time(0), fps_timer = time(0);
     clock_t cstart = clock();
     uint32_t cpu_time, cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
-             run_time, run_days, run_hours, run_minutes, run_seconds, save_time, previous_run_time = start;
-    uint64_t previous_board_count = 0;
+             run_time, run_days, run_hours, run_minutes, run_seconds, save_time, previous_run_time = start, fps_update_time;
+    uint64_t previous_board_count = 0, fps = 0;
     while(1) {
         current = time(0);
         run_time = current - start;
         save_time = (current - save_timer) / 3600;
+        fps_update_time = (current - fps_timer) / 1;
+
         run_days = run_time / 86400;
         run_hours = (run_time / 3600) % 24;
         run_minutes = (run_time / 60) % 60;
         run_seconds = run_time % 60;
+
         cpu_time = (uint32_t)(((double)(clock() - cstart)) / CLOCKS_PER_SEC);
         cpu_days = cpu_time / 86400;
         cpu_hours = (cpu_time / 3600) % 24;
         cpu_minutes = (cpu_time / 60) % 60;
         cpu_seconds = cpu_time % 60;
-        printf("\rFound %ld final board states. Explored %ld boards @ %f boards/sec. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
-               count, explored_count, ((double)(explored_count - previous_board_count)) / ((double)(run_time - previous_run_time)),
+
+        if(fps_update_time) {
+            fps = (explored_count - previous_board_count);
+            previous_board_count = explored_count;
+            fps_timer = time(0);
+        }
+
+        printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
+               count, explored_count, fps,
                run_days, run_hours, run_minutes, run_seconds,
                cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                (save_time) ? "Saving..." : "");
         fflush(stdout);
-
-        previous_board_count = explored_count;
-        previous_run_time = run_time;
 
         if(save_time) {
             save_progress(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
