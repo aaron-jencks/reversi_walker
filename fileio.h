@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "hashtable.h"
+#include "arraylist.h"
 
 /**
  * - Cache
@@ -23,6 +24,20 @@
  * use 'ab+' mode
  * 
  */
+
+typedef struct __processed_file_str {
+    uint64_t found_counter;
+    uint64_t explored_counter;
+    uint64_t num_processors;
+    hashtable cache;
+    ptr_arraylist processor_stacks;
+} processed_file_str;
+
+/**
+ * @brief Represents a processed file that can be used to restore the walker to a previous point
+ * 
+ */
+typedef processed_file_str* processed_file;
 
 /**
  * @brief Generates a unique filename in the /tmp directory for checkpoint saving
@@ -45,3 +60,12 @@ char* find_temp_filename(const char* filename);
 void save_progress(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* filename, 
                    uint64_t* saving_counter, hashtable cache,
                    uint64_t found_counter, uint64_t explored_counter, uint64_t num_processors);
+
+/**
+ * @brief Reads and populates the fields of the processed file from the given file, used to restore progress
+ * 
+ * @param filename The file name to restore progress from
+ * @param hash The hash function to use for the cache, because it can't be saved.
+ * @return processed_file Returns a processed file containing all of the arguments required to restore progress, must be free'd by the user.
+ */
+processed_file restore_progress(char* filename, __uint128_t (*hash)(void*));

@@ -1,5 +1,6 @@
 #include "fileio.h"
 #include "walker.h"
+
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,4 +77,52 @@ void save_progress(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* fil
     while(pthread_mutex_trylock(&saving_lock)) sched_yield();
     SAVING_FLAG = 0;
     pthread_mutex_unlock(&saving_lock);
+}
+
+processed_file restore_progress(char* filename, __uint128_t (*hash)(void*)) {
+    FILE* fp = fopen(filename, "wb+");
+    if(!fp) err(7, "Cannot find/open given restore file %s\n", filename);
+
+    printf("Restoring from file %s\n", filename);
+
+    processed_file result = malloc(sizeof(processed_file_str));
+    if(!result) err(1, "Memory error while allocating processed file\n");
+
+    // Read the counters
+    fscanf(fp, "%lu%lu%lu", &result->found_counter, &result->explored_counter, &result->num_processors);
+    result->processor_stacks = create_ptr_arraylist(result->num_processors + 1);
+    printf("Saved progress, %lu final boards found, %lu boards explored, %lu processors\n", 
+           result->found_counter, result->explored_counter, result->num_processors);
+
+    // Read the processors
+    uint8_t player;
+    uint64_t board_upper, board_lower;
+    __uint128_t board_key;
+    for(uint64_t p = 0; p < result->num_processors; p++) {
+        ptr_arraylist stack = create_ptr_arraylist(65);
+
+        while(1) {
+            fscanf(fp, "%c%lu%lu", &player, &board_upper, &board_lower);
+
+            // Combine the upper and lower keys
+            board_key = board_upper;
+            board_key = board_key << 64;
+            board_key += board_lower;
+
+            if(player || board_key) {
+                board b = create_board_unhash_6(player, board_key);
+                append_pal(stack, b);
+            }
+            else {
+                break;
+            }
+        }
+
+        printf("Read a processor with a stack of %lu elements\n", stack->pointer);
+    }
+
+    // Read in the hashtable
+    result->cache = from_file_hs(fp, hash);
+
+    return result;
 }
