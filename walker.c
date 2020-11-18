@@ -285,7 +285,7 @@ coord short_to_coord(uint16_t s) {
 processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
-                                     uint8_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock) {
+                                     uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock) {
     processor_args args = malloc(sizeof(processor_args_str));
     if(!args) err(1, "Memory error while allocating processor args\n");
 

@@ -1,6 +1,8 @@
 #include "fileio.h"
 #include "walker.h"
 #include <err.h>
+#include <stdlib.h>
+#include <string.h>
 
 /**
  * @brief Generates a unique filename in the /tmp directory for checkpoint saving
@@ -42,11 +44,11 @@ void save_progress(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* fil
 
     // Save the counts
     printf("Saving the walk counters\n");
-    while(pthread_mutex_trylock(&file_lock)) sched_yield();
+    while(pthread_mutex_trylock(file_lock)) sched_yield();
     fwrite(&found_counter, sizeof(found_counter), 1, *checkpoint_file);
     fwrite(&explored_counter, sizeof(explored_counter), 1, *checkpoint_file);
     fwrite(&num_processors, sizeof(num_processors), 1, *checkpoint_file);
-    pthread_mutex_unlock(&file_lock);
+    pthread_mutex_unlock(file_lock);
 
     // Save the threads
     printf("Saving child thread search queues\n");
@@ -56,18 +58,18 @@ void save_progress(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* fil
 
     uint64_t temp_saving_counter = 0;
     while(temp_saving_counter < num_processors) {
-        while(pthread_mutex_trylock(&file_lock)) sched_yield();
-        printf("\r%0u/%ld", *saving_counter, num_processors);
+        while(pthread_mutex_trylock(file_lock)) sched_yield();
+        printf("\r%0lu/%ld", *saving_counter, num_processors);
         temp_saving_counter = *saving_counter;
-        pthread_mutex_unlock(&file_lock);
+        pthread_mutex_unlock(file_lock);
         sched_yield();
     }
 
     // Save the hashtable
     printf("\nSaving the hashtable\n");
-    while(pthread_mutex_trylock(&file_lock)) sched_yield();
+    while(pthread_mutex_trylock(file_lock)) sched_yield();
     to_file_hs(*checkpoint_file, cache);
-    pthread_mutex_unlock(&file_lock);
+    pthread_mutex_unlock(file_lock);
 
     fclose(*checkpoint_file);
 
