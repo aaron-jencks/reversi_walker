@@ -99,7 +99,7 @@ processed_file restore_progress(char* filename, __uint128_t (*hash)(void*)) {
     uint64_t board_upper, board_lower;
     __uint128_t board_key;
     for(uint64_t p = 0; p < result->num_processors; p++) {
-        ptr_arraylist stack = create_ptr_arraylist(65);
+        ptr_arraylist stack = create_ptr_arraylist(1000);
 
         while(1) {
             fscanf(fp, "%c%lu%lu", &player, &board_upper, &board_lower);
@@ -119,6 +119,7 @@ processed_file restore_progress(char* filename, __uint128_t (*hash)(void*)) {
         }
 
         printf("Read a processor with a stack of %lu elements\n", stack->pointer);
+        append_pal(result->processor_stacks, stack);
     }
 
     // Read in the hashtable
