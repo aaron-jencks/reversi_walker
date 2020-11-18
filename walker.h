@@ -98,6 +98,21 @@ processor_args create_processor_args(uint32_t identifier, board starting_board, 
 void* walker_processor(void* args);
 
 /**
+ * @brief Used to launch child threads, accepts a board to start from and a pointer to the cache to use
+ * 
+ * @param args The args are a struct containing the following information:
+ * 
+ * @param identifier the identifier for this processor
+ * @param starting_board The pre-initialized stack for the walker to start its search from
+ * @param cache The existence cache to use
+ * @param counter a pointer to the current board counter
+ * @param counter_lock a lock for the board counter
+ * 
+ * @return uint64_t Returns the number of boards that this thread counted.
+ */
+void* walker_processor_pre_stacked(void* args);
+
+/**
  * @brief Writes a thread to file, saves the search stack
  * 
  * @param fp 

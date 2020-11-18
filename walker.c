@@ -118,19 +118,29 @@ coord* find_next_boards_from_coord_opposing_player(board b, coord c) {
 void* walker_processor(void* args) {
     // Unpack the arguments
     processor_args pargs = (processor_args)args;
-    board starting_board = pargs->starting_board;
+    if(pargs && pargs->starting_board) {
+        ptr_arraylist search_stack = create_ptr_arraylist(1000);
+        append_pal(search_stack, pargs->starting_board);
+        pargs->starting_board = (board)search_stack;
+        return walker_processor_pre_stacked(pargs);
+    }
+    return -1;
+}
+
+void* walker_processor_pre_stacked(void* args) {
+    // Unpack the arguments
+    processor_args pargs = (processor_args)args;
+    ptr_arraylist starting_stack = (ptr_arraylist)pargs->starting_board;
     hashtable cache = pargs->cache;
     uint64_t* counter = pargs->counter, *explored = pargs->explored_counter;
     pthread_mutex_t* counter_lock = pargs->counter_lock, *explored_lock = pargs->explored_lock;
 
-    if(starting_board && cache) {
+    if(starting_stack && cache) {
         printf("Processor %d has started\n", pargs->identifier);
 
         // Setup the stacks
         uint64_t count = 0;
-        ptr_arraylist search_stack = create_ptr_arraylist(1000);
-
-        append_pal(search_stack, starting_board);
+        ptr_arraylist search_stack = starting_stack;
 
         printf("Starting walk...\n");
 
@@ -264,6 +274,7 @@ void* walker_processor(void* args) {
 
         return 0;
     }
+    return -1;
 }
 
 uint16_t coord_to_short(coord c) {
