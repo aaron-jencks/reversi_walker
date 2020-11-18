@@ -44,7 +44,7 @@ mempage.o: mempage.c mempage.h arraylist.o
 walker.o: walker.c walker.h reversi.o ll.o arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
-fileio.o: fileio.c fileio.h walker.o
+fileio.o: fileio.c fileio.h walker.o arraylist.o hashtable.o 
 	$(cc) $(cflags) -o $@ -c $<
 
 # Tests

@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <sys/sysinfo.h>
 #include <time.h>
+#include <string.h>
 
 #include "reversi.h"
 #include "hashtable.h"
@@ -169,34 +170,50 @@ __uint128_t board_hash(void* brd) {
 // TODO make work on a 6x6
 // Modify to copy boards, instead of 
 int main() {
-    #ifdef smallcache
-        hashtable cache = create_hashtable(10, &board_hash);
-    #else
-        hashtable cache = create_hashtable(1000000, &board_hash);
-    #endif
+    // TODO create gui for deciding whether or not to restore from a checkpoint
+    // ui.o
+    // 
+    char d;
+    while(1) {
+        printf("Would you like to restore from a checkpoint?(y/N): ");
+        d = getc(stdin);
+        if(d == '\n' || d == 'n' || d == 'N') {
+            d = 'n';
+            break;
+        }
+        else if(d == 'y' || d == 'Y') {
+            d = 'y';
+            break;
+        }
+    }
+
+    getc(stdin);    // Read the extra \n character
+
+    // Allocate all of the stack parameters necessary for file restoration
+    hashtable cache;
     uint64_t count = 0, explored_count = 1;
-    pthread_mutex_t counter_lock, explored_lock, file_lock;
+    char* checkpoint_filename;
 
-    // Setup the checkpoint saving system
-    char* checkpoint_filename = find_temp_filename("checkpoint.bin\0");
-    FILE** checkpoint_file = malloc(sizeof(FILE*));
-    if(!checkpoint_file) err(1, "Memory error while allocating checkpoint file pointer\n");
-    uint64_t saving_counter;
-
-
-    if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || 
-       pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0)) 
-        err(4, "Initialization of counter mutex failed\n");
-
-    printf("Starting walk...\n");
-
+    // Calculate the number of processors to use
     uint32_t procs = get_nprocs();
-    printf("Running on %d processors, using %d threads\n", procs, procs << 1);
     #ifndef limitprocs
         procs = procs << 1;
     #endif
 
-    // Perform BFS to get the desired number of initial states
+    // Setup the locks
+    pthread_mutex_t counter_lock, explored_lock, file_lock;
+
+    // Setup the checkpoint saving system
+    FILE** checkpoint_file = malloc(sizeof(FILE*));
+    if(!checkpoint_file) err(1, "Memory error while allocating checkpoint file pointer\n");
+    uint64_t saving_counter;
+
+    // Initialize the locks
+    if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || 
+       pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0)) 
+        err(4, "Initialization of counter mutex failed\n");
+
+    #pragma region Round nprocs to the correct number
     board b = create_board(1, 6, 6);
     
     // Setup the queue
@@ -243,24 +260,113 @@ int main() {
         destroy_board(b);
     }
 
-    printf("Found %ld initial board states\n", search_queue->pointer);
+    procs = search_queue->pointer;
 
-    // Distribute the initial states to a set of new pthreads.
-    ptr_arraylist threads = create_ptr_arraylist(search_queue->pointer + 1);
+    printf("Rounded nprocs to %d threads\n", procs);
+    #pragma endregion
 
-    for(uint64_t t = 0; t < search_queue->pointer; t++) {
-        pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
-        if(!thread_id) err(1, "Memory error while allocating thread id\n");
+    ptr_arraylist threads;
 
-        processor_args args = create_processor_args(t, search_queue->data[t], cache, 
-                                                    &count, &counter_lock,
-                                                    &explored_count, &explored_lock,
-                                                    &saving_counter, checkpoint_file, &file_lock);
+    if(d == 'y') {
+        char** restore_filename;
+        scanf("Please enter a file to restore from: %ms", restore_filename);
+        processed_file pf = restore_progress(*restore_filename, &board_hash);
 
-        // walker_processor(args);
-        pthread_create(thread_id, 0, walker_processor, (void*)args);
-        append_pal(threads, thread_id);
+        while(1) {
+            printf("Would you like to continue saving to this checkpoint?(y/N): ");
+            d = getc(stdin);
+            if(d == '\n' || d == 'n' || d == 'N') {
+                checkpoint_filename = find_temp_filename("checkpoint.bin\0");
+                break;
+            }
+            else if(d == 'y' || d == 'Y') {
+                checkpoint_filename = malloc(sizeof(char) * strlen(*restore_filename));
+                strcpy(checkpoint_filename, *restore_filename);
+                break;
+            }
+        }
+
+        free(*restore_filename);
+
+        // De-allocate the stuff we did to round procs, because we don't need it now.
+        while(search_queue->pointer) destroy_board(pop_front_pal(search_queue));
+        destroy_ptr_arraylist(search_queue);
+
+        // Begin restore
+        count = pf->found_counter;
+        explored_count = pf->explored_counter;
+
+        ptr_arraylist stacks = pf->processor_stacks;
+        if(procs != pf->num_processors) {
+            // Redistribute workload
+            ptr_arraylist all_current_boards = create_ptr_arraylist(procs * 1000), important_boards = create_ptr_arraylist(pf->num_processors + 1);
+            for(ptr_arraylist* p = (ptr_arraylist*)pf->processor_stacks->data; *p; p++) {
+                for(uint64_t pb = 0; pb < (*p)->pointer; pb++) append_pal((pb) ? all_current_boards : important_boards, (*p)->data[pb]);
+                destroy_ptr_arraylist(*p);
+            }
+
+            while(stacks->pointer) pop_back_pal(stacks);
+            
+            for(uint64_t p = 0; p < procs; p++) append_pal(stacks, create_ptr_arraylist(1000));
+            uint64_t p_ptr = 0;
+
+            while(important_boards->pointer) {
+                append_pal(stacks->data[p_ptr++], pop_back_pal(important_boards));
+                if(p_ptr == procs) p_ptr = 0;
+            }
+
+            while(all_current_boards->pointer) {
+                append_pal(stacks->data[p_ptr++], pop_back_pal(all_current_boards));
+                if(p_ptr == procs) p_ptr = 0;
+            }
+        }
+
+        // Create threads
+
+        // Distribute the initial states to a set of new pthreads.
+        threads = create_ptr_arraylist(procs + 1);
+
+        for(uint64_t t = 0; t < procs; t++) {
+            pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
+            if(!thread_id) err(1, "Memory error while allocating thread id\n");
+
+            processor_args args = create_processor_args(t, stacks->data[t], cache, 
+                                                        &count, &counter_lock,
+                                                        &explored_count, &explored_lock,
+                                                        &saving_counter, checkpoint_file, &file_lock);
+
+            // walker_processor(args);
+            pthread_create(thread_id, 0, walker_processor_pre_stacked, (void*)args);
+            append_pal(threads, thread_id);
+        }
     }
+    else {
+        #ifdef smallcache
+            cache = create_hashtable(10, &board_hash);
+        #else
+            cache = create_hashtable(1000000, &board_hash);
+        #endif
+
+        // Distribute the initial states to a set of new pthreads.
+        threads = create_ptr_arraylist(procs + 1);
+
+        for(uint64_t t = 0; t < procs; t++) {
+            pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
+            if(!thread_id) err(1, "Memory error while allocating thread id\n");
+
+            processor_args args = create_processor_args(t, search_queue->data[t], cache, 
+                                                        &count, &counter_lock,
+                                                        &explored_count, &explored_lock,
+                                                        &saving_counter, checkpoint_file, &file_lock);
+
+            // walker_processor(args);
+            pthread_create(thread_id, 0, walker_processor, (void*)args);
+            append_pal(threads, thread_id);
+        }
+    }
+
+    printf("Starting walk...\n");
+    printf("Running on %d threads\n", procs);
 
     // for(uint64_t t = 0; t < threads->pointer; t++) pthread_join(*(pthread_t*)(threads->data[0]), 0);
     time_t start = time(0), current, save_timer = time(0);
@@ -292,7 +398,7 @@ int main() {
         previous_run_time = run_time;
 
         if(save_time) {
-            save_progress(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, search_queue->pointer);
+            save_progress(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
             save_timer = time(0);
         }
         sched_yield();
