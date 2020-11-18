@@ -347,6 +347,8 @@ int main() {
             cache = create_hashtable(1000000, &board_hash);
         #endif
 
+        checkpoint_filename = find_temp_filename("checkpoint.bin\0");
+
         // Distribute the initial states to a set of new pthreads.
         threads = create_ptr_arraylist(procs + 1);
 
@@ -377,7 +379,7 @@ int main() {
     while(1) {
         current = time(0);
         run_time = current - start;
-        save_time = (current - save_timer) / 3600;
+        save_time = (current - save_timer) / 60;
         fps_update_time = (current - fps_timer) / 1;
 
         run_days = run_time / 86400;
