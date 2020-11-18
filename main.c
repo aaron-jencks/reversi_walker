@@ -143,7 +143,7 @@ __uint128_t board_hash(void* brd) {
 
                 result += s1;
 
-                if(c < b->width - 1) result = result << 2;
+                if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
             }
         }
 
