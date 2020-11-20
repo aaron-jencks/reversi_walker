@@ -63,6 +63,8 @@
  * TODO add ability to make checkpoints to save progress
  *  - Interpret Ctrl+C interrupt signal and cause a save
  * 
+ * TODO make a way to swap out memory from disk when it's not used.
+ * 
  */
 
 
