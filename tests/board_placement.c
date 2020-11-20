@@ -15,4 +15,6 @@ void board_placement_test() {
             }
         }
     }
+
+    destroy_board(b);
 }

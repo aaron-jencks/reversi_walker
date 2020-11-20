@@ -10,6 +10,10 @@ mempage create_mempage(size_t page_max, __uint128_t elements) {
 
     __uint128_t pages = (elements / page_max) + 1;
 
+    #ifdef mempagedebug
+        printf("Creating a mempage with %lu %lu pages\n", ((uint64_t*)&pages)[1], ((uint64_t*)&pages)[0]);
+    #endif
+
     // mp->pages = create_ll();
     mp->pages = create_ptr_arraylist(pages + 1);
     mp->count_per_page = page_max;

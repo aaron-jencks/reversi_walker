@@ -1,7 +1,7 @@
 cc=gcc
-cflags= -Dlimitprocs -Dcheckpointdebug -Dhashdebug -Dfiledebug -g
+cflags= -Dhashdebug -Dmempagedebug -g
 objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o
-test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o
+test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o
 
 all: main;
 
@@ -9,7 +9,7 @@ main: main.o $(objects)
 	$(cc) $(cflags) -o $@ $< $(objects) -pthread
 
 tester: tester.o $(objects) $(test_objects)
-	$(cc) $(cflags) -o $@ $< $(objects) $(test_objects)
+	$(cc) $(cflags) -o $@ $< $(objects) $(test_objects) -pthread
 
 main.o: main.c $(objects)
 	$(cc) $(cflags) -o $@ -c $<
@@ -59,6 +59,9 @@ board_placement_test.o: tests/board_placement.c tests/board_placement.h reversi.
 	$(cc) $(cflags) -o $@ -c $<
 
 mempage_test.o: tests/mempage_test.c tests/mempage_test.h mempage.o
+	$(cc) $(cflags) -o $@ -c $<
+
+fileio_test.o: tests/fileio_test.c tests/fileio_test.h hashtable.o fileio.o
 	$(cc) $(cflags) -o $@ -c $<
 
 .PHONY : clean

@@ -344,9 +344,11 @@ int main() {
             pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
             if(!thread_id) err(1, "Memory error while allocating thread id\n");
 
-            printf("%p %s with %lu elements\n", stacks->data[t], 
-                                                (((ptr_arraylist)(stacks->data[t]))) ? "Valid" : "Not Valid",
-                                                ((ptr_arraylist)(stacks->data[t]))->pointer);
+            #ifdef filedebug
+                printf("%p %s with %lu elements\n", stacks->data[t], 
+                                                    (((ptr_arraylist)(stacks->data[t]))) ? "Valid" : "Not Valid",
+                                                    ((ptr_arraylist)(stacks->data[t]))->pointer);
+            #endif
 
             processor_args args = create_processor_args(t, stacks->data[t], pf->cache, 
                                                         &count, &counter_lock,
@@ -387,6 +389,7 @@ int main() {
 
     printf("Starting walk...\n");
     printf("Running on %d threads\n", procs);
+    printf("Saving checkpoints to %s\n", checkpoint_filename);
 
     // for(uint64_t t = 0; t < threads->pointer; t++) pthread_join(*(pthread_t*)(threads->data[0]), 0);
     time_t start = time(0), current, save_timer = time(0), fps_timer = time(0);
@@ -397,7 +400,7 @@ int main() {
     while(1) {
         current = time(0);
         run_time = current - start;
-        save_time = (current - save_timer) / 3600;
+        save_time = (current - save_timer) / 15;
         fps_update_time = (current - fps_timer) / 1;
 
         run_days = run_time / 86400;
@@ -417,8 +420,8 @@ int main() {
             fps_timer = time(0);
         }
 
-        printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
-               count, explored_count, fps,
+        printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Cache Status: %ld Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
+               count, explored_count, fps, cache->size,
                run_days, run_hours, run_minutes, run_seconds,
                cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                (save_time) ? "Saving..." : "");

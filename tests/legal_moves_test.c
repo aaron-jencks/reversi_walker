@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "legal_moves_test.h"
 #include "../reversi.h"
@@ -25,14 +26,21 @@ void lm_test_initial() {
     for(coord* ct = cs; *ct; ct++) {
         printf("Testing coordinate (%u, %u)\n", (*ct)->row, (*ct)->column);
         assert(is_valid_coord(*ct, acceptance));
+        free(*ct);
     }
+
+    destroy_board(b);
+    free(cs);
+
+    for(coord* ct = acceptance; *ct; ct++) free(*ct);
 }
 
 void lm_test_from_coord() {
     board b = create_board(2, 8, 8);
     board_place_piece(b, 5, 3);
+    coord c = create_coord(5, 3);
 
-    coord* cs = find_next_boards_from_coord(b, create_coord(5, 3));
+    coord* cs = find_next_boards_from_coord(b, c);
     coord acceptance[3] = {
         create_coord(5, 2),
         create_coord(5, 4),
@@ -42,7 +50,12 @@ void lm_test_from_coord() {
     for(coord* ct = cs; *ct; ct++) {
         printf("Testing coordinate (%u, %u)\n", (*ct)->row, (*ct)->column);
         assert(is_valid_coord(*ct, acceptance));
+        free(*ct);
     }
 
     destroy_board(b);
+    free(cs);
+    free(c);
+
+    for(coord* ct = acceptance; *ct; ct++) free(*ct);
 }

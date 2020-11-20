@@ -19,7 +19,7 @@ hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*
     if(!t) err(1, "Memory Error while trying to allocate hashtable\n");
     if(pthread_mutex_init(&t->table_lock, 0) != 0) err(4, "Hashtable mutex init has failed\n");
     t->bins = create_mempage(1000000, initial_bin_count); // calloc(initial_bin_count, sizeof(uint128_arraylist));
-    for(uint64_t i = 0; i < initial_bin_count; i++) mempage_put(t->bins, i, create_uint128_arraylist(16));
+    for(uint64_t i = 0; i < initial_bin_count; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
     t->bin_count = initial_bin_count;
     t->size = 0;
     t->hash = hash;
@@ -92,12 +92,31 @@ __uint128_t put_hs(hashtable t, void* value) {
 
                     clear_bins(t);
 
-                    t->bins = create_mempage(1000000, t->size + 64);
-                    // if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
-                    for(uint64_t i = 0; i < t->size + 64; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
-                    t->bin_count = t->size + 64;
+                    #ifdef hashdebug
+                        printf("Creating new mempage system with %ld elements\n", t->size + 64000);
+                    #endif
 
-                    for(__uint128_t* p = pairs; *p; p++) append_ddal((uint128_arraylist)mempage_get(t->bins, *p % t->bin_count), *p);
+                    t->bins = create_mempage(1000000, t->size + 64000);
+                    // if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
+                    for(uint64_t i = 0; i < t->size + 64000; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
+                    t->bin_count = t->size + 64000;
+
+                    #ifdef hashdebug
+                        printf("Re-inserting previous elements\n");
+                        uint64_t iter = 0;
+                    #endif
+
+                    for(__uint128_t* p = pairs; *p; p++) {
+                        #ifdef hashdebug
+                            printf("\rInserting element %ld: %lu %lu", iter++, ((uint64_t*)p)[1], ((uint64_t*)p)[0]);
+                        #endif
+
+                        append_ddal((uint128_arraylist)mempage_get(t->bins, (*p) % t->bin_count), *p);
+                    }
+
+                    #ifdef hashdebug
+                        printf("\n");
+                    #endif
 
                     free(pairs);
                 }
@@ -147,14 +166,19 @@ uint8_t exists_hs(hashtable t, void* value) {
 
 void to_file_hs(FILE* fp, hashtable t) {
     if(t) {
-        fwrite(&t->bin_count, sizeof(t->bin_count), 1, fp);
+        if(fwrite(&t->bin_count, sizeof(t->bin_count), 1, fp) < 1) err(10, "Failed to write bin count to file\n");
         fwrite(&t->size, sizeof(t->size), 1, fp);
 
         __uint128_t* pairs = get_pairs(t);
+        uint64_t count = 0;
 
         for(__uint128_t* p = pairs; *p; p++) {
-            fwrite(p, sizeof(__uint128_t), 1, fp);
+            size_t written = fwrite(p, sizeof(__uint128_t), 1, fp);
+            if(written < 1) err(10, "Failed to save hashtable key, only wrote %lu/%lu on entry %lu\n", written, sizeof(__uint128_t), count);
+            count++;
         }
+
+        printf("Wrote %ld entries\n", count);
 
         free(pairs);
 
@@ -172,7 +196,7 @@ hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
     uint128_arraylist keys = create_uint128_arraylist(size + 1);
     __uint128_t bk;
     for(uint64_t k = 0; k < size; k++) {
-        fread(&bk, sizeof(__uint128_t), 1, fp);
+        if(fread(&bk, sizeof(__uint128_t), 1, fp) < 1) err(11, "Failed to read hashtable key %ld/%ld\n", k, size);
         if(bk) append_ddal(keys, bk);
         else break;
     }
@@ -181,8 +205,11 @@ hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
     
     // Insert the keys
     for(__uint128_t* p = keys->data; *p; p++) append_ddal((uint128_arraylist)mempage_get(ht->bins, *p % ht->bin_count), *p);
+    ht->size = size;
 
     printf("Read in a hashtable with %lu entries and %lu bins\n", keys->pointer, bin_count);
+
+    destroy_uint128_arraylist(keys);
 
     return ht;
 }
