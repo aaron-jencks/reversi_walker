@@ -1,21 +1,30 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "arraylist.h"
 
 typedef struct _mempage_str {
-    ptr_arraylist pages;
+    __uint128_t*** pages;
+    size_t** bin_counts;
+    size_t page_count;
     size_t count_per_page;
-    __uint128_t num_elements;
+    __uint128_t num_bins;
+    size_t bin_size;
 } mempage_str;
 
 typedef mempage_str* mempage;
 
-mempage create_mempage(size_t page_max, __uint128_t elements);
+mempage create_mempage(size_t page_max, __uint128_t bin_count, size_t bin_size);
 
 void destroy_mempage(mempage mp);
 
-void* mempage_get(mempage mp, __uint128_t index);
+// __uint128_t* mempage_get(mempage mp, __uint128_t index);
 
-void mempage_put(mempage mp, __uint128_t index, void* data);
+// void mempage_put(mempage mp, __uint128_t index, void* data);
+
+void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value);
+uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t value);
+void mempage_clear_all(mempage mp);
+void mempage_realloc(mempage mp, __uint128_t bin_count);
