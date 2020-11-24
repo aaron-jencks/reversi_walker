@@ -43,9 +43,9 @@ void destroy_hashtable(hashtable t);
  * @brief Get all of the pairs of keys and values from the hashtable
  * 
  * @param t The hashtable to extract the pairs from
- * @return __uint128_t* An array of keys that must be free'd by the user.
+ * @return mempage_buff An array of keys that must be free'd by the user.
  */
-__uint128_t* get_pairs(hashtable t);
+mempage_buff get_pairs(hashtable t);
 
 /**
  * @brief Inserts a value into the hash table

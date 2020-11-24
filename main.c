@@ -361,6 +361,8 @@ int main() {
             pthread_create(thread_id, 0, walker_processor_pre_stacked, (void*)args);
             append_pal(threads, thread_id);
         }
+
+        cache = pf->cache;
     }
     else {
         #ifdef smallcache
@@ -406,7 +408,7 @@ int main() {
         fps_update_time = (current - fps_timer) / 1;
 
         run_days = run_time / 86400;
-        run_hours = (run_time / 3600) % 24;
+        run_hours = (run_time / 15) % 24;
         run_minutes = (run_time / 60) % 60;
         run_seconds = run_time % 60;
 

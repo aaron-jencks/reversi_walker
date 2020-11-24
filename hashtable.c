@@ -49,14 +49,24 @@ void destroy_hashtable(hashtable t) {
  */
 mempage_buff get_pairs(hashtable t) {
     if(t) {
-        mempage_buff buff = create_mempage_buff(t->bin_count, BIN_PAGE_COUNT);
+        mempage_buff buff = create_mempage_buff(t->size, BIN_PAGE_COUNT);
+        uint8_t terminated = 0;
         for(size_t p = 0; p < t->bins->page_count; p++) {
+            if(terminated) break;
             __uint128_t** page = t->bins->pages[p];
             for(size_t b = 0; b < t->bins->count_per_page; b++) {
+                if(terminated) break;
                 __uint128_t* bin = page[b];
                 size_t bcount = t->bins->bin_counts[p][b];
 
-                for(size_t be = 0; be < bcount; be++) mempage_buff_put(buff, ((__uint128_t)p) + ((__uint128_t)b) + ((__uint128_t)be), bin[be]);
+                for(size_t be = 0; be < bcount; be++) {
+                    if(!bin[be]) {
+                        terminated = 1;
+                        break;
+                    }
+                    
+                    mempage_buff_put(buff, ((__uint128_t)p) + ((__uint128_t)b) + ((__uint128_t)be), bin[be]);
+                }
             }
         }
 
@@ -78,7 +88,7 @@ __uint128_t put_hs(hashtable t, void* value) {
                 __uint128_t k = t->hash(value), b = k % (t->bin_count);
                 if(!k) err(2, "Hit a hash value that is 0\n");
 
-                append_ddal((uint128_arraylist)mempage_get(t->bins, b), k);
+                mempage_append_bin(t->bins, b, k);
                 
                 if(++t->size > (t->bin_count * 15)) {
                     #ifdef hashdebug
@@ -144,7 +154,7 @@ __uint128_t put_hs(hashtable t, void* value) {
                         __uint128_t k = mempage_buff_get(buff, p);
 
                         #ifdef hashdebug
-                            printf("\rInserting element: %lu %lu", ((uint64_t*)k)[1], ((uint64_t*)k)[0]);
+                            printf("\rInserting element: %lu %lu", ((uint64_t*)&k)[1], ((uint64_t*)&k)[0]);
                         #endif
 
                         mempage_append_bin(t->bins, k % t->bin_count, k);
@@ -203,8 +213,11 @@ void to_file_hs(FILE* fp, hashtable t) {
         mempage_buff pairs = get_pairs(t);
         uint64_t count = 0;
 
+        printf("Writing %lu %lu entries to disk\n", ((uint64_t*)&pairs->num_element)[1], ((uint64_t*)&pairs->num_element)[0]);
+
         for(__uint128_t p = 0; p < pairs->num_element; p++) {
-            size_t written = fwrite(mempage_buff_get(pairs, p), sizeof(__uint128_t), 1, fp);
+            __uint128_t k = mempage_buff_get(pairs, p);
+            size_t written = fwrite(&k, sizeof(__uint128_t), 1, fp);
             if(written < 1) err(10, "Failed to save hashtable key, only wrote %lu/%lu on entry %lu\n", written, sizeof(__uint128_t), count);
             count++;
         }

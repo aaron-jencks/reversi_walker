@@ -2,6 +2,7 @@
 #include "arraylist.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <err.h>
 
 #pragma region mempage
@@ -20,7 +21,7 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
     mp->pages = malloc(sizeof(__uint128_t**) * pages);
     if(!mp->pages) err(1, "Memory error while allocating book for mempage\n");
 
-    mp->bin_counts = malloc(sizeof(size_t**) * pages);
+    mp->bin_counts = malloc(sizeof(size_t*) * pages);
     if(!mp->bin_counts) err(1, "Memory error while allocating book for mempage\n");
 
     mp->page_count = pages;
@@ -32,10 +33,10 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
         __uint128_t** bins = malloc(sizeof(__uint128_t*) * page_max);
         if(!bins) err(1, "Memory error while allocating array for mempage page\n");
 
-        size_t** sizes = malloc(sizeof(size_t*) * page_max);
+        size_t* sizes = malloc(sizeof(size_t) * page_max);
         if(!sizes) err(1, "Memory error while allocating array for mempage page\n");
 
-        for(size_t b = 0; b < bin_size; b++) {
+        for(size_t b = 0; b < page_max; b++) {
             bins[b] = calloc(bin_size, sizeof(__uint128_t));
             if(!bins[b]) err(1, "Memory error while allocating bin for mempage\n");
 
@@ -155,7 +156,7 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
             __uint128_t** bins = malloc(sizeof(__uint128_t*) * mp->count_per_page);
             if(!bins) err(1, "Memory error while allocating array for mempage page\n");
 
-            size_t** sizes = malloc(sizeof(size_t*) * mp->count_per_page);
+            size_t* sizes = malloc(sizeof(size_t) * mp->count_per_page);
             if(!sizes) err(1, "Memory error while allocating array for mempage page\n");
 
             for(size_t b = 0; b < mp->bin_size; b++) {
@@ -206,14 +207,14 @@ void destroy_mempage_buff(mempage_buff buff) {
 }
 
 void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t value) {
-    if(index >= buff->num_element) err(4, "Index out of bounds in mempage buffer\n");
+    if(index >= buff->num_element) err(4, "Index %lu %lu is out of bounds in mempage buffer\n", ((uint64_t*)&index)[1], ((uint64_t*)&index)[0]);
     uint32_t page = index / buff->count_per_page, page_index = index % buff->count_per_page;
     __uint128_t* l = buff->pages[page];
     l[page_index] = value;
 }
 
 __uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index) {
-    if(index >= buff->num_element) err(4, "Index out of bounds in mempage buffer\n");
+    if(index >= buff->num_element) err(4, "Index %lu %lu is out of bounds in mempage buffer\n", ((uint64_t*)&index)[1], ((uint64_t*)&index)[0]);
     uint32_t page = index / buff->count_per_page, page_index = index % buff->count_per_page;
     return buff->pages[page][page_index];
 }
