@@ -10,6 +10,8 @@
 typedef struct _mempage_str {
     __uint128_t*** pages;
     size_t** bin_counts;
+    size_t* access_counts;
+    uint8_t* page_present;
     size_t page_count;
     size_t count_per_page;
     __uint128_t num_bins;

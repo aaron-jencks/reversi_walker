@@ -7,6 +7,8 @@
 #include "hashtable.h"
 #include "arraylist.h"
 
+#pragma region checkpoint saving and restoring
+
 /**
  * - Cache
  * - Current final board count/visited board count
@@ -69,3 +71,27 @@ void save_progress(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* fil
  * @return processed_file Returns a processed file containing all of the arguments required to restore progress, must be free'd by the user.
  */
 processed_file restore_progress(char* filename, __uint128_t (*hash)(void*));
+
+#pragma endregion
+#pragma region mempage swapping
+
+/**
+ * @brief Saves a page from a mempage struct to disk
+ * 
+ * @param mp mempage to save from
+ * @param page_index page to save
+ * @param swap_directory directory where disk pages are being stored
+ */
+void save_mempage_page(mempage mp, size_t page_index, char* swap_directory);
+
+/**
+ * @brief Swaps a page from a mempage struct with a page that is in memory
+ * 
+ * @param mp mempage to swap from
+ * @param spage_index page to save
+ * @param rpage_index page to read
+ * @param swap_directory the directory where swap file are stored
+ */
+void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, char* swap_directory);
+
+#pragma endregion

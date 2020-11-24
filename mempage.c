@@ -21,6 +21,13 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
     mp->pages = malloc(sizeof(__uint128_t**) * pages);
     if(!mp->pages) err(1, "Memory error while allocating book for mempage\n");
 
+    mp->access_counts = calloc(pages, sizeof(size_t));
+    if(!mp->access_counts) err(1, "Memory error while allocating book for mempage\n");
+
+    mp->page_present = malloc(((pages >> 3) + 1) * sizeof(uint8_t));
+    if(!mp->access_counts) err(1, "Memory error while allocating book for mempage\n");
+    for(uint8_t b = 0; b < ((pages >> 3) + 1); b++) mp->page_present[b] = 255;
+
     mp->bin_counts = malloc(sizeof(size_t*) * pages);
     if(!mp->bin_counts) err(1, "Memory error while allocating book for mempage\n");
 
@@ -58,6 +65,7 @@ void destroy_mempage(mempage mp) {
             free(mp->bin_counts[p]);
         }
         free(mp->pages);
+        free(mp->access_counts);
         free(mp->bin_counts);
         free(mp);
     }
@@ -90,6 +98,13 @@ void destroy_mempage(mempage mp) {
 void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
     if(bin_index >= mp->num_bins) err(4, "Index out of bounds in mempage\n");
     uint32_t page = bin_index / mp->count_per_page, page_index = bin_index % mp->count_per_page;
+
+    mp->access_counts[page]++;
+
+    #ifdef mempagedebug
+        printf("Memory page has been accessed %ld times\n", mp->access_couns[page]);
+    #endif
+
     __uint128_t** l = mp->pages[page];
     size_t bcount = mp->bin_counts[page][page_index];
     
@@ -117,6 +132,13 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
 uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
     if(bin_index >= mp->num_bins) err(4, "Index out of bounds in mempage\n");
     uint32_t page = bin_index / mp->count_per_page, page_index = bin_index % mp->count_per_page;
+
+    mp->access_counts[page]++;
+
+    #ifdef mempagedebug
+        printf("Memory page has been accessed %ld times\n", mp->access_couns[page]);
+    #endif
+
     __uint128_t** l = mp->pages[page];
     size_t bcount = mp->bin_counts[page][page_index];
     
