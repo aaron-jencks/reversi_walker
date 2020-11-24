@@ -6,6 +6,8 @@
 #include <assert.h>
 #include <stdio.h>
 
+#define BIN_PAGE_COUNT 1000000
+
 /**
  * @brief Create a hashtable object
  * 
@@ -18,17 +20,12 @@ hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*
     hashtable t = malloc(sizeof(hashtable_str));
     if(!t) err(1, "Memory Error while trying to allocate hashtable\n");
     if(pthread_mutex_init(&t->table_lock, 0) != 0) err(4, "Hashtable mutex init has failed\n");
-    t->bins = create_mempage(1000000, initial_bin_count); // calloc(initial_bin_count, sizeof(uint128_arraylist));
-    for(uint64_t i = 0; i < initial_bin_count; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
+    t->bins = create_mempage(BIN_PAGE_COUNT, initial_bin_count, 16); // calloc(initial_bin_count, sizeof(uint128_arraylist));
+    // for(uint64_t i = 0; i < initial_bin_count; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
     t->bin_count = initial_bin_count;
     t->size = 0;
     t->hash = hash;
     return t;
-}
-
-void clear_bins(hashtable t) {
-    for(__uint128_t l = 0; l < t->bin_count; l++) destroy_uint128_arraylist((uint128_arraylist)mempage_get(t->bins, l));
-    destroy_mempage(t->bins);
 }
 
 /**
@@ -39,7 +36,7 @@ void clear_bins(hashtable t) {
 void destroy_hashtable(hashtable t) {
     if(t) {
         pthread_mutex_destroy(&t->table_lock);
-        clear_bins(t);
+        destroy_mempage(t->bins);
         free(t);
     }
 }
@@ -88,37 +85,86 @@ __uint128_t put_hs(hashtable t, void* value) {
                     #endif
 
                     //re-hash
-                    __uint128_t* pairs = get_pairs(t);
+                    // __uint128_t* pairs = get_pairs(t);
 
-                    clear_bins(t);
+                    // clear_bins(t);
+
+                    // #ifdef hashdebug
+                    //     printf("Creating new mempage system with %ld elements\n", t->size + 64000);
+                    // #endif
+
+                    // t->bins = create_mempage(1000000, t->size + 64000);
+                    // // if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
+                    // for(uint64_t i = 0; i < t->size + 64000; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
+                    // t->bin_count = t->size + 64000;
+
+                    // #ifdef hashdebug
+                    //     printf("Re-inserting previous elements\n");
+                    //     uint64_t iter = 0;
+                    // #endif
+
+                    // for(__uint128_t* p = pairs; *p; p++) {
+                    //     #ifdef hashdebug
+                    //         printf("\rInserting element %ld: %lu %lu", iter++, ((uint64_t*)p)[1], ((uint64_t*)p)[0]);
+                    //     #endif
+
+                    //     append_ddal((uint128_arraylist)mempage_get(t->bins, (*p) % t->bin_count), *p);
+                    // }
+
+                    // #ifdef hashdebug
+                    //     printf("\n");
+                    // #endif
+
+                    // free(pairs);
 
                     #ifdef hashdebug
-                        printf("Creating new mempage system with %ld elements\n", t->size + 64000);
+                        printf("Copying over the previous elements into a temporary buffer\n");
                     #endif
 
-                    t->bins = create_mempage(1000000, t->size + 64000);
-                    // if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
-                    for(uint64_t i = 0; i < t->size + 64000; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
-                    t->bin_count = t->size + 64000;
+                    mempage_buff buff = create_mempage_buff(t->bin_count, BIN_PAGE_COUNT);
+                    for(size_t p = 0; p < t->bins->page_count; p++) {
+                        __uint128_t** page = t->bins->pages[p];
+                        for(size_t b = 0; b < t->bins->count_per_page; b++) {
+                            __uint128_t* bin = page[b];
+                            size_t bcount = t->bins->bin_counts[p][b];
 
-                    #ifdef hashdebug
-                        printf("Re-inserting previous elements\n");
-                        uint64_t iter = 0;
-                    #endif
-
-                    for(__uint128_t* p = pairs; *p; p++) {
-                        #ifdef hashdebug
-                            printf("\rInserting element %ld: %lu %lu", iter++, ((uint64_t*)p)[1], ((uint64_t*)p)[0]);
-                        #endif
-
-                        append_ddal((uint128_arraylist)mempage_get(t->bins, (*p) % t->bin_count), *p);
+                            for(size_t be = 0; be < bcount; be++) mempage_buff_put(buff, ((__uint128_t)p) + ((__uint128_t)b) + ((__uint128_t)be), bin[be]);
+                        }
                     }
 
                     #ifdef hashdebug
-                        printf("\n");
+                        printf("Clearing mempage\n");
                     #endif
 
-                    free(pairs);
+                    mempage_clear_all(t->bins);
+
+                    #ifdef hashdebug
+                        printf("Reallocating mempage to %ld elements\n", t->size + 64000);
+                    #endif
+
+                    mempage_realloc(t->bins, t->size + 64000);
+
+                    #ifdef hashdebug
+                        printf("Reinserting previous elements\n");
+                    #endif
+
+                    for(__uint128_t p = 0; p < buff->num_element; p++) {
+                        __uint128_t k = mempage_buff_get(buff, p);
+
+                        #ifdef hashdebug
+                            printf("\rInserting element: %lu %lu", ((uint64_t*)k)[1], ((uint64_t*)k)[0]);
+                        #endif
+
+                        mempage_append_bin(t->bins, k % t->bin_count, k);
+                    }
+
+                    #ifdef hashdebug
+                        printf("\nRehash complete\n");
+                    #endif
+
+                    t->bin_count = t->size + 64000;
+
+                    destroy_mempage_buff(buff);
                 }
 
                 pthread_mutex_unlock(&t->table_lock);
@@ -147,18 +193,11 @@ uint8_t exists_hs(hashtable t, void* value) {
             __uint128_t key = t->hash(value), b = key % t->bin_count;
             if(!key) err(2, "Hit a hash value that is 0\n");
 
-            uint128_arraylist bin = mempage_get(t->bins, b);
-            for(uint32_t n = 0; n < bin->pointer; n++) {
-                __uint128_t p = bin->data[n];
-                if(p == key) {
-                    pthread_mutex_unlock(&t->table_lock);
-                    return 1;
-                }
-            }
+            uint8_t res = mempage_value_in_bin(t->bins, b, key);
 
             pthread_mutex_unlock(&t->table_lock);
 
-            return 0;
+            return res;
         }
     }
     return 0;
@@ -168,6 +207,8 @@ void to_file_hs(FILE* fp, hashtable t) {
     if(t) {
         if(fwrite(&t->bin_count, sizeof(t->bin_count), 1, fp) < 1) err(10, "Failed to write bin count to file\n");
         fwrite(&t->size, sizeof(t->size), 1, fp);
+
+        // TODO update to new mempage implementation
 
         __uint128_t* pairs = get_pairs(t);
         uint64_t count = 0;
@@ -193,6 +234,7 @@ hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
     fread(&size, sizeof(uint64_t), 1, fp);
     // fscanf(fp, "%lu%lu", &bin_count, &size);
 
+    // TODO update to new mempage_buff implementation
     uint128_arraylist keys = create_uint128_arraylist(size + 1);
     __uint128_t bk;
     for(uint64_t k = 0; k < size; k++) {

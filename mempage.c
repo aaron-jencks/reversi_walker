@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <err.h>
 
+#pragma region mempage
+
 mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
     mempage mp = malloc(sizeof(mempage_str));
     if(!mp) err(1, "Memory Error while allocating memory page manager\n");
@@ -170,3 +172,50 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
         mp->page_count = pages;
     }
 }
+
+#pragma endregion
+#pragma region mempage_buff
+
+mempage_buff create_mempage_buff(__uint128_t num_elements, size_t page_size) {
+    mempage_buff buff = malloc(sizeof(mempage_buff_str));
+    if(!buff) err(1, "Memory error while allocating mempage buffer\n");
+
+    buff->count_per_page = page_size;
+    buff->num_element = num_elements;
+
+    size_t num_pages = num_elements / page_size + 1;
+
+    buff->pages = malloc(sizeof(__uint128_t*) * num_pages);
+    if(!buff->pages) err(1, "Memory error while allocating mempage pages\n");
+
+    for(size_t p = 0; p < num_pages; p++) {
+        buff->pages[p] = calloc(page_size, sizeof(__uint128_t));
+        if(!buff->pages[p]) err(1, "Memory error while allocating mempage page\n");
+    }
+
+    return buff;
+}
+
+void destroy_mempage_buff(mempage_buff buff) {
+    size_t num_pages = buff->num_element / buff->count_per_page + 1;
+
+    for(size_t p = 0; p < num_pages; p++) free(buff->pages[p]);
+    free(buff->pages);
+
+    free(buff);
+}
+
+void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t value) {
+    if(index >= buff->num_element) err(4, "Index out of bounds in mempage buffer\n");
+    uint32_t page = index / buff->count_per_page, page_index = index % buff->count_per_page;
+    __uint128_t* l = buff->pages[page];
+    l[page_index] = value;
+}
+
+__uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index) {
+    if(index >= buff->num_element) err(4, "Index out of bounds in mempage buffer\n");
+    uint32_t page = index / buff->count_per_page, page_index = index % buff->count_per_page;
+    return buff->pages[page][page_index];
+}
+
+#pragma endregion
