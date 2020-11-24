@@ -196,7 +196,7 @@ char* find_temp_directory() {
  * @param page_index page to save
  * @param swap_directory directory where disk pages are being stored
  */
-void save_mempage_page(mempage mp, size_t page_index, char* swap_directory) {
+void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory) {
     char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (16 + strlen(swap_directory)));
     if(!filename) err(1, "Memory Error while allocating filename for swap page\n");
     filename[15] = 0;
@@ -249,7 +249,7 @@ void save_mempage_page(mempage mp, size_t page_index, char* swap_directory) {
  * @param rpage_index page to read
  * @param swap_directory the directory where swap file are stored
  */
-void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, char* swap_directory) {
+void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const char* swap_directory) {
     save_mempage_page(mp, spage_index, swap_directory);
 
     char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (16 + strlen(swap_directory)));

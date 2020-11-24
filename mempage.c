@@ -1,9 +1,11 @@
 #include "mempage.h"
-#include "arraylist.h"
+#include "fileio.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <err.h>
+
+#define MEMORY_THRESHOLD 16000000000
 
 #pragma region mempage
 
@@ -25,7 +27,7 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
     if(!mp->access_counts) err(1, "Memory error while allocating book for mempage\n");
 
     mp->page_present = malloc(((pages >> 3) + 1) * sizeof(uint8_t));
-    if(!mp->access_counts) err(1, "Memory error while allocating book for mempage\n");
+    if(!mp->page_present) err(1, "Memory error while allocating book for mempage\n");
     for(uint8_t b = 0; b < ((pages >> 3) + 1); b++) mp->page_present[b] = 255;
 
     mp->bin_counts = malloc(sizeof(size_t*) * pages);
@@ -53,6 +55,8 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
         mp->pages[p] = bins;
         mp->bin_counts[p] = sizes;
     }
+
+    mp->swap_directory = find_temp_directory();
 
     return mp;
 }
@@ -95,9 +99,47 @@ void destroy_mempage(mempage mp) {
 //     (l)->data[page_index] = data;
 // }
 
+uint8_t mempage_page_exists(mempage mp, size_t page_index) {
+    size_t byte = page_index >> 3, bit = page_index % 8;
+    uint8_t ph = 1 << bit, result = 0;
+    result = mp->page_present[byte] & ph;
+    return (result) ? 1 : 0;
+}
+
+size_t mempage_find_least_used_page(mempage mp) {
+    size_t min = 0, result;
+    uint8_t found = 0;
+    for(size_t i = 0; i < mp->page_count; i++) {
+        if(mempage_page_exists(mp, i) && (!i || mp->access_counts[i] < min)) {
+            min = mp->access_counts[i];
+            result = i;
+            found = 1;
+        }
+    }
+    return (found) ? result : 0;
+}
+
+size_t mempage_find_total_size(mempage mp) {
+    size_t result = sizeof(void*) * mp->page_count * sizeof(size_t) * mp->count_per_page;
+    for(size_t p = 0; p < mp->page_count; p++) {
+        if(mempage_page_exists(mp, p)) {
+            result += sizeof(void*) + sizeof(void*) * mp->count_per_page;
+            for(size_t b = 0; b < mp->count_per_page; b++) {
+                result += sizeof(__uint128_t) * mp->bin_counts[p][b];
+            }
+        }
+    }
+    return result + sizeof(mempage_str);
+}
+
 void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
     if(bin_index >= mp->num_bins) err(4, "Index out of bounds in mempage\n");
     uint32_t page = bin_index / mp->count_per_page, page_index = bin_index % mp->count_per_page;
+
+    if(!mempage_page_exists(mp, page)) {
+        size_t lpage = mempage_find_least_used_page(mp);
+        swap_mempage_page(mp, lpage, page, mp->swap_directory);
+    }
 
     mp->access_counts[page]++;
 
@@ -133,6 +175,11 @@ uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t valu
     if(bin_index >= mp->num_bins) err(4, "Index out of bounds in mempage\n");
     uint32_t page = bin_index / mp->count_per_page, page_index = bin_index % mp->count_per_page;
 
+    if(!mempage_page_exists(mp, page)) {
+        size_t lpage = mempage_find_least_used_page(mp);
+        swap_mempage_page(mp, lpage, page, mp->swap_directory);
+    }
+
     mp->access_counts[page]++;
 
     #ifdef mempagedebug
@@ -148,7 +195,21 @@ uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t valu
 }
 
 void mempage_clear_all(mempage mp) {
-    for(__uint128_t p = 0; p < mp->page_count; p++) {
+    // TODO adjust to clear swapped pages as well
+    size_t last_known_mem_page = 0;
+    for(size_t p = 0; p < mp->page_count; p++) {
+        if(mempage_page_exists(mp, p)) {
+            last_known_mem_page = p;
+            break;
+        }
+    }
+
+    for(size_t p = 0; p < mp->page_count; p++) {
+        if(!mempage_page_exists(mp, p)) {
+            swap_mempage_page(mp, last_known_mem_page, p, mp->swap_directory);
+            last_known_mem_page = p;
+        }
+        
         for(size_t b = 0; b < mp->bin_size; b++) {
             free(mp->pages[p][b]);
             mp->pages[p][b] = calloc(mp->bin_size, sizeof(__uint128_t));
@@ -171,6 +232,12 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
         mp->pages = realloc(mp->pages, sizeof(__uint128_t**) * pages);
         if(!mp->pages) err(1, "Memory error while allocating book for mempage\n");
 
+        mp->access_counts = realloc(mp->access_counts, pages * sizeof(size_t));
+        if(!mp->access_counts) err(1, "Memory error while allocating book for mempage\n");
+
+        mp->page_present = realloc(mp->page_present, ((pages >> 3) + 1) * sizeof(uint8_t));
+        if(!mp->page_present) err(1, "Memory error while allocating book for mempage\n");
+
         mp->bin_counts = realloc(mp->bin_counts, sizeof(size_t**) * pages);
         if(!mp->bin_counts) err(1, "Memory error while allocating book for mempage\n");
 
@@ -190,9 +257,25 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
 
             mp->pages[p] = bins;
             mp->bin_counts[p] = sizes;
+            mp->access_counts[p] = 0;
+
+            // Mark the page as not present in RAM
+            size_t byte = p >> 3, bit = p % 8;
+            uint8_t ph = 1 << bit;
+            mp->page_present[byte] |= ph;
         }
 
         mp->page_count = pages;
+
+        while(mempage_find_total_size(mp) > MEMORY_THRESHOLD) {
+            size_t pindex = mempage_find_least_used_page(mp);
+
+            #ifdef mempagedebug
+                printf("Saving page %ld to file\n", pindex);
+            #endif
+
+            save_mempage_page(mp, pindex, mp->swap_directory);
+        }
     }
 }
 

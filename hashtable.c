@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #define BIN_PAGE_COUNT 1000000
+#define BIN_SIZE 16
 
 /**
  * @brief Create a hashtable object
@@ -20,7 +21,7 @@ hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*
     hashtable t = malloc(sizeof(hashtable_str));
     if(!t) err(1, "Memory Error while trying to allocate hashtable\n");
     if(pthread_mutex_init(&t->table_lock, 0) != 0) err(4, "Hashtable mutex init has failed\n");
-    t->bins = create_mempage(BIN_PAGE_COUNT, initial_bin_count, 16); // calloc(initial_bin_count, sizeof(uint128_arraylist));
+    t->bins = create_mempage(BIN_PAGE_COUNT, initial_bin_count, BIN_SIZE); // calloc(initial_bin_count, sizeof(uint128_arraylist));
     // for(uint64_t i = 0; i < initial_bin_count; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
     t->bin_count = initial_bin_count;
     t->size = 0;

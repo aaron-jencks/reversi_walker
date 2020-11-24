@@ -38,7 +38,7 @@ hashtable.o: hashtable.c hashtable.h mempage.o arraylist.o
 arraylist.o: arraylist.c arraylist.h
 	$(cc) $(cflags) -o $@ -c $<
 
-mempage.o: mempage.c mempage.h arraylist.o
+mempage.o: mempage.c mempage.h fileio.o
 	$(cc) $(cflags) -o $@ -c $<
 
 walker.o: walker.c walker.h reversi.o ll.o arraylist.o

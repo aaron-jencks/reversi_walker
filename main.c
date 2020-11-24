@@ -65,6 +65,8 @@
  * 
  * TODO make a way to swap out memory from disk when it's not used.
  * 
+ * TODO ask about using mmap with swap to automate the mempage system
+ * 
  */
 
 

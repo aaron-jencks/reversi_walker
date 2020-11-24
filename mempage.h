@@ -3,8 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "arraylist.h"
-
 #pragma region hashtable mempage
 
 typedef struct _mempage_str {
@@ -16,6 +14,7 @@ typedef struct _mempage_str {
     size_t count_per_page;
     __uint128_t num_bins;
     size_t bin_size;
+    char* swap_directory;
 } mempage_str;
 
 typedef mempage_str* mempage;
