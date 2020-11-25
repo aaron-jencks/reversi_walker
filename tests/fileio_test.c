@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define INSERTIONS 16000000
+#define INSERTIONS 30000
 #define SAVING_CYCLES 1
 
 __uint128_t key = 1;
@@ -20,7 +20,7 @@ void fio_test_hashtable_write() {
     printf("Testing fileio with a full hashtable\n");
     char* checkpoint_filename = find_temp_filename("checkpoint.bin\0");
     printf("Saving to %s\n", checkpoint_filename);
-    hashtable hs = create_hashtable(1000000, &debug_hash);
+    hashtable hs = create_hashtable(100, &debug_hash);
 
     printf("Inserting elements\n");
     for(uint32_t k = 0; k < INSERTIONS; k++) {
@@ -42,7 +42,7 @@ void fio_test_hashtable_write() {
         hs = from_file_hs(fp, &debug_hash);
         fclose(fp);
 
-        printf("New hashtable size %ld\n", hs->size);
+        printf("New hashtable size %lu %lu\n", ((uint64_t*)&hs->size)[1], ((uint64_t*)&hs->size)[0]);
         assert(hs->size == INSERTIONS);
     }
 

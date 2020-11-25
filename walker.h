@@ -2,6 +2,7 @@
 
 #include "reversi.h"
 #include "hashtable.h"
+#include "arraylist.h"
 
 #include <stdint.h>
 #include <stdio.h>

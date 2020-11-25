@@ -64,7 +64,7 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
 void destroy_mempage(mempage mp) {
     if(mp) {
         for(__uint128_t p = 0; p < mp->page_count; p++) {
-            for(size_t b = 0; b < mp->bin_size; b++) free(mp->pages[p][b]);
+            for(size_t b = 0; b < mp->count_per_page; b++) free(mp->pages[p][b]);
             free(mp->pages[p]);
             free(mp->bin_counts[p]);
         }
@@ -144,7 +144,7 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
     mp->access_counts[page]++;
 
     #ifdef mempagedebug
-        printf("Memory page has been accessed %ld times\n", mp->access_couns[page]);
+        // printf("Memory page has been accessed %ld times\n", mp->access_counts[page]);
     #endif
 
     __uint128_t** l = mp->pages[page];
@@ -183,7 +183,7 @@ uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t valu
     mp->access_counts[page]++;
 
     #ifdef mempagedebug
-        printf("Memory page has been accessed %ld times\n", mp->access_couns[page]);
+        printf("Memory page has been accessed %ld times\n", mp->access_counts[page]);
     #endif
 
     __uint128_t** l = mp->pages[page];
@@ -195,7 +195,6 @@ uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t valu
 }
 
 void mempage_clear_all(mempage mp) {
-    // TODO adjust to clear swapped pages as well
     size_t last_known_mem_page = 0;
     for(size_t p = 0; p < mp->page_count; p++) {
         if(mempage_page_exists(mp, p)) {

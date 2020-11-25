@@ -51,25 +51,28 @@ void destroy_hashtable(hashtable t) {
 mempage_buff get_pairs(hashtable t) {
     if(t) {
         mempage_buff buff = create_mempage_buff(t->size, BIN_PAGE_COUNT);
-        uint8_t terminated = 0;
+        __uint128_t offset = 0;
         for(size_t p = 0; p < t->bins->page_count; p++) {
-            if(terminated) break;
             __uint128_t** page = t->bins->pages[p];
             for(size_t b = 0; b < t->bins->count_per_page; b++) {
-                if(terminated) break;
                 __uint128_t* bin = page[b];
                 size_t bcount = t->bins->bin_counts[p][b];
 
                 for(size_t be = 0; be < bcount; be++) {
-                    if(!bin[be]) {
-                        terminated = 1;
-                        break;
-                    }
+                    if(!bin[be]) break;
+
+                    #ifdef hashdebug
+                        printf("\rRetrieving %lu %lu into index %lu %lu", ((uint64_t*)&bin[be])[1], ((uint64_t*)&bin[be])[0], ((uint64_t*)&offset)[1], ((uint64_t*)&offset)[0]);
+                    #endif
                     
-                    mempage_buff_put(buff, ((__uint128_t)p) + ((__uint128_t)b) + ((__uint128_t)be), bin[be]);
+                    mempage_buff_put(buff, (p || b || be) ? ++offset : offset, bin[be]);
                 }
             }
         }
+
+        #ifdef hashdebug
+            printf("\n");
+        #endif
 
         return buff;
     }
@@ -97,37 +100,6 @@ __uint128_t put_hs(hashtable t, void* value) {
                     #endif
 
                     //re-hash
-                    // __uint128_t* pairs = get_pairs(t);
-
-                    // clear_bins(t);
-
-                    // #ifdef hashdebug
-                    //     printf("Creating new mempage system with %ld elements\n", t->size + 64000);
-                    // #endif
-
-                    // t->bins = create_mempage(1000000, t->size + 64000);
-                    // // if(!t->bins) err(1, "Memory Error while re allocating bins for hashtable\n");
-                    // for(uint64_t i = 0; i < t->size + 64000; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
-                    // t->bin_count = t->size + 64000;
-
-                    // #ifdef hashdebug
-                    //     printf("Re-inserting previous elements\n");
-                    //     uint64_t iter = 0;
-                    // #endif
-
-                    // for(__uint128_t* p = pairs; *p; p++) {
-                    //     #ifdef hashdebug
-                    //         printf("\rInserting element %ld: %lu %lu", iter++, ((uint64_t*)p)[1], ((uint64_t*)p)[0]);
-                    //     #endif
-
-                    //     append_ddal((uint128_arraylist)mempage_get(t->bins, (*p) % t->bin_count), *p);
-                    // }
-
-                    // #ifdef hashdebug
-                    //     printf("\n");
-                    // #endif
-
-                    // free(pairs);
 
                     #ifdef hashdebug
                         printf("Copying over the previous elements into a temporary buffer\n");
@@ -141,11 +113,13 @@ __uint128_t put_hs(hashtable t, void* value) {
 
                     mempage_clear_all(t->bins);
 
+                    __uint128_t new_size = t->size + 64000;
+
                     #ifdef hashdebug
-                        printf("Reallocating mempage to %ld elements\n", t->size + 64000);
+                        printf("Reallocating mempage to %lu %lu elements\n", ((uint64_t*)&new_size)[1], ((uint64_t*)&new_size)[0]);
                     #endif
 
-                    mempage_realloc(t->bins, t->size + 64000);
+                    mempage_realloc(t->bins, new_size);
 
                     #ifdef hashdebug
                         printf("Reinserting previous elements\n");
@@ -155,7 +129,7 @@ __uint128_t put_hs(hashtable t, void* value) {
                         __uint128_t k = mempage_buff_get(buff, p);
 
                         #ifdef hashdebug
-                            printf("\rInserting element: %lu %lu", ((uint64_t*)&k)[1], ((uint64_t*)&k)[0]);
+                            printf("\rInserting element %lu %lu: %lu %lu", ((uint64_t*)&p)[1], ((uint64_t*)&p)[0], ((uint64_t*)&k)[1], ((uint64_t*)&k)[0]);
                         #endif
 
                         mempage_append_bin(t->bins, k % t->bin_count, k);
@@ -165,7 +139,7 @@ __uint128_t put_hs(hashtable t, void* value) {
                         printf("\nRehash complete\n");
                     #endif
 
-                    t->bin_count = t->size + 64000;
+                    t->bin_count = new_size;
 
                     destroy_mempage_buff(buff);
                 }

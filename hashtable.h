@@ -16,8 +16,8 @@ typedef keyval_pair_str* keyval_pair;
 typedef struct _hashtable_str {
     pthread_mutex_t table_lock;
     mempage bins;
-    uint64_t bin_count;
-    uint64_t size;
+    __uint128_t bin_count;
+    __uint128_t size;
     __uint128_t (*hash)(void*);
 } hashtable_str;
 
