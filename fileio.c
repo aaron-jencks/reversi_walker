@@ -33,7 +33,7 @@ void display_board_f(board b) {
  */
 char* find_temp_filename(const char* filename) {
     // Setup the checkpoint saving system
-    char temp_str[] = "/tmp/reversi.XXXXXX\0", *final_result = calloc(35, sizeof(char));
+    char temp_str[] = "/tmp/reversi.XXXXXX", *final_result = calloc(35, sizeof(char));
     char* dir_ptr = mkdtemp(temp_str);
     strncat(final_result, dir_ptr, 20);
     final_result[19] = '/';
@@ -177,7 +177,7 @@ char* find_temp_directory() {
 
     char* temp_str = malloc(sizeof(char) * strlen(p->pw_name) + 27);
     if(!temp_str) err(1, "Memory Error while allocating temporary directory for swap\n");
-    snprintf(temp_str, strlen(p->pw_name) + 27, "/home/%s/Temp/reversi.XXXXXX\0", p->pw_name);
+    snprintf(temp_str, strlen(p->pw_name) + 27, "/home/%s/Temp/reversi.XXXXXX", p->pw_name);
 
     char* dir_ptr = mkdtemp(temp_str);
     #ifdef checkpointdebug
@@ -197,6 +197,11 @@ char* find_temp_directory() {
  * @param swap_directory directory where disk pages are being stored
  */
 void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Saving files\n");
+    #endif
+
     char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (16 + strlen(swap_directory)));
     if(!filename) err(1, "Memory Error while allocating filename for swap page\n");
     filename[15] = 0;
@@ -250,6 +255,11 @@ void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory
  * @param swap_directory the directory where swap file are stored
  */
 void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Swapping files\n");
+    #endif
+
     save_mempage_page(mp, spage_index, swap_directory);
 
     char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (16 + strlen(swap_directory)));

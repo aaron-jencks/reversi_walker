@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define INSERTIONS 30000
+#define INSERTIONS 3000
 #define SAVING_CYCLES 1
 
 __uint128_t key = 1;
@@ -24,7 +24,7 @@ void fio_test_hashtable_write() {
 
     printf("Inserting elements\n");
     for(uint32_t k = 0; k < INSERTIONS; k++) {
-        printf("\r%u/%d", k, INSERTIONS);
+        printf("\r%u/%d", k + 1, INSERTIONS);
         fflush(stdout);
         put_hs(hs, k);
     }

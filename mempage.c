@@ -71,6 +71,7 @@ void destroy_mempage(mempage mp) {
         free(mp->pages);
         free(mp->access_counts);
         free(mp->bin_counts);
+        free(mp->page_present);
         free(mp);
     }
 }
@@ -133,7 +134,9 @@ size_t mempage_find_total_size(mempage mp) {
 }
 
 void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
-    if(bin_index >= mp->num_bins) err(4, "Index out of bounds in mempage\n");
+    if(bin_index >= mp->num_bins) err(4, "Index %lu %lu out of bounds in mempage of size %lu %lu\n", 
+                                      ((uint64_t*)&bin_index)[1], ((uint64_t*)&bin_index)[0], 
+                                      ((uint64_t*)&mp->num_bins)[1], ((uint64_t*)&mp->num_bins)[0]);
     uint32_t page = bin_index / mp->count_per_page, page_index = bin_index % mp->count_per_page;
 
     if(!mempage_page_exists(mp, page)) {
@@ -250,7 +253,6 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
             for(size_t b = 0; b < mp->bin_size; b++) {
                 bins[b] = calloc(mp->bin_size, sizeof(__uint128_t));
                 if(!bins[b]) err(1, "Memory error while allocating bin for mempage\n");
-
                 sizes[b] = mp->bin_size;
             }
 
@@ -276,6 +278,8 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
             save_mempage_page(mp, pindex, mp->swap_directory);
         }
     }
+
+    mp->num_bins = bin_count;
 }
 
 #pragma endregion

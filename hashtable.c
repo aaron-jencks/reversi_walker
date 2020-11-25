@@ -50,6 +50,10 @@ void destroy_hashtable(hashtable t) {
  */
 mempage_buff get_pairs(hashtable t) {
     if(t) {
+        #ifdef hashdebug
+            printf("Getting pairs for hashtable with size %lu %lu\n", ((uint64_t*)&t->size)[1], ((uint64_t*)&t->size)[0]);
+        #endif
+
         mempage_buff buff = create_mempage_buff(t->size, BIN_PAGE_COUNT);
         __uint128_t offset = 0;
         for(size_t p = 0; p < t->bins->page_count; p++) {
@@ -63,9 +67,10 @@ mempage_buff get_pairs(hashtable t) {
 
                     #ifdef hashdebug
                         printf("\rRetrieving %lu %lu into index %lu %lu", ((uint64_t*)&bin[be])[1], ((uint64_t*)&bin[be])[0], ((uint64_t*)&offset)[1], ((uint64_t*)&offset)[0]);
+                        fflush(stdout);
                     #endif
                     
-                    mempage_buff_put(buff, (p || b || be) ? ++offset : offset, bin[be]);
+                    mempage_buff_put(buff, offset++, bin[be]);
                 }
             }
         }
@@ -132,13 +137,14 @@ __uint128_t put_hs(hashtable t, void* value) {
                             printf("\rInserting element %lu %lu: %lu %lu", ((uint64_t*)&p)[1], ((uint64_t*)&p)[0], ((uint64_t*)&k)[1], ((uint64_t*)&k)[0]);
                         #endif
 
-                        mempage_append_bin(t->bins, k % t->bin_count, k);
+                        mempage_append_bin(t->bins, k % t->bins->num_bins, k);
                     }
 
                     #ifdef hashdebug
-                        printf("\nRehash complete\n");
+                        printf("\nRehash complete, new bin count is %lu %lu\n", ((uint64_t*)&t->bins->num_bins)[1], ((uint64_t*)&t->bins->num_bins)[0]);
                     #endif
 
+                    // t->bins->num_bins = new_size;
                     t->bin_count = new_size;
 
                     destroy_mempage_buff(buff);
