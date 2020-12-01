@@ -8,13 +8,14 @@
 #include "tests/mempage_test.h"
 #include "tests/fileio_test.h"
 
-uint64_t test_count = 7;
-void (*tests[7])() = {
+uint64_t test_count = 8;
+void (*tests[8])() = {
     cc_test_directions,
     lm_test_initial,
     lm_test_from_coord,
     board_placement_test,
     mp_test_index,
+    mp_test_realloc,
     mp_buff_test_index,
     fio_test_hashtable_write
 };

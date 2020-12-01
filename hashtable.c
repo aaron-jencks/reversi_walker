@@ -66,7 +66,7 @@ mempage_buff get_pairs(hashtable t) {
                     if(!bin[be]) break;
 
                     #ifdef hashdebug
-                        printf("\rRetrieving %lu %lu into index %lu %lu", ((uint64_t*)&bin[be])[1], ((uint64_t*)&bin[be])[0], ((uint64_t*)&offset)[1], ((uint64_t*)&offset)[0]);
+                        printf("\nRetrieving %lu %lu into index %lu %lu", ((uint64_t*)&bin[be])[1], ((uint64_t*)&bin[be])[0], ((uint64_t*)&offset)[1], ((uint64_t*)&offset)[0]);
                         fflush(stdout);
                     #endif
                     
