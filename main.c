@@ -426,8 +426,8 @@ int main() {
             fps_timer = time(0);
         }
 
-        printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Cache Status: %ld Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
-               count, explored_count, fps, cache->size,
+        printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Cache Status: %lu %lu Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
+               count, explored_count, fps, ((uint64_t*)&cache->size)[1], ((uint64_t*)&cache->size)[0],
                run_days, run_hours, run_minutes, run_seconds,
                cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                (save_time) ? "Saving..." : "");
