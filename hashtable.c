@@ -213,15 +213,16 @@ void to_file_hs(FILE* fp, hashtable t) {
 }
 
 hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
-    uint64_t bin_count, size;
-    fread(&bin_count, sizeof(uint64_t), 1, fp);
-    fread(&size, sizeof(uint64_t), 1, fp);
+    __uint128_t bin_count, size;
+    fread(&bin_count, sizeof(__uint128_t), 1, fp);
+    fread(&size, sizeof(__uint128_t), 1, fp);
     // fscanf(fp, "%lu%lu", &bin_count, &size);
 
     mempage_buff keys = create_mempage_buff(size, BIN_PAGE_COUNT);
     __uint128_t bk;
-    for(uint64_t k = 0; k < size; k++) {
-        if(fread(&bk, sizeof(__uint128_t), 1, fp) < 1) err(11, "Failed to read hashtable key %ld/%ld\n", k, size);
+    for(__uint128_t k = 0; k < size; k++) {
+        if(fread(&bk, sizeof(__uint128_t), 1, fp) < 1) err(11, "Failed to read hashtable key %lu %lu/%lu %lu\n", ((uint64_t*)&k)[1], ((uint64_t*)&k)[0], 
+                                                                                                                 ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
         if(bk) mempage_buff_put(keys, k, bk);
         else break;
     }
@@ -235,7 +236,8 @@ hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
     }
     ht->size = size;
 
-    printf("Read in a hashtable with %lu entries and %lu bins\n", size, bin_count);
+    printf("Read in a hashtable with %lu %lu entries and %lu %lu bins\n", ((uint64_t*)&size)[1], ((uint64_t*)&size)[0], 
+                                                                          ((uint64_t*)&bin_count)[1], ((uint64_t*)&bin_count)[0]);
 
     destroy_mempage_buff(keys);
 
