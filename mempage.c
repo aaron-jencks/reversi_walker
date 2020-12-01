@@ -173,6 +173,9 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
 
             l[page_index] = bin;
             mp->bin_counts[page][page_index] = bcount;
+
+            bin[iter] = value;
+            break;
         }
     }
 }
@@ -215,7 +218,7 @@ void mempage_clear_all(mempage mp) {
             last_known_mem_page = p;
         }
         
-        for(size_t b = 0; b < mp->page_count; b++) {
+        for(size_t b = 0; b < mp->count_per_page; b++) {
             free(mp->pages[p][b]);
             mp->pages[p][b] = calloc(mp->bin_size, sizeof(__uint128_t));
             if(!mp->pages[p][b]) err(1, "Memory error while allocating bin for mempage\n");

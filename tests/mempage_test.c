@@ -14,17 +14,39 @@ void mp_test_index() {
     destroy_mempage(mp);
 }
 
+void mp_test_clear() {
+    printf("Testing mempage realloc system\n");
+    mempage mp = create_mempage(25, 500, 65);
+    for(int i = 0; i < 500; i++) mempage_append_bin(mp, i % 500, i);
+    mempage_clear_all(mp);
+
+    for(size_t p = 0; p < mp->page_count; p++) {
+        __uint128_t** page = mp->pages[p];
+        for(size_t b = 0; b < mp->count_per_page; b++) {
+            __uint128_t* bin = page[b];
+            size_t bcount = mp->bin_counts[p][b];
+
+            for(size_t be = 0; be < bcount; be++) {
+                assert(!bin[be]);
+                break;
+            }
+        }
+    }
+}
+
 void mp_test_realloc() {
     printf("Testing mempage realloc system\n");
     mempage mp = create_mempage(25, 500, 65);
-    for(int i = 0; i < 500; i++) mempage_append_bin(mp, i % 500, 1);
+    for(int i = 0; i < 500; i++) mempage_append_bin(mp, i % 500, i);
     mempage_clear_all(mp);
     mempage_realloc(mp, 1000);
 
-    for(int i = 0; i < 500; i++) mempage_append_bin(mp, i % 1000, 1);
+    for(int i = 0; i < 500; i++) 
+        mempage_append_bin(mp, i % 1000, i);
 
     mempage_buff buff = create_mempage_buff(500, 25);
     __uint128_t offset = 0;
+    uint64_t previous = 0, current = 0;
     for(size_t p = 0; p < mp->page_count; p++) {
         __uint128_t** page = mp->pages[p];
         for(size_t b = 0; b < mp->count_per_page; b++) {
@@ -34,10 +56,13 @@ void mp_test_realloc() {
             for(size_t be = 0; be < bcount; be++) {
                 if(!bin[be]) break;
 
+                current = bin[be];
+
                 printf("\nRetrieving %lu %lu into index %lu %lu", ((uint64_t*)&bin[be])[1], ((uint64_t*)&bin[be])[0], ((uint64_t*)&offset)[1], ((uint64_t*)&offset)[0]);
                 fflush(stdout);
                 
                 mempage_buff_put(buff, offset++, bin[be]);
+                previous = current;
             }
         }
     }
