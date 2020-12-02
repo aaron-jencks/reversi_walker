@@ -189,6 +189,18 @@ char* find_temp_directory() {
     return dir_ptr;
 }
 
+char* find_abs_path(size_t page_index, const char* swap_directory) {
+    char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (16 + strlen(swap_directory)));
+    if(!filename) err(1, "Memory Error while allocating filename for swap page\n");
+    filename[15] = 0;
+    snprintf(filename, 15, "p%lu.bin", page_index);
+    strncat(abs_path, swap_directory, strlen(swap_directory));
+    strncat(abs_path + strlen(swap_directory), filename, 16);
+    abs_path[(15 + strlen(swap_directory))] = 0;
+    free(filename);
+    return abs_path;
+}
+
 /**
  * @brief Saves a page from a mempage struct to disk
  * 
@@ -199,17 +211,10 @@ char* find_temp_directory() {
 void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory) {
 
     #ifdef swapdebug
-        printf("Saving files\n");
+        printf("Saving files for page %ld\n", page_index);
     #endif
 
-    char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (16 + strlen(swap_directory)));
-    if(!filename) err(1, "Memory Error while allocating filename for swap page\n");
-    filename[15] = 0;
-    snprintf(filename, 15, "p%lu.bin", page_index);
-    strncat(abs_path, swap_directory, strlen(swap_directory));
-    strncat(abs_path + strlen(swap_directory), filename, 16);
-    abs_path[(15 + strlen(swap_directory))] = 0;
-    free(filename);
+    char* abs_path = find_abs_path(page_index, swap_directory);
 
     /*
      * page_size (number of bins)
@@ -257,19 +262,12 @@ void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory
 void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const char* swap_directory) {
 
     #ifdef swapdebug
-        printf("Swapping files\n");
+        printf("Swapping files for indices %ld and %ld\n", spage_index, rpage_index);
     #endif
 
     save_mempage_page(mp, spage_index, swap_directory);
 
-    char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (16 + strlen(swap_directory)));
-    if(!filename) err(1, "Memory Error while allocating filename for swap page\n");
-    filename[15] = 0;
-    snprintf(filename, 15, "p%lu.bin", rpage_index);
-    strncat(abs_path, swap_directory, strlen(swap_directory));
-    strncat(abs_path + strlen(swap_directory), filename, 16);
-    abs_path[(15 + strlen(swap_directory))] = 0;
-    free(filename);
+    char* abs_path = find_abs_path(rpage_index, swap_directory);
 
     /*
      * page_size (number of bins)
@@ -300,6 +298,95 @@ void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const
         bins[b] = bin;
     }
 
+
+    fclose(fp);
+    free(abs_path);
+
+    // Mark the page as not present in RAM
+    size_t byte = rpage_index >> 3, bit = rpage_index % 8;
+    uint8_t ph = 1 << bit;
+    mp->page_present[byte] |= ph;
+}
+
+#pragma endregion
+#pragma region mempage_buff swapping
+
+/**
+ * @brief Saves a page from a mempage struct to disk
+ * 
+ * @param mp mempage to save from
+ * @param page_index page to save
+ * @param swap_directory directory where disk pages are being stored
+ */
+void save_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Saving files for page %ld\n", page_index);
+    #endif
+
+    char* abs_path = find_abs_path(page_index, swap_directory);
+
+    /*
+     * page_size (number of bins)
+     * bin_counts (number of elements in each bin)
+     * bin_contents (array of all elements)
+     */
+
+    FILE* fp = fopen(abs_path, "wb+");
+    if(!fp) err(7, "Unable to open or create swap file\n");
+
+    // Write page size
+    fwrite(&mp->count_per_page, sizeof(mp->count_per_page), 1, fp);
+
+    // Write the keys
+    fwrite(mp->pages[page_index], sizeof(__uint128_t), mp->count_per_page, fp);
+    free(mp->pages[page_index]);
+
+    fclose(fp);
+    free(abs_path);
+    free(mp->pages[page_index]);
+
+    // Mark the page as not present in RAM
+    size_t byte = page_index >> 3, bit = page_index % 8;
+    uint8_t ph = 1 << bit;
+    mp->page_present[byte] ^= ph;
+}
+
+/**
+ * @brief Swaps a page from a mempage struct with a page that is in memory
+ * 
+ * @param mp mempage to swap from
+ * @param spage_index page to save
+ * @param rpage_index page to read
+ * @param swap_directory the directory where swap file are stored
+ */
+void swap_mempage_buff_page(mempage_buff mp, size_t spage_index, size_t rpage_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Swapping files for indices %ld and %ld\n", spage_index, rpage_index);
+    #endif
+
+    save_mempage_buff_page(mp, spage_index, swap_directory);
+
+    char* abs_path = find_abs_path(rpage_index, swap_directory);
+
+    /*
+     * page_size (number of bins)
+     * bin_counts (number of elements in each bin)
+     * bin_contents (array of all elements)
+     */
+
+    FILE* fp = fopen(abs_path, "rb");
+    if(!fp) err(7, "Unable to open or create swap file\n");
+
+    size_t page_size = 0;
+    fread(&page_size, sizeof(page_size), 1, fp);
+
+    __uint128_t* bins = malloc(sizeof(__uint128_t*) * page_size);
+    if(!bins) err(1, "Memory Error while allocating page from swap file\n");
+    mp->pages[rpage_index] = bins;
+
+    fread(bins, sizeof(__uint128_t), page_size, fp);
 
     fclose(fp);
     free(abs_path);

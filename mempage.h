@@ -40,6 +40,8 @@ typedef struct _mempage_buff_str {
     size_t page_count;
     size_t count_per_page;
     __uint128_t num_element;
+    uint8_t* page_present;
+    char* swap_directory;
 } mempage_buff_str;
 
 typedef mempage_buff_str* mempage_buff;

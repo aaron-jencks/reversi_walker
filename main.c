@@ -171,12 +171,7 @@ __uint128_t board_hash(void* brd) {
 }
 
 
-// TODO make work on a 6x6
-// Modify to copy boards, instead of 
 int main() {
-    // TODO create gui for deciding whether or not to restore from a checkpoint
-    // ui.o
-    // 
     char d;
     while(1) {
         printf("Would you like to restore from a checkpoint?(y/N): ");
@@ -204,7 +199,7 @@ int main() {
     #ifndef limitprocs
         procs = procs << 1;
     #else
-        procs = 2;
+        procs = 12;
     #endif
 
     // Setup the locks
