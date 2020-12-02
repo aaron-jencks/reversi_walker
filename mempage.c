@@ -323,7 +323,7 @@ uint8_t mempage_buff_page_exists(mempage_buff mp, size_t page_index) {
 
 size_t mempage_buff_find_least_used_page(mempage_buff mp) {
     for(size_t i = 0; i < mp->page_count; i++) {
-        if(mempage_page_exists(mp, i)) {
+        if(mempage_buff_page_exists(mp, i)) {
             return i;
         }
     }

@@ -23,6 +23,10 @@ mempage create_mempage(size_t page_max, __uint128_t bin_count, size_t bin_size);
 
 void destroy_mempage(mempage mp);
 
+uint8_t mempage_page_exists(mempage mp, size_t page_index);
+size_t mempage_find_least_used_page(mempage mp);
+size_t mempage_find_total_size(mempage mp);
+
 // __uint128_t mempage_get(mempage mp, __uint128_t key_index);
 
 // void mempage_put(mempage mp, __uint128_t index, void* data);
