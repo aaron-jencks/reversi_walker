@@ -49,6 +49,10 @@ typedef mempage_buff_str* mempage_buff;
 mempage_buff create_mempage_buff(__uint128_t num_elements, size_t page_size);
 void destroy_mempage_buff(mempage_buff buff);
 
+uint8_t mempage_buff_page_exists(mempage_buff mp, size_t page_index);
+size_t mempage_buff_find_least_used_page(mempage_buff mp);
+size_t mempage_buff_find_total_size(mempage_buff buff);
+
 void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t value);
 __uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index);
 

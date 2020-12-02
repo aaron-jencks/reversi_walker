@@ -102,3 +102,9 @@ void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory
 void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const char* swap_directory);
 
 #pragma endregion
+#pragma region mempage buff swapping
+
+void save_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory);
+void swap_mempage_buff_page(mempage_buff mp, size_t spage_index, size_t rpage_index, const char* swap_directory);
+
+#pragma endregion
