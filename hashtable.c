@@ -230,14 +230,18 @@ hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
     hashtable ht = create_hashtable(bin_count, hash);
     
     // Insert the keys
-    for(uint64_t p = 0; p < size; p++) {
+    for(__uint128_t p = 0; p < size; p++) {
+        printf("\rInserting %lu %lu/%lu %lu", ((uint64_t*)&p)[1], ((uint64_t*)&p)[0],
+                                              ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
+        fflush(stdout);
         __uint128_t k = mempage_buff_get(keys, p);
+        // printf("Retrieved the file from the buffer\n");
         mempage_append_bin(ht->bins, k % ht->bin_count, k);
     }
     ht->size = size;
 
-    printf("Read in a hashtable with %lu %lu entries and %lu %lu bins\n", ((uint64_t*)&size)[1], ((uint64_t*)&size)[0], 
-                                                                          ((uint64_t*)&bin_count)[1], ((uint64_t*)&bin_count)[0]);
+    printf("\nRead in a hashtable with %lu %lu entries and %lu %lu bins\n", ((uint64_t*)&size)[1], ((uint64_t*)&size)[0], 
+                                                                            ((uint64_t*)&bin_count)[1], ((uint64_t*)&bin_count)[0]);
 
     destroy_mempage_buff(keys);
 

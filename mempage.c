@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <err.h>
+#include <time.h>
 
-#define MEMORY_THRESHOLD 16000000000
+#define MEMORY_THRESHOLD 5750000000
+#define CHECK_SWAP_INTERV 1000000
 
 #pragma region mempage
 
@@ -38,6 +40,7 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
     mp->num_bins = num_bins;
     mp->bin_size = bin_size;
     mp->swap_directory = find_temp_directory();
+    mp->save_interv_counter = 0;
 
     for(__uint128_t p = 0; p < pages; p++) {
         __uint128_t** bins = malloc(sizeof(__uint128_t*) * page_max);
@@ -64,7 +67,7 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
             size_t pindex = mempage_find_least_used_page(mp);
 
             #ifdef mempagedebug
-                printf("Saving page %ld to file\n", pindex);
+                printf("Cache size: %ld/%ld: Saving page %ld to file\n", mempage_find_total_size(mp), MEMORY_THRESHOLD, pindex);
             #endif
 
             save_mempage_page(mp, pindex, mp->swap_directory);
@@ -122,9 +125,10 @@ uint8_t mempage_page_exists(mempage mp, size_t page_index) {
 
 size_t mempage_find_least_used_page(mempage mp) {
     size_t min = 0, result;
-    uint8_t found = 0;
+    uint8_t found = 0, first_page = 1;
     for(size_t i = 0; i < mp->page_count; i++) {
-        if(mempage_page_exists(mp, i) && (!i || mp->access_counts[i] < min)) {
+        if(mempage_page_exists(mp, i) && (first_page || mp->access_counts[i] < min)) {
+            if(first_page) first_page = 0;
             min = mp->access_counts[i];
             result = i;
             found = 1;
@@ -135,14 +139,27 @@ size_t mempage_find_least_used_page(mempage mp) {
 
 size_t mempage_find_total_size(mempage mp) {
     size_t result = sizeof(void*) * mp->page_count * sizeof(size_t) * mp->count_per_page;
-    for(size_t p = 0; p < mp->page_count; p++) {
-        if(mempage_page_exists(mp, p)) {
-            result += sizeof(void*) + sizeof(void*) * mp->count_per_page;
-            for(size_t b = 0; b < mp->count_per_page; b++) {
-                result += sizeof(__uint128_t) * mp->bin_counts[p][b];
+    uint8_t ph;
+    for(size_t b = 0; b < ((mp->page_count >> 3) + 1); b++) {
+        ph = 1;
+        for(uint8_t bit = 0; bit < 8; bit++) {
+            if(bit) ph = ph << 1;
+            if(mp->page_present[b] & ph) {
+                result += sizeof(void*) + sizeof(void*) * mp->count_per_page;
+                for(size_t bn = 0; bn < mp->count_per_page; bn++) {
+                    result += sizeof(__uint128_t) * mp->bin_counts[(b >> 3) + bit][bn];
+                }
             }
         }
     }
+    // for(size_t p = 0; p < mp->page_count; p++) {
+    //     if(mempage_page_exists(mp, p)) {
+    //         result += sizeof(void*) + sizeof(void*) * mp->count_per_page;
+    //         for(size_t b = 0; b < mp->count_per_page; b++) {
+    //             result += sizeof(__uint128_t) * mp->bin_counts[p][b];
+    //         }
+    //     }
+    // }
     return result + sizeof(mempage_str);
 }
 
@@ -152,10 +169,15 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
                                       ((uint64_t*)&mp->num_bins)[1], ((uint64_t*)&mp->num_bins)[0]);
     uint32_t page = bin_index / mp->count_per_page, page_index = bin_index % mp->count_per_page;
 
+    // printf("Calculated page and bin %ld\n", clock());
+
     if(!mempage_page_exists(mp, page)) {
         size_t lpage = mempage_find_least_used_page(mp);
-        swap_mempage_page(mp, lpage, page, mp->swap_directory);
+        if(mempage_page_exists(mp, lpage)) swap_mempage_page(mp, lpage, page, mp->swap_directory);
+        else load_mempage_page(mp, page, mp->swap_directory);
     }
+
+    // printf("Checked page existence %ld\n", clock());
 
     mp->access_counts[page]++;
 
@@ -192,15 +214,28 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
         }
     }
 
-    while(mempage_find_total_size(mp) > MEMORY_THRESHOLD) {
-        size_t pindex = mempage_find_least_used_page(mp);
+    // printf("Inserted element %ld\n", clock());
 
-        #ifdef mempagedebug
-            printf("Saving page %ld to file\n", pindex);
-        #endif
+    if(++mp->save_interv_counter == CHECK_SWAP_INTERV) {
+        if(mempage_find_total_size(mp) > MEMORY_THRESHOLD) {
+            #ifdef mempagedebug
+                printf("The cache is too big, attempting to swap\n");
+            #endif
 
-        save_mempage_page(mp, pindex, mp->swap_directory);
+            size_t pindex = mempage_find_least_used_page(mp);
+
+            if(mempage_page_exists(mp, pindex)) {
+                #ifdef mempagedebug
+                    printf("Cache size: %ld/%ld: Saving page %ld to file\n", mempage_find_total_size(mp), MEMORY_THRESHOLD, pindex);
+                #endif
+
+                save_mempage_page(mp, pindex, mp->swap_directory);
+            }
+        }
+        mp->save_interv_counter = 0;
     }
+
+    // printf("Checked for swap %ld\n", clock());
 }
 
 uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
@@ -215,7 +250,7 @@ uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t valu
     mp->access_counts[page]++;
 
     #ifdef mempagedebug
-        printf("Memory page has been accessed %ld times\n", mp->access_counts[page]);
+        // printf("Memory page has been accessed %ld times\n", mp->access_counts[page]);
     #endif
 
     __uint128_t** l = mp->pages[page];
@@ -237,7 +272,8 @@ void mempage_clear_all(mempage mp) {
 
     for(size_t p = 0; p < mp->page_count; p++) {
         if(!mempage_page_exists(mp, p)) {
-            swap_mempage_page(mp, last_known_mem_page, p, mp->swap_directory);
+            if(mempage_page_exists(mp, last_known_mem_page)) swap_mempage_page(mp, last_known_mem_page, p, mp->swap_directory);
+            else load_mempage_page(mp, p, mp->swap_directory);
             last_known_mem_page = p;
         }
         
@@ -298,7 +334,7 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
                 size_t pindex = mempage_find_least_used_page(mp);
 
                 #ifdef mempagedebug
-                    printf("Saving page %ld to file\n", pindex);
+                    printf("Cache size: %ld/%ld: Saving page %ld to file\n", mempage_find_total_size(mp), MEMORY_THRESHOLD, pindex);
                 #endif
 
                 save_mempage_page(mp, pindex, mp->swap_directory);
@@ -346,6 +382,7 @@ mempage_buff create_mempage_buff(__uint128_t num_elements, size_t page_size) {
 
     buff->count_per_page = page_size;
     buff->num_element = num_elements;
+    buff->save_interv_counter = 0;
 
     size_t num_pages = num_elements / page_size + 1;
 
@@ -393,11 +430,25 @@ void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t value) {
 
     if(!mempage_buff_page_exists(buff, page)) {
         size_t lpage = mempage_buff_find_least_used_page(buff);
-        swap_mempage_buff_page(buff, lpage, page, buff->swap_directory);
+        if(mempage_buff_page_exists(buff, lpage)) swap_mempage_buff_page(buff, lpage, page, buff->swap_directory);
+        else load_mempage_buff_page(buff, page, buff->swap_directory);
     }
 
     __uint128_t* l = buff->pages[page];
     l[page_index] = value;
+
+    if(++buff->save_interv_counter == CHECK_SWAP_INTERV) {
+        if(mempage_buff_find_total_size(buff) > MEMORY_THRESHOLD) {
+            size_t pindex = mempage_buff_find_least_used_page(buff);
+
+            #ifdef mempagedebug
+                printf("Saving page %ld to file\n", pindex);
+            #endif
+
+            save_mempage_buff_page(buff, pindex, buff->swap_directory);
+        }
+        buff->save_interv_counter = 0;
+    }
 }
 
 __uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index) {
@@ -406,7 +457,8 @@ __uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index) {
 
     if(!mempage_buff_page_exists(buff, page)) {
         size_t lpage = mempage_buff_find_least_used_page(buff);
-        swap_mempage_buff_page(buff, lpage, page, buff->swap_directory);
+        if(mempage_buff_page_exists(buff, lpage)) swap_mempage_buff_page(buff, lpage, page, buff->swap_directory);
+        else load_mempage_buff_page(buff, page, buff->swap_directory);
     }
 
     return buff->pages[page][page_index];

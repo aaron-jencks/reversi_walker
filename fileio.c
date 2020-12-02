@@ -131,7 +131,9 @@ processed_file restore_progress(char* filename, __uint128_t (*hash)(void*)) {
             fread(&board_key, sizeof(__uint128_t), 1, fp);
             // fscanf(fp, "%c%lu%lu", &player, &board_upper, &board_lower);
 
-            printf("Found board %u: %lu %lu\n", player, ((uint64_t*)(&board_key))[1], ((uint64_t*)(&board_key))[0]);
+            #ifdef filedebug
+                printf("Found board %u: %lu %lu\n", player, ((uint64_t*)(&board_key))[1], ((uint64_t*)(&board_key))[0]);
+            #endif
 
             // // Combine the upper and lower keys
             // board_key = board_upper;
@@ -157,6 +159,7 @@ processed_file restore_progress(char* filename, __uint128_t (*hash)(void*)) {
     }
 
     // Read in the hashtable
+    printf("Restoring cache\n");
     result->cache = from_file_hs(fp, hash);
 
     return result;
@@ -251,6 +254,46 @@ void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory
     for(size_t p = 0; p < mp->page_count; p++) mp->access_counts[p] = 0;
 }
 
+void load_mempage_page(mempage mp, size_t page_index, const char* swap_directory) {
+    #ifdef swapdebug
+        printf("Loading files for page %ld\n", page_index);
+    #endif
+
+    char* abs_path = find_abs_path(page_index, swap_directory);
+
+    FILE* fp = fopen(abs_path, "rb");
+    if(!fp) err(7, "Unable to open or create swap file\n");
+
+    size_t page_size = 0;
+    fread(&page_size, sizeof(page_size), 1, fp);
+
+    size_t *sizes = malloc(sizeof(size_t) * page_size);
+    if(!sizes) err(1, "Memory Error while allocating page from swap file\n");
+
+    fread(sizes, sizeof(size_t), page_size, fp);
+    mp->bin_counts[page_index] = sizes;
+
+    __uint128_t** bins = malloc(sizeof(__uint128_t*) * page_size);
+    if(!bins) err(1, "Memory Error while allocating page from swap file\n");
+    mp->pages[page_index] = bins;
+
+    for(size_t b = 0; b < page_size; b++) {
+        __uint128_t* bin = malloc(sizeof(__uint128_t) * mp->bin_counts[page_index][b]);
+        if(!bin) err(1, "Memory Error while allocating bin from swap file\n");
+        fread(bin, sizeof(__uint128_t), mp->bin_counts[page_index][b], fp);
+        bins[b] = bin;
+    }
+
+
+    fclose(fp);
+    free(abs_path);
+
+    // Mark the page as not present in RAM
+    size_t byte = page_index >> 3, bit = page_index % 8;
+    uint8_t ph = 1 << bit;
+    mp->page_present[byte] |= ph;
+}
+
 /**
  * @brief Swaps a page from a mempage struct with a page that is in memory
  * 
@@ -266,46 +309,7 @@ void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const
     #endif
 
     save_mempage_page(mp, spage_index, swap_directory);
-
-    char* abs_path = find_abs_path(rpage_index, swap_directory);
-
-    /*
-     * page_size (number of bins)
-     * bin_counts (number of elements in each bin)
-     * bin_contents (array of all elements)
-     */
-
-    FILE* fp = fopen(abs_path, "rb");
-    if(!fp) err(7, "Unable to open or create swap file\n");
-
-    size_t page_size = 0;
-    fread(&page_size, sizeof(page_size), 1, fp);
-
-    size_t *sizes = malloc(sizeof(size_t) * page_size);
-    if(!sizes) err(1, "Memory Error while allocating page from swap file\n");
-
-    fread(sizes, sizeof(size_t), page_size, fp);
-    mp->bin_counts[rpage_index] = sizes;
-
-    __uint128_t** bins = malloc(sizeof(__uint128_t*) * page_size);
-    if(!bins) err(1, "Memory Error while allocating page from swap file\n");
-    mp->pages[rpage_index] = bins;
-
-    for(size_t b = 0; b < page_size; b++) {
-        __uint128_t* bin = malloc(sizeof(__uint128_t) * mp->bin_counts[rpage_index][b]);
-        if(!bin) err(1, "Memory Error while allocating bin from swap file\n");
-        fread(bin, sizeof(__uint128_t), mp->bin_counts[rpage_index][b], fp);
-        bins[b] = bin;
-    }
-
-
-    fclose(fp);
-    free(abs_path);
-
-    // Mark the page as not present in RAM
-    size_t byte = rpage_index >> 3, bit = rpage_index % 8;
-    uint8_t ph = 1 << bit;
-    mp->page_present[byte] |= ph;
+    load_mempage_page(mp, rpage_index, swap_directory);
 }
 
 #pragma endregion
@@ -352,6 +356,35 @@ void save_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap
     mp->page_present[byte] ^= ph;
 }
 
+void load_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Loading files for page %ld\n", page_index);
+    #endif
+
+    char* abs_path = find_abs_path(page_index, swap_directory);
+
+    FILE* fp = fopen(abs_path, "rb");
+    if(!fp) err(7, "Unable to open or create swap file\n");
+
+    size_t page_size = 0;
+    fread(&page_size, sizeof(page_size), 1, fp);
+
+    __uint128_t* bins = malloc(sizeof(__uint128_t*) * page_size);
+    if(!bins) err(1, "Memory Error while allocating page from swap file\n");
+    mp->pages[page_index] = bins;
+
+    fread(bins, sizeof(__uint128_t), page_size, fp);
+
+    fclose(fp);
+    free(abs_path);
+
+    // Mark the page as not present in RAM
+    size_t byte = page_index >> 3, bit = page_index % 8;
+    uint8_t ph = 1 << bit;
+    mp->page_present[byte] |= ph;
+}
+
 /**
  * @brief Swaps a page from a mempage struct with a page that is in memory
  * 
@@ -367,34 +400,7 @@ void swap_mempage_buff_page(mempage_buff mp, size_t spage_index, size_t rpage_in
     #endif
 
     save_mempage_buff_page(mp, spage_index, swap_directory);
-
-    char* abs_path = find_abs_path(rpage_index, swap_directory);
-
-    /*
-     * page_size (number of bins)
-     * bin_counts (number of elements in each bin)
-     * bin_contents (array of all elements)
-     */
-
-    FILE* fp = fopen(abs_path, "rb");
-    if(!fp) err(7, "Unable to open or create swap file\n");
-
-    size_t page_size = 0;
-    fread(&page_size, sizeof(page_size), 1, fp);
-
-    __uint128_t* bins = malloc(sizeof(__uint128_t*) * page_size);
-    if(!bins) err(1, "Memory Error while allocating page from swap file\n");
-    mp->pages[rpage_index] = bins;
-
-    fread(bins, sizeof(__uint128_t), page_size, fp);
-
-    fclose(fp);
-    free(abs_path);
-
-    // Mark the page as not present in RAM
-    size_t byte = rpage_index >> 3, bit = rpage_index % 8;
-    uint8_t ph = 1 << bit;
-    mp->page_present[byte] |= ph;
+    load_mempage_buff_page(mp, rpage_index, swap_directory);
 }
 
 #pragma endregion

@@ -15,6 +15,7 @@ typedef struct _mempage_str {
     __uint128_t num_bins;
     size_t bin_size;
     char* swap_directory;
+    size_t save_interv_counter;
 } mempage_str;
 
 typedef mempage_str* mempage;
@@ -46,6 +47,7 @@ typedef struct _mempage_buff_str {
     __uint128_t num_element;
     uint8_t* page_present;
     char* swap_directory;
+    size_t save_interv_counter;
 } mempage_buff_str;
 
 typedef mempage_buff_str* mempage_buff;

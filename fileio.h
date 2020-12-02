@@ -92,6 +92,15 @@ char* find_temp_directory();
 void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory);
 
 /**
+ * @brief Loads a page for the mempage struct from disk
+ * 
+ * @param mp mempage to load into
+ * @param page_index page to load
+ * @param swap_directory directory where disk pages are being stored
+ */
+void load_mempage_page(mempage mp, size_t page_index, const char* swap_directory);
+
+/**
  * @brief Swaps a page from a mempage struct with a page that is in memory
  * 
  * @param mp mempage to swap from
@@ -106,5 +115,6 @@ void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const
 
 void save_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory);
 void swap_mempage_buff_page(mempage_buff mp, size_t spage_index, size_t rpage_index, const char* swap_directory);
+void load_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory);
 
 #pragma endregion
