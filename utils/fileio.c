@@ -182,25 +182,46 @@ char* find_temp_directory() {
     if(!temp_str) err(1, "Memory Error while allocating temporary directory for swap\n");
     snprintf(temp_str, strlen(p->pw_name) + 27, "/home/%s/Temp/reversi.XXXXXX", p->pw_name);
 
-    char* dir_ptr = mkdtemp(temp_str);
+    char* dir_ptr = mkdtemp(temp_str), *result = malloc(sizeof(char) * (strlen(dir_ptr) + 1));
+    memcpy(result, dir_ptr, strlen(dir_ptr) + 1);
+
     #ifdef checkpointdebug
         printf("Swapping to %s\n", dir_ptr);
     #endif
 
     free(temp_str);
 
-    return dir_ptr;
+    return result;
 }
 
 char* find_abs_path(size_t page_index, const char* swap_directory) {
-    char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (16 + strlen(swap_directory)));
+    char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (17 + strlen(swap_directory)));
     if(!filename) err(1, "Memory Error while allocating filename for swap page\n");
     filename[15] = 0;
     snprintf(filename, 15, "p%lu.bin", page_index);
-    strncat(abs_path, swap_directory, strlen(swap_directory));
-    strncat(abs_path + strlen(swap_directory), filename, 16);
-    abs_path[(15 + strlen(swap_directory))] = 0;
+
+    #ifdef checkpointdebug
+        printf("The checkpoint filename is %s\n", filename);
+    #endif
+
+    abs_path[0] = 0;
+    abs_path = strcat(abs_path, swap_directory);
+    abs_path[strlen(swap_directory)] = '/';
+    abs_path[strlen(swap_directory) + 1] = 0;
+
+    #ifdef checkpointdebug
+        // abs_path[strlen(swap_directory) + 1] = 0;
+        printf("Swap directory is %s\n", abs_path);
+    #endif
+
+    strcat(abs_path, filename);
+    // abs_path[strlen(filename) + strlen(swap_directory) + 1] = 0;
     free(filename);
+
+    #ifdef checkpointdebug
+        printf("Saving index %ld to %s\n", page_index, abs_path);
+    #endif
+
     return abs_path;
 }
 
@@ -214,7 +235,7 @@ char* find_abs_path(size_t page_index, const char* swap_directory) {
 void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory) {
 
     #ifdef swapdebug
-        printf("Saving files for page %ld\n", page_index);
+        printf("Saving files for page %ld in %s\n", page_index, swap_directory);
     #endif
 
     char* abs_path = find_abs_path(page_index, swap_directory);

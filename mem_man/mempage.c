@@ -6,7 +6,7 @@
 #include <err.h>
 #include <time.h>
 
-#define MEMORY_THRESHOLD 5750000000
+#define MEMORY_THRESHOLD 750000000
 #define CHECK_SWAP_INTERV 1000000
 
 #pragma region mempage
@@ -88,6 +88,7 @@ void destroy_mempage(mempage mp) {
         free(mp->access_counts);
         free(mp->bin_counts);
         free(mp->page_present);
+        free(mp->swap_directory);
         free(mp);
     }
 }
@@ -147,7 +148,7 @@ size_t mempage_find_total_size(mempage mp) {
             if(mp->page_present[b] & ph) {
                 result += sizeof(void*) + sizeof(void*) * mp->count_per_page;
                 for(size_t bn = 0; bn < mp->count_per_page; bn++) {
-                    result += sizeof(__uint128_t) * mp->bin_counts[(b >> 3) + bit][bn];
+                    result += sizeof(__uint128_t) * mp->bin_size;
                 }
             }
         }

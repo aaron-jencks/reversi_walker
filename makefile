@@ -17,34 +17,34 @@ main.o: main.c $(objects)
 tester.o: tester.c $(objects) $(test_objects)
 	$(cc) $(cflags) -o $@ -c $<
 
-reversi.o: reversi.c reversi.h
+reversi.o: ./gameplay/reversi.c ./gameplay/reversi.h
 	$(cc) $(cflags) -o $@ -c $<
 
-valid_moves.o: valid_moves.c valid_moves.h walker.o arraylist.o
+valid_moves.o: ./gameplay/valid_moves.c ./gameplay/valid_moves.h walker.o arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
-cache.o: cache.c cache.h arraylist.o
+cache.o: ./hashing/cache.c ./hashing/cache.h arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
-lookup.o: lookup3.c lookup3.h
+lookup.o: ./hashing/lookup3.c ./hashing/lookup3.h
 	$(cc) $(cflags) -o $@ -c $<
 
-ll.o: ll.c ll.h
+ll.o: ./utils/ll.c ./utils/ll.h
 	$(cc) $(cflags) -o $@ -c $<
 
-hashtable.o: hashtable.c hashtable.h mempage.o arraylist.o
+hashtable.o: ./hashing/hashtable.c ./hashing/hashtable.h mempage.o arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
-arraylist.o: arraylist.c arraylist.h
+arraylist.o: ./utils/arraylist.c ./utils/arraylist.h
 	$(cc) $(cflags) -o $@ -c $<
 
-mempage.o: mempage.c mempage.h fileio.o
+mempage.o: ./mem_man/mempage.c ./mem_man/mempage.h fileio.o
 	$(cc) $(cflags) -o $@ -c $<
 
-walker.o: walker.c walker.h reversi.o ll.o arraylist.o
+walker.o: ./gameplay/walker.c ./gameplay/walker.h reversi.o ll.o arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
-fileio.o: fileio.c fileio.h walker.o arraylist.o hashtable.o 
+fileio.o: ./utils/fileio.c ./utils/fileio.h walker.o arraylist.o hashtable.o 
 	$(cc) $(cflags) -o $@ -c $<
 
 # Tests

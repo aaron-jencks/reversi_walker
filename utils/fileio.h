@@ -83,6 +83,14 @@ processed_file restore_progress(char* filename, __uint128_t (*hash)(void*));
 char* find_temp_directory();
 
 /**
+ * @brief Generates a unique filename in the given directory
+ * 
+ * @param directory The directory to prepend the filename with
+ * @return char* Returns a null terminated string that contains the absolute path of the generated temporary file. Must be free'd by the user
+ */
+char* find_abs_path(size_t page_index, const char* directory);
+
+/**
  * @brief Saves a page from a mempage struct to disk
  * 
  * @param mp mempage to save from

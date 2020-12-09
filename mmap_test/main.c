@@ -10,8 +10,11 @@
 
 
 int main() {
-    int fp = open("/home/aaron/Workspace/github/mine/reversi_walker/mmap_test/swapfile", O_RDWR);
-    void* res = mmap(0, LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, fp, 0);
+    int fp = open("./swapfile", O_RDWR);
+    
+    posix_fallocate(fp, 0, LEN);
+
+    void* res = mmap(0, LEN, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_NORESERVE, fp, 0);
     if(res == MAP_FAILED) err(1, "Mapping failed!\n");
     // for(size_t i = 0; i < (LEN / sizeof(__uint128_t)); i++) {
     //     printf("\r%ld/%ld", i, LEN / sizeof(__uint128_t));

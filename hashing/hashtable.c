@@ -221,11 +221,15 @@ hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
     mempage_buff keys = create_mempage_buff(size, BIN_PAGE_COUNT);
     __uint128_t bk;
     for(__uint128_t k = 0; k < size; k++) {
+        printf("\rReading %lu %lu/%lu %lu", ((uint64_t*)&k)[1], ((uint64_t*)&k)[0],
+                                            ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
         if(fread(&bk, sizeof(__uint128_t), 1, fp) < 1) err(11, "Failed to read hashtable key %lu %lu/%lu %lu\n", ((uint64_t*)&k)[1], ((uint64_t*)&k)[0], 
                                                                                                                  ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
         if(bk) mempage_buff_put(keys, k, bk);
         else break;
     }
+
+    printf("\n");
 
     hashtable ht = create_hashtable(bin_count, hash);
     
