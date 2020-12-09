@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "./mmap_man.h"
 
 #pragma region hashtable mempage
 
@@ -125,5 +126,25 @@ void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t value);
 __uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index);
 
 #pragma endregion
+
+#pragma endregion
+#pragma region bit cache mempage
+
+typedef struct __bit_mempage_str {
+    uint8_t** pages;
+    mmap_page* mpages;
+    size_t page_count;
+    size_t count_per_page;
+    __uint128_t num_elements;
+    char* mmap_directory;
+} bit_mempage_str;
+
+typedef bit_mempage_str* bit_mempage;
+
+bit_mempage create_bit_mempage(__uint128_t num_bits, size_t page_size);
+void destroy_bit_mempage(bit_mempage mp);
+
+void bit_mempage_put(bit_mempage buff, __uint128_t index, uint8_t value);
+uint8_t bit_mempage_get(bit_mempage buff, __uint128_t index);
 
 #pragma endregion

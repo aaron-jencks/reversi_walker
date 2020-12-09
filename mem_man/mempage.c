@@ -1,5 +1,5 @@
 #include "mempage.h"
-#include "fileio.h"
+#include "../utils/fileio.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -463,6 +463,64 @@ __uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index) {
     }
 
     return buff->pages[page][page_index];
+}
+
+#pragma endregion
+#pragma region bit mempage region
+
+bit_mempage create_bit_mempage(__uint128_t num_bits, size_t page_size) {
+    bit_mempage mp = malloc(sizeof(bit_mempage_str));
+    if(!mp) err(1, "Memory error while allocating bit cache mempage\n");
+
+    mp->count_per_page = page_size;
+    mp->num_elements = num_bits;
+    mp->page_count = num_bits / page_size + 1;
+
+    mp->mmap_directory = find_temp_directory();
+
+    mp->mpages = malloc(sizeof(mmap_page) * mp->page_count);
+    mp->pages = malloc(sizeof(uint8_t*) * mp->page_count);
+    if(!mp->mpages || !mp->pages) err(1, "Memory error while allocating pages for bit cache mempage\n");
+
+    for(size_t i = 0; i < mp->page_count; i++) {
+        char* filename = find_abs_path(i, mp->mmap_directory);
+        mp->mpages[i] = create_mmap_page(filename, page_size);
+        mp->pages[i] = (uint8_t*)(mp->mpages[i]->map);
+        for(size_t b = 0; b < mp->count_per_page; b++) mp->pages[i][b] = 0; // Initialize the data
+        free(filename);
+    }
+
+    return mp;
+}
+
+void destroy_bit_mempage(bit_mempage mp) {
+    if(mp) {
+        free(mp->pages);
+        for(size_t i = 0; i < mp->page_count; i++) destroy_mmap_page(mp->mpages[i], mp->count_per_page);
+        free(mp->mpages);
+        free(mp->mmap_directory);
+        free(mp);
+    }
+}
+
+void bit_mempage_put(bit_mempage buff, __uint128_t index, uint8_t value) {
+    size_t page = index / buff->count_per_page, byte_index = index / 8, bit_index = index % 8;
+    if(value) buff->pages[page][byte_index] |= 1 << bit_index;
+    else {
+        uint8_t ph = 254, lower;
+        ph = ph << bit_index;
+
+        lower = 1 << bit_index;
+        ph += --lower;
+
+        buff->pages[page][byte_index] &= ph;
+    }
+}
+
+uint8_t bit_mempage_get(bit_mempage buff, __uint128_t index) {
+    size_t page = index / buff->count_per_page, byte_index = index / 8, bit_index = index % 8;
+    uint8_t ph = 1 << bit_index;
+    return buff->pages[page][byte_index] & ph;
 }
 
 #pragma endregion
