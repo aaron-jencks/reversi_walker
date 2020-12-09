@@ -1,6 +1,6 @@
 cc=gcc
 cflags= -Dhashdebug -Dmempagedebug -Dswapdebug -g
-objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o
+objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o
 
 all: main;
@@ -36,6 +36,9 @@ hashtable.o: ./hashing/hashtable.c ./hashing/hashtable.h mempage.o arraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
 arraylist.o: ./utils/arraylist.c ./utils/arraylist.h
+	$(cc) $(cflags) -o $@ -c $<
+
+mmap_man.o: ./mem_man/mmap_man.c ./mem_man/mmap_man.h fileio.o
 	$(cc) $(cflags) -o $@ -c $<
 
 mempage.o: ./mem_man/mempage.c ./mem_man/mempage.h fileio.o
