@@ -523,4 +523,17 @@ uint8_t bit_mempage_get(bit_mempage buff, __uint128_t index) {
     return buff->pages[page][byte_index] & ph;
 }
 
+void bit_mempage_append_page(bit_mempage mp) {
+    mp->num_elements += mp->count_per_page;
+    mp->mpages = realloc(mp->mpages, sizeof(mmap_page) * ++mp->page_count);
+    if(!mp->mpages) err(12, "Memory error while reallocating bit cache mempage\n");
+
+    size_t new_index = mp->page_count - 1;
+    char* filename = find_abs_path(new_index, mp->mmap_directory);
+    mp->mpages[new_index] = create_mmap_page(filename, mp->count_per_page);
+    
+    mp->pages[new_index] = mp->mpages[new_index]->map;
+    for(size_t b = 0; b < mp->count_per_page; b++) mp->pages[new_index][b] = 0; // Initialize the data
+}
+
 #pragma endregion

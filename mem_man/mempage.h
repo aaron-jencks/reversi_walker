@@ -147,4 +147,6 @@ void destroy_bit_mempage(bit_mempage mp);
 void bit_mempage_put(bit_mempage buff, __uint128_t index, uint8_t value);
 uint8_t bit_mempage_get(bit_mempage buff, __uint128_t index);
 
+void bit_mempage_append_page(bit_mempage mp);
+
 #pragma endregion
