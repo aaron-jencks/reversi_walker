@@ -54,7 +54,7 @@ void destroy_mmap_page(mmap_page page, size_t size){
     }
 }
 
-mmap_man create_mmap_man(size_t page_size, size_t bin_size, const char* file_directory) {
+mmap_man create_mmap_man(size_t page_size, size_t bin_size) {
     mmap_man man = malloc(sizeof(mmap_man_str));
     if(!man) err(1, "Memory error while allocating mmap manager\n");
     man->num_pages = 1;

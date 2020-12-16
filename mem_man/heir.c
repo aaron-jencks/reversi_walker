@@ -27,7 +27,7 @@ heirarchy create_heirarchy() {
     h->num_bits_per_level = shifts;
     h->num_levels = 128 / shifts;
 
-    h->final_level = create_bit_mempage(INITIAL_CACHE_SIZE, INITIAL_PAGE_SIZE);
+    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, 1 << (shifts - 3));
 
     h->first_level = calloc(h->page_size, sizeof(void*));
     if(!h->first_level) err(1, "Memory error while allocating heirarchical memory system\n");

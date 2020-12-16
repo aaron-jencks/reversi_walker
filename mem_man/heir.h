@@ -3,11 +3,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "mempage.h"
+#include "mmap_man.h"
 
 typedef struct __heirarchy_str {
     void** first_level;
-    bit_mempage final_level;
+    mmap_man final_level;
     size_t num_bits_per_level;
     size_t num_levels;
     size_t page_size;

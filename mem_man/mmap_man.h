@@ -48,7 +48,7 @@ typedef struct __mmap_man_str {
 
 typedef mmap_man_str* mmap_man;
 
-mmap_man create_mmap_man(size_t page_size, size_t bin_size, const char* file_directory);
+mmap_man create_mmap_man(size_t page_size, size_t bin_size);
 void destroy_mmap_man(mmap_man man);
 
 size_t find_mmap_bin_total_size(size_t initial_bin_size);
