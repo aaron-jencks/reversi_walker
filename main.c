@@ -8,66 +8,31 @@
 #include <time.h>
 #include <string.h>
 
-#include "reversi.h"
-#include "hashtable.h"
-#include "lookup3.h"
-#include "walker.h"
-#include "ll.h"
-#include "arraylist.h"
-#include "valid_moves.h"
-#include "fileio.h"
+#include "./gameplay/reversi.h"
+#include "./hashing/hash_functions.h"
+#include "./mem_man/heir.h"
+#include "./gameplay/walker.h"
+#include "./utils/ll.h"
+#include "./utils/arraylist.h"
+#include "./gameplay/valid_moves.h"
+#include "./utils/fileio.h"
 
 // TODO you can use the previous two board states to predict the next set of valid moves.
 
 /**
- * I had to get rid of the stacks because I had no way to keep track of when a move generates new moves for BOTH colors .W.
- * or when a capture generates new moves
- * 
- * ie.
- * 
- * 00000000
- * 00000000
- * 00012000
- * 00021000
- * 00000000
- * 00000000
- * 
- * --->
- * 
- * 00000000
- * 00001000
- * 00011000
- * 00021000
- * 00x00000 <-- Where x is a new move generated for white by a captured piece -___-
- * 00000000
- * 
- * I need to optimize the linkedlists in the hashtable, and optimize the memory usage of the DFS stack by getting rid of the pointers.
- * 
- * Re work the hashtable so that it doesn't error out when the size gets too big.
- *  - TODO Add mempage system to speed up search in bins
- *  - TODO integrate mempage into hashtable.c
- * 
- * [DONE] make hashtable so that it uses arraylists for the bins, until they get too big, then switch the bins over to arraylists
- * 
- * Use pthread library to multithread project
- * mutex locks: pthread_mutex_t
- * use about 2 processes per core
- * Use pthread_yield instead of sleeping
- * 
- * put locks on the bins in the hashtable
- * 
- * do bfs to find the number of moves necessary to fill all the workers, then switch to dfs with n workers for each entry in the search queue
  * 
  * use 'ulimit -c unlimited' to make core dump
  * 
  * TODO add ability to make checkpoints to save progress
  *  - Interpret Ctrl+C interrupt signal and cause a save
  * 
- * TODO make a way to swap out memory from disk when it's not used.
- * 
- * TODO ask about using mmap with swap to automate the mempage system
+ * [DONE] make a way to swap out memory from disk when it's not used.
  * 
  */
+
+// TODO Re-work file system to work with heir.h
+// TODO Re-make hash to do counter-clockwise spiral from center of board
+// TODO Maybe try to use heroseh's gui stuff to make interface look nice
 
 
 void display_board(board b) {
@@ -130,47 +95,6 @@ void display_capture_counts(uint64_t cc) {
 }
 
 
-__uint128_t board_hash(void* brd) {
-    if(brd) {
-        board b = (board)brd;
-
-        __uint128_t result = 0;
-
-        // NO YOU CAN'T, but luckily, I don't actually need the player
-        // You can fit 2 spaces in 3 bits if you really try,
-        // so on an 8x8 board, 
-        // we end up only using 96 bits instead of the entire 128.
-        // well
-        for(uint8_t r = 0; r < b->height; r++) {
-            for(uint8_t c = 0; c < b->width; c++) {
-                uint8_t s1 = board_get(b, r, c);
-
-                result += s1;
-
-                if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
-            }
-        }
-
-        // we still need to use the entire 128 bits though,
-        // because the hashing algorithm works best in powers of 2
-        uint32_t upperupper = 0, upperlower = 0, lowerupper = 0, lowerlower = 0;
-        hashlittle2(&result, 8, &upperupper, &upperlower);
-        hashlittle2(((char*)&result) + 8, 8, &lowerupper, &lowerlower);
-        result = 0;
-        result += upperupper;
-        result = result << 32;
-        result += upperlower;
-        result = result << 32;
-        result += lowerupper;
-        result = result << 32;
-        result += lowerlower;
-
-        return result;
-    }
-    return 0;
-}
-
-
 int main() {
     char d;
     while(1) {
@@ -187,10 +111,9 @@ int main() {
     }
 
     getc(stdin);    // Read the extra \n character
-    // while(!feof(stdin)) getc(stdin);    // Read the extra \n character
 
     // Allocate all of the stack parameters necessary for file restoration
-    hashtable cache;
+    heirarchy cache;
     uint64_t count = 0, explored_count = 1;
     char* checkpoint_filename;
 
@@ -274,7 +197,7 @@ int main() {
         printf("Please enter a file to restore from: ");
         scanf("%ms", restore_filename);
         getc(stdin);    // Read the extra \n character
-        processed_file pf = restore_progress(*restore_filename, &board_hash);
+        processed_file pf = restore_progress_v2(*restore_filename);
 
         while(1) {
             printf("Would you like to continue saving to this checkpoint?(y/N): ");
@@ -289,6 +212,7 @@ int main() {
                 strcpy(checkpoint_filename, *restore_filename);
                 break;
             }
+            else printf("\n");
         }
 
         free(*restore_filename);
@@ -362,11 +286,12 @@ int main() {
         cache = pf->cache;
     }
     else {
-        #ifdef smallcache
-            cache = create_hashtable(10, &board_hash);
-        #else
-            cache = create_hashtable(1000000, &board_hash);
-        #endif
+        // #ifdef smallcache
+        //     cache = create_hashtable(10, &board_hash);
+        // #else
+        //     cache = create_hashtable(1000000, &board_hash);
+        // #endif
+        cache = create_heirarchy();
 
         checkpoint_filename = find_temp_filename("checkpoint.bin\0");
 
@@ -421,15 +346,15 @@ int main() {
             fps_timer = time(0);
         }
 
-        printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Cache Status: %lu %lu Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
-               count, explored_count, fps, ((uint64_t*)&cache->size)[1], ((uint64_t*)&cache->size)[0],
+        printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
+               count, explored_count, fps,
                run_days, run_hours, run_minutes, run_seconds,
                cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                (save_time) ? "Saving..." : "");
         fflush(stdout);
 
         if(save_time) {
-            save_progress(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
+            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
             save_timer = time(0);
         }
         sched_yield();

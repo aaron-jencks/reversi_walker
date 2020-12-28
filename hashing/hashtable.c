@@ -1,5 +1,5 @@
 #include "hashtable.h"
-#include "arraylist.h"
+#include "../utils/arraylist.h"
 
 #include <stdlib.h>
 #include <err.h>

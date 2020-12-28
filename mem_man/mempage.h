@@ -101,31 +101,6 @@ uint8_t mmap_mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t
 void mmap_mempage_realloc(mempage mp, __uint128_t bin_count);
 
 #pragma endregion
-#pragma region hashtable rehash buffer with mmap
-
-typedef struct _mempage_buff_str {
-    __uint128_t** pages;
-    size_t page_count;
-    size_t count_per_page;
-    __uint128_t num_element;
-    uint8_t* page_present;
-    char* swap_directory;
-    size_t save_interv_counter;
-} mempage_buff_str;
-
-typedef mempage_buff_str* mempage_buff;
-
-mempage_buff create_mempage_buff(__uint128_t num_elements, size_t page_size);
-void destroy_mempage_buff(mempage_buff buff);
-
-uint8_t mempage_buff_page_exists(mempage_buff mp, size_t page_index);
-size_t mempage_buff_find_least_used_page(mempage_buff mp);
-size_t mempage_buff_find_total_size(mempage_buff buff);
-
-void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t value);
-__uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index);
-
-#pragma endregion
 
 #pragma endregion
 #pragma region bit cache mempage

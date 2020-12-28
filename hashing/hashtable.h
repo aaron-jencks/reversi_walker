@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mempage.h"
+#include "../mem_man/mempage.h"
 
 #include <stdint.h>
 #include <stdio.h>

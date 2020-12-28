@@ -1,8 +1,9 @@
 #pragma once
 
 #include "reversi.h"
-#include "hashtable.h"
-#include "arraylist.h"
+#include "../hashing/hashtable.h"
+#include "../utils/arraylist.h"
+#include "../mem_man/heir.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -22,7 +23,7 @@ typedef coord_str* coord;
 typedef struct _processor_args_str {
     uint32_t identifier;
     board starting_board;
-    hashtable cache; 
+    heirarchy cache; 
     uint64_t* counter;
     pthread_mutex_t* counter_lock;
     uint64_t* explored_counter;
@@ -78,7 +79,7 @@ uint16_t coord_to_short(coord c);
 uint16_t coord_to_short_ints(uint8_t r, uint8_t c);
 coord short_to_coord(uint16_t s);
 
-processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, 
+processor_args create_processor_args(uint32_t identifier, board starting_board, heirarchy cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                      uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock);

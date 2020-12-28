@@ -2,7 +2,7 @@
 #include <err.h>
 
 #include "valid_moves.h"
-#include "arraylist.h"
+#include "../utils/arraylist.h"
 
 uint64_t encode_valid_position(uint64_t b, uint8_t row, uint8_t column) {
     uint8_t* bytes = (uint8_t*)&b;

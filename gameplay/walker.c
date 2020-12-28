@@ -1,6 +1,7 @@
 #include "walker.h"
-#include "ll.h"
-#include "arraylist.h"
+#include "../utils/ll.h"
+#include "../utils/arraylist.h"
+#include "../hashing/hash_functions.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -145,7 +146,7 @@ void* walker_processor_pre_stacked(void* args) {
     // Unpack the arguments
     processor_args pargs = (processor_args)args;
     ptr_arraylist starting_stack = (ptr_arraylist)pargs->starting_board;
-    hashtable cache = pargs->cache;
+    heirarchy cache = pargs->cache;
     uint64_t* counter = pargs->counter, *explored = pargs->explored_counter;
     pthread_mutex_t* counter_lock = pargs->counter_lock, *explored_lock = pargs->explored_lock;
 
@@ -232,24 +233,26 @@ void* walker_processor_pre_stacked(void* args) {
 
                     free(next_moves);
 
-                    if(!exists_hs(cache, sb)) {
-                        put_hs(cache, sb);
-                        while(pthread_mutex_trylock(counter_lock)) sched_yield();
-                        *counter += 1;
-                        // *explored += count;
-                        pthread_mutex_unlock(counter_lock);
+                    // if(!exists_hs(cache, sb)) {
+                    //     put_hs(cache, sb);
+                    //     while(pthread_mutex_trylock(counter_lock)) sched_yield();
+                    //     *counter += 1;
+                    //     // *explored += count;
+                    //     pthread_mutex_unlock(counter_lock);
 
-                        // while(pthread_mutex_trylock(explored_lock)) sched_yield();
-                        // *explored += count;
-                        // pthread_mutex_unlock(explored_lock);
+                    //     // while(pthread_mutex_trylock(explored_lock)) sched_yield();
+                    //     // *explored += count;
+                    //     // pthread_mutex_unlock(explored_lock);
 
-                        count = 0;
-                    }
-                    else {
-                        #ifdef debug
-                            printf("The given board is already counted\n");
-                        #endif
-                    }
+                    //     count = 0;
+                    // }
+                    // else {
+                    //     #ifdef debug
+                    //         printf("The given board is already counted\n");
+                    //     #endif
+                    // }
+
+                    if(heirarchy_insert(cache, board_spiral_hash(sb)));
                 }
             }
 
@@ -309,7 +312,7 @@ coord short_to_coord(uint16_t s) {
     return r;
 }
 
-processor_args create_processor_args(uint32_t identifier, board starting_board, hashtable cache, 
+processor_args create_processor_args(uint32_t identifier, board starting_board, heirarchy cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                      uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock) {
