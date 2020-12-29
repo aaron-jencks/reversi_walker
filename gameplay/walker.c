@@ -252,7 +252,23 @@ void* walker_processor_pre_stacked(void* args) {
                     //     #endif
                     // }
 
-                    if(heirarchy_insert(cache, board_spiral_hash(sb)));
+                    if(heirarchy_insert(cache, board_spiral_hash(sb))) {
+                            while(pthread_mutex_trylock(counter_lock)) sched_yield();
+                            *counter += 1;
+                            // *explored += count;
+                            pthread_mutex_unlock(counter_lock);
+
+                            // while(pthread_mutex_trylock(explored_lock)) sched_yield();
+                            // *explored += count;
+                            // pthread_mutex_unlock(explored_lock);
+
+                            count = 0;
+                    }
+                    else {
+                        #ifdef debug
+                            printf("The given board is already counted\n");
+                        #endif
+                    }
                 }
             }
 
