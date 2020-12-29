@@ -71,6 +71,8 @@ mmap_man create_mmap_man(size_t page_size, size_t bin_size) {
         char* filename = find_abs_path(p, man->file_directory);
         man->pages[p] = create_mmap_page(filename, page_size);
     }
+
+    return man;
 }
 
 void destroy_mmap_man(mmap_man man) {

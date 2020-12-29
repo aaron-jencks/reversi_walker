@@ -24,7 +24,7 @@ heirarchy create_heirarchy() {
         b = b >> 1;
     }
 
-    h->num_bits_per_level = shifts;
+    h->num_bits_per_level = --shifts;
     h->num_levels = 128 / shifts;
 
     h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, 1 << (shifts - 3));
@@ -78,6 +78,12 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     for(level = 1; level < h->num_levels; level++) {
         bits = (size_t)(key_copy & bit_placeholder);
         key_copy = key_copy >> h->num_bits_per_level;
+
+        if(!phase[bits]) {
+            phase[bits] = calloc(h->page_size, sizeof(void*));
+            if(!phase[bits]) err(1, "Memory Error while allocating bin for key hash\n");
+        }
+        
         phase = (void**)phase[bits];
     }
 
