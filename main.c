@@ -343,7 +343,7 @@ int main() {
     while(1) {
         current = time(0);
         run_time = current - start;
-        save_time = (current - save_timer) / 15;
+        save_time = (current - save_timer) / 3600;
         fps_update_time = (current - fps_timer) / 1;
 
         run_days = run_time / 86400;
