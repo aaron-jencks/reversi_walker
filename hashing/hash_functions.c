@@ -50,9 +50,10 @@ __uint128_t board_spiral_hash(void* brd) {
 
         __uint128_t result = 0;
 
-        uint8_t r = b->height >> 1, c = b->width >> 1, spiral_dimension, iter, v;
-        for(uint8_t c = 0; c < (b->width >> 1); c++) {
-            spiral_dimension = 2 << c;
+        uint8_t r = b->height >> 1, c = b->width >> 1, spiral_dimension, iter, v, delta_dimension;
+        for(uint8_t cb = 0; cb < (b->width >> 1); cb++) {
+            spiral_dimension = 2 * (cb + 1);
+            delta_dimension = spiral_dimension - 1;
 
             // Perform the box
             for(iter = 0; iter < spiral_dimension; iter++) {
@@ -61,17 +62,17 @@ __uint128_t board_spiral_hash(void* brd) {
                 if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
             }
             for(iter = 0; iter < spiral_dimension; iter++) {
-                v = board_get(b, r - spiral_dimension, c - iter);
+                v = board_get(b, r - delta_dimension, c - iter);
                 result += v;
                 if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
             }
             for(iter = 0; iter < spiral_dimension; iter++) {
-                v = board_get(b, r - spiral_dimension + iter, c - spiral_dimension);
+                v = board_get(b, r - delta_dimension + iter, c - delta_dimension);
                 result += v;
                 if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
             }
             for(iter = 0; iter < spiral_dimension; iter++) {
-                v = board_get(b, r, c - spiral_dimension + iter);
+                v = board_get(b, r, c - delta_dimension + iter);
                 result += v;
                 if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
             }

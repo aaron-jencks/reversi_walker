@@ -70,6 +70,7 @@ mmap_man create_mmap_man(size_t page_size, size_t bin_size) {
     for(size_t p = 0; p < man->num_pages; p++) {
         char* filename = find_abs_path(p, man->file_directory);
         man->pages[p] = create_mmap_page(filename, page_size);
+        free(filename);
     }
 
     return man;

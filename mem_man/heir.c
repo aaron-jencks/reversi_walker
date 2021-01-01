@@ -4,6 +4,7 @@
 #include <err.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define INITIAL_CACHE_SIZE 34359738368
 #define INITIAL_PAGE_SIZE 5368709120
@@ -189,11 +190,21 @@ void to_file_heir(FILE* fp, heirarchy h) {
         while(qb->pointer) {
             v = pop_back_pal(qb);
             uint8_t* bytes = (uint8_t*)v->ptr;
+
+            #ifdef heirdebug
+                printf("Saving array (address: %p, level: %lu, id: %lu) to file\nContents: [", bytes, v->level, v->id);
+                for(size_t b = 0; b < bytes_per_final_level; b++) {
+                    if(b) printf(", ");
+                    printf("%u", bytes[b]);
+                }
+                printf("]\n");
+            #endif
+
             fwrite(&v->level, sizeof(v->level), 1, fp);
             fwrite(&v->id, sizeof(v->id), 1, fp);
             fwrite(bytes, sizeof(uint8_t), bytes_per_final_level, fp);
 
-            free(bytes);
+            // free((uint16_t*)bytes); Don't free ranges of the file
             free(v);
         }
 
@@ -207,6 +218,11 @@ void to_file_heir(FILE* fp, heirarchy h) {
             free(v->ptr);
             free(v);
         }
+
+        free(level_ids);
+        destroy_ptr_arraylist(q);
+        destroy_ptr_arraylist(qq);
+        destroy_ptr_arraylist(qb);
     }
 }
 
