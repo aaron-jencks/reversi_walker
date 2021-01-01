@@ -55,12 +55,13 @@ void destroy_heirarchy(heirarchy h) {
         while(stack->pointer) {
             void** k = (void**)pop_back_pal(stack);
             uint64_t d = pop_back_dal(dstack);
-            if(d < h->num_levels && k) 
+            if(d < h->num_levels && k) {
                 for(size_t i = 0; i < h->page_size; i++) {
                     append_pal(stack, k[i]);
                     append_dal(dstack, d + 1);
                 }
-            free(k);
+                free(k);
+            }
         }
 
         free(h);

@@ -35,6 +35,7 @@
 // TODO interpret the Ctrl+C interrupt to shutdown gracefully and remove mmapped files
 
 uint8_t SHUTDOWN_FLAG = 0;
+pthread_mutex_t shutdown_lock;
 
 
 void display_board(board b) {
@@ -98,7 +99,12 @@ void display_capture_counts(uint64_t cc) {
 
 
 void graceful_shutdown(int sig) {
-    if(sig == SIGINT) SHUTDOWN_FLAG = 1;
+    pthread_mutex_lock(&shutdown_lock);
+    if(sig == SIGINT) {
+        printf("Shutting down processor\n");
+        SHUTDOWN_FLAG = 1;
+    }
+    pthread_mutex_unlock(&shutdown_lock);
 }
 
 
@@ -146,7 +152,7 @@ int main() {
 
     // Initialize the locks
     if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || 
-       pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0)) 
+       pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0) || pthread_mutex_init(&shutdown_lock, 0)) 
         err(4, "Initialization of counter mutex failed\n");
 
     #pragma region Round nprocs to the correct number
@@ -337,7 +343,7 @@ int main() {
     while(1) {
         current = time(0);
         run_time = current - start;
-        save_time = (current - save_timer) / 3600;
+        save_time = (current - save_timer) / 15;
         fps_update_time = (current - fps_timer) / 1;
 
         run_days = run_time / 86400;
@@ -362,19 +368,23 @@ int main() {
                run_days, run_hours, run_minutes, run_seconds,
                cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                (save_time) ? "Saving..." : "");
-        fflush(stdout);
 
         if(save_time) {
+            // SHUTDOWN_FLAG = 1;
             save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
             save_timer = time(0);
         }
 
         if(SHUTDOWN_FLAG) {
+            fflush(stdout);
             save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
             destroy_heirarchy(cache);
+            exit(0);
         }
-
-        sched_yield();
+        else {
+            fflush(stdout);
+            sched_yield();
+        }
     }
 
     printf("\nThere are %ld possible board states\n", count);
