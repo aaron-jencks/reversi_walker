@@ -7,6 +7,7 @@
 #include <sys/sysinfo.h>
 #include <time.h>
 #include <string.h>
+#include <signal.h>
 
 #include "./gameplay/reversi.h"
 #include "./hashing/hash_functions.h"
@@ -30,9 +31,10 @@
  * 
  */
 
-// TODO Re-work file system to work with heir.h
-// TODO Re-make hash to do counter-clockwise spiral from center of board
 // TODO Maybe try to use heroseh's gui stuff to make interface look nice
+// TODO interpret the Ctrl+C interrupt to shutdown gracefully and remove mmapped files
+
+uint8_t SHUTDOWN_FLAG = 0;
 
 
 void display_board(board b) {
@@ -95,7 +97,16 @@ void display_capture_counts(uint64_t cc) {
 }
 
 
+void graceful_shutdown(int sig) {
+    if(sig == SIGINT) SHUTDOWN_FLAG = 1;
+}
+
+
 int main() {
+
+    // This way we can remove the mmapped files
+    signal(SIGINT, graceful_shutdown);
+
     char d;
     while(1) {
         printf("Would you like to restore from a checkpoint?(y/N): ");
@@ -357,6 +368,12 @@ int main() {
             save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
             save_timer = time(0);
         }
+
+        if(SHUTDOWN_FLAG) {
+            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
+            destroy_heirarchy(cache);
+        }
+
         sched_yield();
     }
 
