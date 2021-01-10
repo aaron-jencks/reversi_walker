@@ -1,5 +1,5 @@
 #include "mempage_test.h"
-#include "../mempage.h"
+#include "../mem_man/mempage.h"
 
 #include <assert.h>
 #include <stdio.h>

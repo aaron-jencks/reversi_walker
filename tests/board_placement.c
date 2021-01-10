@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include "board_placement.h"
-#include "../reversi.h"
+#include "../gameplay/reversi.h"
 
 void board_placement_test() {
     board b = create_board(1, 255, 255);

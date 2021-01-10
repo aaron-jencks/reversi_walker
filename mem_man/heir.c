@@ -103,6 +103,7 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     if(!(uint8_t*)phase[bits]) {
         // Allocate a new bin
         phase[bits] = mmap_allocate_bin(h->final_level);
+        for(size_t b = 0; b < h->final_level->max_page_size; b++) ((uint8_t*)(phase[bits]))[b] = 0;
     }
 
     // Insert the new bit if it's not already in the array

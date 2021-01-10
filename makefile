@@ -1,12 +1,16 @@
 cc=gcc
 cflags= -g
 objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o hash_functions.o heir.o
-test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o
+cuda_objects=
+test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
 
 all: main;
 
 main: main.o $(objects)
 	$(cc) $(cflags) -o $@ $< $(objects) -pthread
+
+gmain: gmain.cu $(cuda_objects)
+	nvcc -arch=sm_61 $(cflags) -o $@ $< $(cuda_objects) -lpthread
 
 tester: tester.o $(objects) $(test_objects)
 	$(cc) $(cflags) -o $@ $< $(objects) $(test_objects) -pthread
@@ -73,9 +77,12 @@ mempage_test.o: tests/mempage_test.c tests/mempage_test.h mempage.o
 fileio_test.o: tests/fileio_test.c tests/fileio_test.h hashtable.o fileio.o
 	$(cc) $(cflags) -o $@ -c $<
 
+mmap_test.o: tests/mmap_test.c tests/mmap_test.h heir.o 
+	$(cc) $(cflags) -o $@ -c $<
+
 .PHONY : clean
 clean:
-	rm main main.o $(objects)
+	rm main main.o $(objects) gmain $(cuda_objects)
 
 .PHONY : tests
 tests: tester $(objects) $(test_objects)

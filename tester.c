@@ -7,9 +7,10 @@
 #include "tests/board_placement.h"
 #include "tests/mempage_test.h"
 #include "tests/fileio_test.h"
+#include "tests/mmap_test.h"
 
-uint64_t test_count = 9;
-void (*tests[9])() = {
+const uint64_t test_count = 10;
+void (*tests[10])() = {
     cc_test_directions,
     lm_test_initial,
     lm_test_from_coord,
@@ -18,7 +19,8 @@ void (*tests[9])() = {
     mp_test_clear,
     mp_test_realloc,
     mp_buff_test_index,
-    fio_test_hashtable_write
+    fio_test_hashtable_write,
+    mmap_test_readback
 };
 
 

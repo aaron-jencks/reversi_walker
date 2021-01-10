@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "../reversi.h"
+#include "../gameplay/reversi.h"
 #include "capturecounts_test.h"
 
 void cc_test_directions() {

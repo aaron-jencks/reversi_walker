@@ -4,8 +4,8 @@
 #include <stdlib.h>
 
 #include "legal_moves_test.h"
-#include "../reversi.h"
-#include "../walker.h"
+#include "../gameplay/reversi.h"
+#include "../gameplay/walker.h"
 
 uint8_t is_valid_coord(coord c, coord* accept) {
     for(coord* ct = accept; *ct; ct++) if(c->row == (*ct)->row && c->column == (*ct)->column) return 1;

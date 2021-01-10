@@ -1,6 +1,6 @@
 #include "fileio_test.h"
-#include "../hashtable.h"
-#include "../fileio.h"
+#include "../hashing/hashtable.h"
+#include "../utils/fileio.h"
 
 #include <assert.h>
 #include <stdio.h>
