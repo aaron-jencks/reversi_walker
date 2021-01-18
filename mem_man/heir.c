@@ -70,6 +70,10 @@ void destroy_heirarchy(heirarchy h) {
 }
 
 uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
+    #ifdef heirdebug
+        printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
+    #endif
+
     __uint128_t key_copy = key, bit_placeholder = 0; 
     size_t bits, level = 1;
     void** phase = h->first_level;
@@ -82,9 +86,9 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
         bits = (size_t)((key_copy & bit_placeholder) >> (128 - h->num_bits_per_level));
         key_copy = key_copy << h->num_bits_per_level;
 
-        #ifdef heirdebug
-            printf("Bits for level %lu is %lu\n", level, bits);
-        #endif
+        // #ifdef heirdebug
+        //     printf("Bits for level %lu is %lu\n", level, bits);
+        // #endif
 
         if(level != (h->num_levels - 1) && !phase[bits]) {
             phase[bits] = calloc(h->page_size, sizeof(void*));
@@ -120,15 +124,26 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     bits = (size_t)(key_copy >> 3);
     uint8_t bit = key_copy & 7;
 
-    #ifdef heirdebug
-        printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
-    #endif
+    // #ifdef heirdebug
+    //     printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
+    // #endif
 
     // Insert the new bit if it's not already in the array
     uint8_t byte = ((uint8_t*)phase)[bits];
     uint8_t ph = 1 << bit;
 
-    if(byte & ph) return 0;
+    if(byte & ph) {
+        #ifdef heirdebug
+            printf("%lu %lu is already in the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
+        #endif
+
+        return 0;
+    }
+    
+    #ifdef heirdebug
+        printf("%lu %lu inserted into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
+    #endif
+
     ((uint8_t*)phase)[bits] |= ph;
     return 1;
 }

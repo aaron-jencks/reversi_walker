@@ -163,9 +163,9 @@ void* walker_processor_pre_stacked(void* args) {
         while(search_stack->pointer) {
             board sb = pop_back_pal(search_stack), bc;
 
-            #ifdef debug
-                display_board(sb);
-            #endif
+            // #ifdef debug
+            //     display_board(sb);
+            // #endif
 
             coord* next_moves = find_next_boards(sb);
 
@@ -253,6 +253,7 @@ void* walker_processor_pre_stacked(void* args) {
                     // }
 
                     if(heirarchy_insert(cache, board_spiral_hash(sb))) {
+                            printf("Found a new board to count\n");
                             while(pthread_mutex_trylock(counter_lock)) sched_yield();
                             *counter += 1;
                             // *explored += count;

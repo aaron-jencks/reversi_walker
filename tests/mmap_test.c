@@ -1,10 +1,25 @@
 #include "../mem_man/heir.h"
 #include "../mem_man/mmap_man.h"
+#include "../hashing/hash_functions.h"
+#include "../gameplay/reversi.h"
 #include "mmap_test.h"
 
 #include <stdio.h>
 #include <assert.h>
 #include <err.h>
+
+
+void display_board(board b) {
+    if(b) {
+        for(uint8_t r = 0; r < b->height; r++) {
+            for(uint8_t c = 0; c < b->width; c++) {
+                printf("%c", board_get(b, r, c) + '0');
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
+}
 
 
 void mmap_test_readback() {
@@ -19,4 +34,24 @@ void mmap_test_readback() {
         assert(!heirarchy_insert(h, k));
     }
     destroy_heirarchy(h);
+}
+
+void mmap_spiral_hash_test() {
+    printf("Testing hash function uniqueness\n");
+    board b = create_board(2, 8, 8);
+
+    __uint128_t v1, v2;
+
+    display_board(b);
+    v1 = board_spiral_hash(b);
+
+    printf("Player: %u\n", b->player);
+    printf("Legality: %u\n", board_is_legal_move(b, 2, 4));
+    printf("captures: %lu\n", board_place_piece(b, 2, 4));
+
+    v2 = board_spiral_hash(b);
+    display_board(b);
+
+    assert(v1 != v2);
+    destroy_board(b);
 }

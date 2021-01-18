@@ -1,5 +1,5 @@
 cc=gcc
-cflags= -g
+cflags= -g -Dlimitprocs -Ddebug -Dheirdebug
 objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o hash_functions.o heir.o
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
@@ -77,7 +77,7 @@ mempage_test.o: tests/mempage_test.c tests/mempage_test.h mempage.o
 fileio_test.o: tests/fileio_test.c tests/fileio_test.h hashtable.o fileio.o
 	$(cc) $(cflags) -o $@ -c $<
 
-mmap_test.o: tests/mmap_test.c tests/mmap_test.h heir.o 
+mmap_test.o: tests/mmap_test.c tests/mmap_test.h heir.o reversi.o hash_functions.o 
 	$(cc) $(cflags) -o $@ -c $<
 
 .PHONY : clean
