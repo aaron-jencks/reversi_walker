@@ -44,6 +44,7 @@ void mmap_spiral_hash_test() {
 
     display_board(b);
     v1 = board_spiral_hash(b);
+    printf("V1 hash is %lu %lu\n", ((uint64_t*)&v1)[1], ((uint64_t*)&v1)[0]);
 
     printf("Player: %u\n", b->player);
     printf("Legality: %u\n", board_is_legal_move(b, 2, 4));
@@ -51,6 +52,7 @@ void mmap_spiral_hash_test() {
 
     v2 = board_spiral_hash(b);
     display_board(b);
+    printf("V2 hash is %lu %lu\n", ((uint64_t*)&v2)[1], ((uint64_t*)&v2)[0]);
 
     assert(v1 != v2);
     destroy_board(b);

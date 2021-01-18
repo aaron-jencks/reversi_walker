@@ -253,7 +253,7 @@ void* walker_processor_pre_stacked(void* args) {
                     // }
 
                     if(heirarchy_insert(cache, board_spiral_hash(sb))) {
-                            printf("Found a new board to count\n");
+                            // printf("Found a new board to count\n");
                             while(pthread_mutex_trylock(counter_lock)) sched_yield();
                             *counter += 1;
                             // *explored += count;
