@@ -56,7 +56,7 @@ void destroy_heirarchy(heirarchy h) {
         while(stack->pointer) {
             void** k = (void**)pop_back_pal(stack);
             uint64_t d = pop_back_dal(dstack);
-            if(d < h->num_levels && k) {
+            if(d < (h->num_levels - 1) && k) {
                 for(size_t i = 0; i < h->page_size; i++) {
                     append_pal(stack, k[i]);
                     append_dal(dstack, d + 1);
@@ -75,22 +75,34 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     void** phase = h->first_level;
 
     // Create the placeholder to extract the correct number of bits every time
-    bit_placeholder = (1 << h->num_bits_per_level) - 1;
+    bit_placeholder = ((1 << h->num_bits_per_level) - 1) << (128 - h->num_bits_per_level);
 
     // Traverse through all of the levels
     for(level = 1; level < h->num_levels; level++) {
-        bits = (size_t)(key_copy & bit_placeholder);
-        key_copy = key_copy >> h->num_bits_per_level;
+        bits = (size_t)((key_copy & bit_placeholder) >> (128 - h->num_bits_per_level));
+        key_copy = key_copy << h->num_bits_per_level;
 
-        if(!phase[bits]) {
+        #ifdef heirdebug
+            printf("Bits for level %lu is %lu\n", level, bits);
+        #endif
+
+        if(level != (h->num_levels - 1) && !phase[bits]) {
             phase[bits] = calloc(h->page_size, sizeof(void*));
             if(!phase[bits]) err(1, "Memory Error while allocating bin for key hash\n");
         }
+        else if(level == (h->num_levels - 1) && !phase[bits]) {
 
-        if(level == (h->num_levels - 1) && !phase[bits]) {
+            #ifdef heirdebug
+                printf("Generating a new bin for entry %lu\n", bits);
+            #endif
+
             // Allocate a new bin
             phase[bits] = mmap_allocate_bin(h->final_level);
-            for(size_t b = 0; b < h->final_level->max_page_size; b++) ((uint8_t*)(phase[bits]))[b] = 0;
+
+            // for(size_t b = 0; b < h->final_level->max_page_size; b++) ((uint8_t*)(phase[bits]))[b] = 0;
+            size_t num_jumps = h->final_level->elements_per_bin / 8;
+            for(size_t b = 0; b < num_jumps; b++) ((uint64_t*)(phase[bits]))[b] = 0;
+            for(size_t b = 0; b < h->final_level->max_page_size % 8; b++) ((uint8_t*)(phase[bits]))[b] = 0;
         }
         
         phase = (void**)phase[bits];
@@ -101,18 +113,23 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     // Use the rest to determine the byte
 
     // Create the placeholder to extract the correct number of bits every time, for the edge case of the final level, where the least 3 bits are used for bit position
-    bit_placeholder = (1 << (h->num_bits_per_final_level - 2)) - 1;
+    // bit_placeholder = (1 << (h->num_bits_per_final_level - 2)) - 1;
 
     // Extract the bit from the last level
+    key_copy = key_copy >> (128 - h->num_bits_per_final_level);
     bits = (size_t)(key_copy >> 3);
     uint8_t bit = key_copy & 7;
 
+    #ifdef heirdebug
+        printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
+    #endif
+
     // Insert the new bit if it's not already in the array
-    uint8_t* bytes = (uint8_t*)phase[bits];
+    uint8_t byte = ((uint8_t*)phase)[bits];
     uint8_t ph = 1 << bit;
 
-    if(bytes[bits] & ph) return 0;
-    bytes[bits] |= ph;
+    if(byte & ph) return 0;
+    ((uint8_t*)phase)[bits] |= ph;
     return 1;
 }
 

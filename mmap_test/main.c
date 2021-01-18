@@ -6,7 +6,7 @@
 #include <err.h>
 #include <stdint.h>
 
-#define LEN 64000000000
+#define LEN 64000000
 
 
 int main() {
@@ -16,14 +16,26 @@ int main() {
 
     void* res = mmap(0, LEN, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_NORESERVE, fp, 0);
     if(res == MAP_FAILED) err(1, "Mapping failed!\n");
-    // for(size_t i = 0; i < (LEN / sizeof(__uint128_t)); i++) {
-    //     printf("\r%ld/%ld", i, LEN / sizeof(__uint128_t));
-    //     ((__uint128_t*)res)[i] = 2147483647;
-    // }
+    
     for(size_t i = 0; i < (LEN / 4096); i++) {
         printf("\r%ld/%ld", i, LEN / 4096);
-        ((char*)res)[i * 4096] = 255;
+        ((char*)res)[i * 4095] = 255;
     }
     printf("\n");
+    
+    int fp1 = open("./swapfile_1", O_RDWR);
+    
+    posix_fallocate(fp1, 0, LEN);
+
+    res = mmap(0, LEN, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_NORESERVE, fp1, 0);
+    if(res == MAP_FAILED) err(1, "Mapping failed!\n");
+    
+    for(size_t i = 0; i < (LEN / 4096); i++) {
+        printf("\r%ld/%ld", i, LEN / 4096);
+        ((char*)res)[i * 4095] = 255;
+    }
+    printf("\n");
+
     close(fp);
+    close(fp1);
 }

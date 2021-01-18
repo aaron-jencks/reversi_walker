@@ -11,6 +11,10 @@
 #include "mmap_man.h"
 #include "../utils/fileio.h"
 
+#ifdef mmapdebug
+    #include <stdio.h>
+#endif
+
 #define PAGE_BIN_COUNT 2000
 
 // mmap_bin create_mmap_bin(uint8_t in_use, __uint128_t bid, size_t num_elements) {
@@ -32,6 +36,10 @@ mmap_page create_mmap_page(const char* filename, size_t size) {
     if(!page) err(1, "Memory error while allocating mmap for mmap manager\n");
     page->filename = malloc(sizeof(char) * (strlen(filename) + 1));
     memcpy(page->filename, filename, strlen(filename) + 1);
+
+    #ifdef mmapdebug
+        printf("Creating mmap_page at %s\n", page->filename);
+    #endif
 
     page->fd = open(filename, O_RDWR | O_CREAT);
     posix_fallocate(page->fd, 0, size);
@@ -64,7 +72,7 @@ mmap_man create_mmap_man(size_t page_size, size_t bin_size) {
 
     man->file_directory = find_temp_directory();
     man->max_page_size = page_size;
-    man->bins_per_page = PAGE_BIN_COUNT;
+    man->bins_per_page = page_size / bin_size;
     man->elements_per_bin = bin_size;
 
     for(size_t p = 0; p < man->num_pages; p++) {
@@ -124,7 +132,7 @@ void destroy_mmap_man(mmap_man man) {
 // }
 
 uint8_t* mmap_allocate_bin(mmap_man man) {
-    if(man->pages[man->num_pages - 1]->size >= PAGE_BIN_COUNT) {
+    if(man->pages[man->num_pages - 1]->size >= man->bins_per_page) {
         man->pages = realloc(man->pages, man->num_pages++ + 1);
 
         char* filename = find_abs_path(man->num_pages - 1, man->file_directory);
@@ -135,6 +143,10 @@ uint8_t* mmap_allocate_bin(mmap_man man) {
     uint8_t* position = page->free_pointer;
     page->free_pointer += man->elements_per_bin;
     page->size++;
+
+    #ifdef mmapdebug
+        printf("Returned a new bin at pointer %p with %lu elements\n", position, man->elements_per_bin);
+    #endif
 
     return position;
 }
