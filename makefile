@@ -4,6 +4,9 @@ objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o m
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
 
+CHECKPOINT_PATH="$(HOME)/reversi_checkpoint.bin"
+export CHECKPOINT_PATH
+
 all: main;
 
 main: main.o $(objects)
