@@ -160,6 +160,8 @@ void to_file_heir(FILE* fp, heirarchy h) {
         fwrite(&h->num_levels, sizeof(h->num_levels), 1, fp);
         fwrite(&h->page_size, sizeof(h->page_size), 1, fp);
 
+        printf("Heirarchy stats:\n\tBits: %lu\n\tLevels: %lu\n\tSize: %lu\n", h->num_bits_per_level, h->num_levels, h->page_size);
+
         size_t* level_ids = calloc(h->num_levels + 1, sizeof(size_t));
         if(!level_ids) err(1, "Memory Error while allocating array id array for heirarchy file saving algorithm\n");
 
@@ -232,7 +234,7 @@ void to_file_heir(FILE* fp, heirarchy h) {
             uint8_t* bytes = (uint8_t*)(v->ptr);
 
             #ifdef heirdebug
-                printf("Saving array (address: %p, level: %lu, id: %lu) to file\nContents: [", bytes, v->level, v->id);
+                printf("Saving array (address: %p, level: %lu, id: %lu, count: %lu) to file\nContents: [", bytes, v->level, v->id, h->final_level->elements_per_bin);
                 for(size_t b = 0; b < h->final_level->elements_per_bin; b++) {
                     if(b) printf(", ");
                     printf("%u", bytes[b]);
@@ -277,6 +279,7 @@ heirarchy from_file_heir(FILE* fp) {
     if(!fread(&h->num_bits_per_level, sizeof(h->num_bits_per_level), 1, fp)) err(11, "Error while reading data from file\n");
     fread(&h->num_levels, sizeof(h->num_levels), 1, fp);
     fread(&h->page_size, sizeof(h->page_size), 1, fp);
+    h->num_bits_per_final_level = h->num_bits_per_level + (128 % h->num_bits_per_level);
 
     printf("Heirarchy stats:\n\tBits: %lu\n\tLevels: %lu\n\tSize: %lu\n", h->num_bits_per_level, h->num_levels, h->page_size);
 
@@ -284,7 +287,7 @@ heirarchy from_file_heir(FILE* fp) {
     if(!level_counts) err(1, "Memory error while allocating level counts for heirarchy file read\n");
     fread(level_counts, sizeof(size_t), h->num_levels + 1, fp);
 
-    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, 1 << (h->num_bits_per_level - 3));
+    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, 1 << (h->num_bits_per_final_level - 3));
 
     size_t level, id;
     uint8_t* mmap_ptr;
@@ -302,11 +305,14 @@ heirarchy from_file_heir(FILE* fp) {
 
     while(1) {
         fread(&level, sizeof(size_t), 1, fp);
+        fread(&id, sizeof(size_t), 1, fp);
+
+        printf("Reading in info for %lu[%lu]\n", level, id);
+
         if(level < (h->num_levels - 1)) {
             printf("Reading in level %lu\n", level);
 
             // It's a normal array
-            fread(&id, sizeof(size_t), 1, fp);
             fread(arr_contents, sizeof(uint16_t), h->page_size, fp);
 
             ptr = malloc(sizeof(void*) * h->page_size);
@@ -325,7 +331,7 @@ heirarchy from_file_heir(FILE* fp) {
             // It's part of the bit string
             mmap_ptr = mmap_allocate_bin(h->final_level);
 
-            fread(&id, sizeof(size_t), 1, fp);
+            printf("%lu\n", h->final_level->elements_per_bin);
             fread(mmap_ptr, sizeof(uint8_t), h->final_level->elements_per_bin, fp);
 
             printf("Read in bits %lu\n", id);
