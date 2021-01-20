@@ -222,7 +222,7 @@ int main() {
             d = getc(stdin);
             // printf("%c\n", d);
             if(d == '\n' || d == 'n' || d == 'N') {
-                checkpoint_filename = find_temp_filename("checkpoint.bin\0");
+                checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : find_temp_filename("checkpoint.bin\0");
                 break;
             }
             else if(d == 'y' || d == 'Y') {
@@ -311,7 +311,7 @@ int main() {
         // #endif
         cache = create_heirarchy();
 
-        checkpoint_filename = find_temp_filename("checkpoint.bin\0");
+        checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : find_temp_filename("checkpoint.bin\0");
 
         // Distribute the initial states to a set of new pthreads.
         threads = create_ptr_arraylist(procs + 1);

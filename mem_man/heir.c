@@ -316,10 +316,14 @@ heirarchy from_file_heir(FILE* fp) {
         fread(&level, sizeof(size_t), 1, fp);
         fread(&id, sizeof(size_t), 1, fp);
 
-        printf("Reading in info for %lu[%lu]\n", level, id);
+        #ifdef heirdebug
+            printf("Reading in info for %lu[%lu]\n", level, id);
+        #endif
 
         if(level < (h->num_levels - 1)) {
-            printf("Reading in level %lu\n", level);
+            #ifdef heirdebug
+                printf("Reading in level %lu\n", level);
+            #endif
 
             // It's a normal array
             fread(arr_contents, sizeof(uint16_t), h->page_size, fp);
@@ -340,10 +344,12 @@ heirarchy from_file_heir(FILE* fp) {
             // It's part of the bit string
             mmap_ptr = mmap_allocate_bin(h->final_level);
 
-            printf("%lu\n", h->final_level->elements_per_bin);
+            // printf("%lu\n", h->final_level->elements_per_bin);
             fread(mmap_ptr, sizeof(uint8_t), h->final_level->elements_per_bin, fp);
 
-            printf("Read in bits %lu\n", id);
+            #ifdef heirdebug
+                printf("Read in bits %lu\n", id);
+            #endif
 
             ptr_mappings[level][id] = mmap_ptr;
         }
