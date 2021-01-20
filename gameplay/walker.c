@@ -157,7 +157,7 @@ void* walker_processor_pre_stacked(void* args) {
         uint64_t count = 0;
         ptr_arraylist search_stack = starting_stack;
 
-        printf("Starting walk...\n");
+        // printf("Starting walk...\n");
 
         uint64_t iter = 0, intercap = 0;
         while(search_stack->pointer) {
