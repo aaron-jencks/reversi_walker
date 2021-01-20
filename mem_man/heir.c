@@ -70,9 +70,9 @@ void destroy_heirarchy(heirarchy h) {
 }
 
 uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
-    #ifdef heirdebug
-        printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
-    #endif
+    // #ifdef heirdebug
+    //     printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
+    // #endif
 
     __uint128_t key_copy = key, bit_placeholder = 0; 
     size_t bits, level = 1;
@@ -90,23 +90,22 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
         //     printf("Bits for level %lu is %lu\n", level, bits);
         // #endif
 
-        if(level != (h->num_levels - 1) && !phase[bits]) {
+        if(level < (h->num_levels - 1) && !phase[bits]) {
             phase[bits] = calloc(h->page_size, sizeof(void*));
             if(!phase[bits]) err(1, "Memory Error while allocating bin for key hash\n");
         }
-        else if(level == (h->num_levels - 1) && !phase[bits]) {
-
-            #ifdef heirdebug
-                printf("Generating a new bin for entry %lu\n", bits);
-            #endif
-
+        else if(!phase[bits]) {
             // Allocate a new bin
-            phase[bits] = mmap_allocate_bin(h->final_level);
+            phase[bits] = (void**)mmap_allocate_bin(h->final_level);
 
             // for(size_t b = 0; b < h->final_level->max_page_size; b++) ((uint8_t*)(phase[bits]))[b] = 0;
             size_t num_jumps = h->final_level->elements_per_bin / 8;
             for(size_t b = 0; b < num_jumps; b++) ((uint64_t*)(phase[bits]))[b] = 0;
             for(size_t b = 0; b < h->final_level->max_page_size % 8; b++) ((uint8_t*)(phase[bits]))[b] = 0;
+            
+            #ifdef heirdebug
+                printf("Generating a new bin for entry %lu[%lu] @ %p\n", level - 1, bits, phase[bits]);
+            #endif
         }
         
         phase = (void**)phase[bits];
@@ -133,16 +132,16 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     uint8_t ph = 1 << bit;
 
     if(byte & ph) {
-        #ifdef heirdebug
-            printf("%lu %lu is already in the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
-        #endif
+        // #ifdef heirdebug
+        //     printf("%lu %lu is already in the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
+        // #endif
 
         return 0;
     }
-    
-    #ifdef heirdebug
-        printf("%lu %lu inserted into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
-    #endif
+
+    // #ifdef heirdebug
+    //     printf("%lu %lu inserted into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
+    // #endif
 
     ((uint8_t*)phase)[bits] |= ph;
     return 1;
@@ -157,7 +156,7 @@ void to_file_heir(FILE* fp, heirarchy h) {
     // [bits per level][num levels][page size][reverse order traversal]...
 
     if(h) {
-        fwrite(&h->num_bits_per_level, sizeof(h->num_bits_per_level), 1, fp);
+        if(!fwrite(&h->num_bits_per_level, sizeof(h->num_bits_per_level), 1, fp)) err(12, "Error while writing file data\n");
         fwrite(&h->num_levels, sizeof(h->num_levels), 1, fp);
         fwrite(&h->page_size, sizeof(h->page_size), 1, fp);
 
@@ -187,6 +186,10 @@ void to_file_heir(FILE* fp, heirarchy h) {
         while(qq->pointer) {
             v = pop_front_pal(qq);
 
+            #ifdef heirdebug
+                printf("Level %lu[%lu] @ %p's Children are:\n", v->level, v->id, v->ptr);
+            #endif
+
             uint16_t* contents = malloc(sizeof(uint16_t) * h->page_size);
             if(!contents) err(1, "Memory error while allocating id array for array\n");
 
@@ -200,13 +203,17 @@ void to_file_heir(FILE* fp, heirarchy h) {
                     vc->id = level_ids[vc_level]++;
                     vc->level = vc_level;
 
-                    if(vc_level < h->num_levels) append_pal(qq, vc);
+                    if(vc_level < (h->num_levels - 1)) append_pal(qq, vc);
                     else {
                         // We are at the bit level
                         append_pal(qb, vc);
                     }
 
                     contents[c] = vc->id;
+
+                    #ifdef heirdebug
+                        printf("\t%lu[%lu] @ %p\n", vc->level, vc->id, vc->ptr);
+                    #endif
                 }
                 else contents[c] = 65535;
             }
@@ -220,14 +227,13 @@ void to_file_heir(FILE* fp, heirarchy h) {
         fwrite(level_ids, sizeof(size_t), h->num_levels + 1, fp);
 
         // Write the bit results first
-        size_t bytes_per_final_level = 1 << (h->num_bits_per_level - 3);
         while(qb->pointer) {
             v = pop_back_pal(qb);
-            uint8_t* bytes = (uint8_t*)v->ptr;
+            uint8_t* bytes = (uint8_t*)(v->ptr);
 
             #ifdef heirdebug
                 printf("Saving array (address: %p, level: %lu, id: %lu) to file\nContents: [", bytes, v->level, v->id);
-                for(size_t b = 0; b < bytes_per_final_level; b++) {
+                for(size_t b = 0; b < h->final_level->elements_per_bin; b++) {
                     if(b) printf(", ");
                     printf("%u", bytes[b]);
                 }
@@ -236,7 +242,7 @@ void to_file_heir(FILE* fp, heirarchy h) {
 
             fwrite(&v->level, sizeof(v->level), 1, fp);
             fwrite(&v->id, sizeof(v->id), 1, fp);
-            fwrite(bytes, sizeof(uint8_t), bytes_per_final_level, fp);
+            fwrite(bytes, sizeof(uint8_t), h->final_level->elements_per_bin, fp);
 
             // free((uint16_t*)bytes); Don't free ranges of the file
             free(v);
@@ -268,9 +274,11 @@ heirarchy from_file_heir(FILE* fp) {
     heirarchy h = malloc(sizeof(heirarchy_str));
     if(!h) err(1, "Memory error while allocating new heirarchy for file read\n");
 
-    fread(&h->num_bits_per_level, sizeof(h->num_bits_per_level), 1, fp);
+    if(!fread(&h->num_bits_per_level, sizeof(h->num_bits_per_level), 1, fp)) err(11, "Error while reading data from file\n");
     fread(&h->num_levels, sizeof(h->num_levels), 1, fp);
     fread(&h->page_size, sizeof(h->page_size), 1, fp);
+
+    printf("Heirarchy stats:\n\tBits: %lu\n\tLevels: %lu\n\tSize: %lu\n", h->num_bits_per_level, h->num_levels, h->page_size);
 
     size_t *level_counts  = malloc(sizeof(size_t) * (h->num_levels + 1));
     if(!level_counts) err(1, "Memory error while allocating level counts for heirarchy file read\n");
@@ -294,7 +302,9 @@ heirarchy from_file_heir(FILE* fp) {
 
     while(1) {
         fread(&level, sizeof(size_t), 1, fp);
-        if(level < h->num_levels) {
+        if(level < (h->num_levels - 1)) {
+            printf("Reading in level %lu\n", level);
+
             // It's a normal array
             fread(&id, sizeof(size_t), 1, fp);
             fread(arr_contents, sizeof(uint16_t), h->page_size, fp);
@@ -316,7 +326,9 @@ heirarchy from_file_heir(FILE* fp) {
             mmap_ptr = mmap_allocate_bin(h->final_level);
 
             fread(&id, sizeof(size_t), 1, fp);
-            fread(mmap_ptr, sizeof(uint8_t), 1 << (h->num_bits_per_level - 3), fp);
+            fread(mmap_ptr, sizeof(uint8_t), h->final_level->elements_per_bin, fp);
+
+            printf("Read in bits %lu\n", id);
 
             ptr_mappings[level][id] = mmap_ptr;
         }

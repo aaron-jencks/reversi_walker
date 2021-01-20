@@ -9,8 +9,8 @@
 #include "tests/fileio_test.h"
 #include "tests/mmap_test.h"
 
-const uint64_t test_count = 11;
-void (*tests[11])() = {
+const uint64_t test_count = 12;
+void (*tests[12])() = {
     cc_test_directions,
     lm_test_initial,
     lm_test_from_coord,
@@ -21,7 +21,8 @@ void (*tests[11])() = {
     mp_buff_test_index,
     fio_test_hashtable_write,
     mmap_test_readback,
-    mmap_spiral_hash_test
+    mmap_spiral_hash_test,
+    fio_test_heir_write
 };
 
 

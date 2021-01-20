@@ -343,7 +343,7 @@ int main() {
     while(1) {
         current = time(0);
         run_time = current - start;
-        save_time = (current - save_timer) / 3600;
+        save_time = (current - save_timer) / 5;
         fps_update_time = (current - fps_timer) / 1;
 
         run_days = run_time / 86400;
@@ -363,11 +363,13 @@ int main() {
             fps_timer = time(0);
         }
 
-        printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
-               count, explored_count, fps,
-               run_days, run_hours, run_minutes, run_seconds,
-               cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
-               (save_time) ? "Saving..." : "");
+        #ifndef hideprint
+            printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
+                count, explored_count, fps,
+                run_days, run_hours, run_minutes, run_seconds,
+                cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
+                (save_time) ? "Saving..." : "");
+        #endif
 
         if(save_time) {
             // SHUTDOWN_FLAG = 1;
