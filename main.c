@@ -152,7 +152,8 @@ int main() {
 
     // Initialize the locks
     if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || 
-       pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0) || pthread_mutex_init(&shutdown_lock, 0)) 
+       pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0) || pthread_mutex_init(&shutdown_lock, 0) || 
+       pthread_mutex_init(&heirarchy_lock, 0)) 
         err(4, "Initialization of counter mutex failed\n");
 
     #pragma region Round nprocs to the correct number
@@ -343,7 +344,13 @@ int main() {
     while(1) {
         current = time(0);
         run_time = current - start;
-        save_time = (current - save_timer) / 5;
+
+        #ifdef fastsave
+            save_time = (current - save_timer) / 5;
+        #else
+            save_time = (current - save_timer) / 3600;
+        #endif
+
         fps_update_time = (current - fps_timer) / 1;
 
         run_days = run_time / 86400;

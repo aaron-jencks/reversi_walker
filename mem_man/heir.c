@@ -9,6 +9,8 @@
 #define INITIAL_CACHE_SIZE 34359738368
 #define INITIAL_PAGE_SIZE 5368709120
 
+pthread_mutex_t heirarchy_lock;
+
 heirarchy create_heirarchy() {
     heirarchy h = malloc(sizeof(heirarchy_str));
     if(!h) err(1, "Memory error while allocating heirarchical memory system\n");
@@ -131,10 +133,14 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     uint8_t byte = ((uint8_t*)phase)[bits];
     uint8_t ph = 1 << bit;
 
+    while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+
     if(byte & ph) {
         // #ifdef heirdebug
         //     printf("%lu %lu is already in the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
         // #endif
+
+        pthread_mutex_unlock(&heirarchy_lock);
 
         return 0;
     }
@@ -144,6 +150,9 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     // #endif
 
     ((uint8_t*)phase)[bits] |= ph;
+
+    pthread_mutex_unlock(&heirarchy_lock);
+
     return 1;
 }
 

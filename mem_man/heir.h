@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <pthread.h>
 
 #include "mmap_man.h"
 
@@ -16,6 +17,8 @@ typedef struct __heirarchy_str {
 } heirarchy_str;
 
 typedef heirarchy_str* heirarchy;
+
+extern pthread_mutex_t heirarchy_lock;
 
 heirarchy create_heirarchy();
 void destroy_heirarchy(heirarchy h);
