@@ -376,8 +376,8 @@ int main() {
         }
 
         #ifndef hideprint
-            printf("\rFound %ld final board states. Explored %ld boards with %ld repeats @ %ld boards/sec. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
-                count, explored_count, repeated_count, fps,
+            printf("\rFound %lu final board states. Explored %lu boards @ %lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
+                count, explored_count, fps,
                 run_days, run_hours, run_minutes, run_seconds,
                 cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                 (save_time) ? "Saving..." : "");
