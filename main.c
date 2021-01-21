@@ -132,6 +132,7 @@ int main() {
     // Allocate all of the stack parameters necessary for file restoration
     heirarchy cache;
     uint64_t count = 0, explored_count = 1, repeated_count = 0;
+    size_t finished_count = 0;
     char* checkpoint_filename;
 
     // Calculate the number of processors to use
@@ -143,7 +144,7 @@ int main() {
     #endif
 
     // Setup the locks
-    pthread_mutex_t counter_lock, explored_lock, file_lock, repeated_lock;
+    pthread_mutex_t counter_lock, explored_lock, file_lock, repeated_lock, finished_lock;
 
     // Setup the checkpoint saving system
     FILE** checkpoint_file = malloc(sizeof(FILE*));
@@ -153,7 +154,7 @@ int main() {
     // Initialize the locks
     if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || pthread_mutex_init(&repeated_lock, 0) || 
        pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0) || pthread_mutex_init(&shutdown_lock, 0) || 
-       pthread_mutex_init(&heirarchy_lock, 0)) 
+       pthread_mutex_init(&heirarchy_lock, 0) || pthread_mutex_init(&finished_lock, 0)) 
         err(4, "Initialization of counter mutex failed\n");
 
     #pragma region Round nprocs to the correct number
@@ -295,7 +296,8 @@ int main() {
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
                                                         &repeated_count, &repeated_lock,
-                                                        &saving_counter, checkpoint_file, &file_lock);
+                                                        &saving_counter, checkpoint_file, &file_lock,
+                                                        &finished_count, &finished_lock);
 
             // walker_processor(args);
             pthread_create(thread_id, 0, walker_processor_pre_stacked, (void*)args);
@@ -325,7 +327,8 @@ int main() {
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
                                                         &repeated_count, &repeated_lock,
-                                                        &saving_counter, checkpoint_file, &file_lock);
+                                                        &saving_counter, checkpoint_file, &file_lock,
+                                                        &finished_count, &finished_lock);
 
             // walker_processor(args);
             pthread_create(thread_id, 0, walker_processor, (void*)args);
@@ -380,15 +383,17 @@ int main() {
                 (save_time) ? "Saving..." : "");
         #endif
 
+        if(finished_count == procs) break;
+
         if(save_time) {
             // SHUTDOWN_FLAG = 1;
-            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs);
+            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
             save_timer = time(0);
         }
 
         if(SHUTDOWN_FLAG) {
             fflush(stdout);
-            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs);
+            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
             destroy_heirarchy(cache);
             exit(0);
         }
@@ -397,6 +402,10 @@ int main() {
             sched_yield();
         }
     }
+
+    fflush(stdout);
+    // save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
+    destroy_heirarchy(cache);
 
     printf("\nThere are %ld possible board states\n", count);
 }

@@ -307,6 +307,10 @@ void* walker_processor_pre_stacked(void* args) {
 
         printf("Processor %d has finished\n", pargs->identifier);
 
+        while(pthread_mutex_trylock(pargs->finished_lock)) sched_yield();
+        *pargs->finished_count += 1;
+        pthread_mutex_unlock(pargs->finished_lock);
+
         return 0;
     }
 
@@ -334,7 +338,8 @@ processor_args create_processor_args(uint32_t identifier, board starting_board, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                      uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
-                                     uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock) {
+                                     uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock,
+                                     size_t* finished_count, pthread_mutex_t* finished_lock) {
     processor_args args = malloc(sizeof(processor_args_str));
     if(!args) err(1, "Memory error while allocating processor args\n");
 
@@ -350,6 +355,8 @@ processor_args create_processor_args(uint32_t identifier, board starting_board, 
     args->checkpoint_file = checkpoint_file;
     args->file_lock = file_lock;
     args->saving_counter = saving_counter;
+    args->finished_count = finished_count;
+    args->finished_lock = finished_lock;
 
     return args;
 }
