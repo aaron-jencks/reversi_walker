@@ -91,7 +91,7 @@ processed_file restore_progress(char* filename, __uint128_t (*hash)(void*));
  */
 void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* filename, 
                    uint64_t* saving_counter, heirarchy cache,
-                   uint64_t found_counter, uint64_t explored_counter, uint64_t num_processors);
+                   uint64_t found_counter, uint64_t explored_counter, uint64_t repeated_counter, uint64_t num_processors);
 
 /**
  * @brief Reads and populates the fields of the processed file from the given file, used to restore progress

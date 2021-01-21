@@ -182,7 +182,7 @@ processed_file restore_progress(char* filename, __uint128_t (*hash)(void*)) {
  */
 void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* filename, 
                    uint64_t* saving_counter, heirarchy cache,
-                   uint64_t found_counter, uint64_t explored_counter, uint64_t num_processors) {
+                   uint64_t found_counter, uint64_t explored_counter, uint64_t repeated_counter, uint64_t num_processors) {
     printf("\nStarting save...\n");
     *checkpoint_file = fopen(filename, "wb+");
     if(!*checkpoint_file) err(7, "Unable to open or create file %s\n", filename);
@@ -194,6 +194,7 @@ void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* 
     while(pthread_mutex_trylock(file_lock)) sched_yield();
     fwrite(&found_counter, sizeof(found_counter), 1, *checkpoint_file);
     fwrite(&explored_counter, sizeof(explored_counter), 1, *checkpoint_file);
+    fwrite(&repeated_counter, sizeof(repeated_counter), 1, *checkpoint_file);
     fwrite(&num_processors, sizeof(num_processors), 1, *checkpoint_file);
     pthread_mutex_unlock(file_lock);
 

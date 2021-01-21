@@ -130,6 +130,7 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     // #endif
 
     // Insert the new bit if it's not already in the array
+    // printf("Bit value: %lu\n", bits);
     uint8_t byte = ((uint8_t*)phase)[bits];
     uint8_t ph = 1 << bit;
 

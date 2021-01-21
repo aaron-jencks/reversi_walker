@@ -131,7 +131,7 @@ int main() {
 
     // Allocate all of the stack parameters necessary for file restoration
     heirarchy cache;
-    uint64_t count = 0, explored_count = 1;
+    uint64_t count = 0, explored_count = 1, repeated_count = 0;
     char* checkpoint_filename;
 
     // Calculate the number of processors to use
@@ -143,7 +143,7 @@ int main() {
     #endif
 
     // Setup the locks
-    pthread_mutex_t counter_lock, explored_lock, file_lock;
+    pthread_mutex_t counter_lock, explored_lock, file_lock, repeated_lock;
 
     // Setup the checkpoint saving system
     FILE** checkpoint_file = malloc(sizeof(FILE*));
@@ -151,7 +151,7 @@ int main() {
     uint64_t saving_counter;
 
     // Initialize the locks
-    if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || 
+    if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || pthread_mutex_init(&repeated_lock, 0) || 
        pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0) || pthread_mutex_init(&shutdown_lock, 0) || 
        pthread_mutex_init(&heirarchy_lock, 0)) 
         err(4, "Initialization of counter mutex failed\n");
@@ -294,6 +294,7 @@ int main() {
             processor_args args = create_processor_args(t, stacks->data[t], pf->cache, 
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
+                                                        &repeated_count, &repeated_lock,
                                                         &saving_counter, checkpoint_file, &file_lock);
 
             // walker_processor(args);
@@ -323,6 +324,7 @@ int main() {
             processor_args args = create_processor_args(t, search_queue->data[t], cache, 
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
+                                                        &repeated_count, &repeated_lock,
                                                         &saving_counter, checkpoint_file, &file_lock);
 
             // walker_processor(args);
@@ -371,8 +373,8 @@ int main() {
         }
 
         #ifndef hideprint
-            printf("\rFound %ld final board states. Explored %ld boards @ %ld boards/sec. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
-                count, explored_count, fps,
+            printf("\rFound %ld final board states. Explored %ld boards with %ld repeats @ %ld boards/sec. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
+                count, explored_count, repeated_count, fps,
                 run_days, run_hours, run_minutes, run_seconds,
                 cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                 (save_time) ? "Saving..." : "");
@@ -380,13 +382,13 @@ int main() {
 
         if(save_time) {
             // SHUTDOWN_FLAG = 1;
-            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
+            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs);
             save_timer = time(0);
         }
 
         if(SHUTDOWN_FLAG) {
             fflush(stdout);
-            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, procs);
+            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs);
             destroy_heirarchy(cache);
             exit(0);
         }
