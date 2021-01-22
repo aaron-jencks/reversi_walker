@@ -262,7 +262,7 @@ int main() {
 
             // printf("Distributing %lu boards\n", all_current_boards->pointer + important_boards->pointer);
             
-            for(uint64_t p = 0; p < procs; p++) append_pal(stacks, create_ptr_arraylist(1000));
+            for(uint64_t p = 0; p < procs; p++) append_pal(stacks, create_ptr_arraylist(10000));
 
             uint64_t p_ptr = 0;
 

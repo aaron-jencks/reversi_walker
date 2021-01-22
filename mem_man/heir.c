@@ -98,12 +98,12 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
         }
         else if(!phase[bits]) {
             // Allocate a new bin
-            phase[bits] = (void**)mmap_allocate_bin(h->final_level);
+            phase[bits] = (void**)calloc(h->final_level->elements_per_bin, sizeof(uint8_t)); // mmap_man_allocate_bin(h->final_level);
 
             // for(size_t b = 0; b < h->final_level->max_page_size; b++) ((uint8_t*)(phase[bits]))[b] = 0;
             size_t num_jumps = h->final_level->elements_per_bin / 8;
             for(size_t b = 0; b < num_jumps; b++) ((uint64_t*)(phase[bits]))[b] = 0;
-            for(size_t b = 0; b < h->final_level->max_page_size % 8; b++) ((uint8_t*)(phase[bits]))[b] = 0;
+            for(size_t b = 0; b < h->final_level->elements_per_bin % 8; b++) ((uint8_t*)(phase[bits]))[b] = 0;
             
             #ifdef heirdebug
                 printf("Generating a new bin for entry %lu[%lu] @ %p\n", level - 1, bits, phase[bits]);

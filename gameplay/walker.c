@@ -34,43 +34,52 @@ coord create_coord(uint8_t row, uint8_t col) {
 
 coord* find_next_boards(board b) {
     uint8_t sr = (b->height >> 1) - 1, sc = (b->width >> 1) - 1, visited[b->height][b->width];
-    ptr_arraylist edges = create_ptr_arraylist(65), queue = create_ptr_arraylist(65);
+    ptr_arraylist edges = create_ptr_arraylist(65); // , queue = create_ptr_arraylist(65);
 
-    for(uint8_t i = 0; i < b->height; i++) 
-        for(uint8_t j = 0; j < b->width; j++) 
-            visited[i][j] = 0;
-
-    append_pal(queue, create_coord(sr, sc));
-
-    while(queue->pointer) {
-        coord c = pop_front_pal(queue);
-        visited[c->row][c->column] = 1;
-
-        for(int8_t rd = -1; rd < 2; rd++) {
-            for(int8_t cd = -1; cd < 2; cd++) {
-                if(!rd && !cd) continue;
-                
-                sr = c->row + rd;
-                sc = c->column + cd;
-
-                if(sr >= 0 && sr < b->height && sc >= 0 && sc < b->width) {
-                    uint8_t v = visited[sr][sc];
-                    if(board_get(b, sr, sc) && !v) 
-                        append_pal(queue, create_coord(sr, sc));
-                    else if(!v && board_get(b, c->row, c->column) != b->player) {
-                        visited[sr][sc] = 1;
-                        if(board_is_legal_move(b, sr, sc))
-                            append_pal(edges, create_coord(sr, sc));
-                    }
-                }
+    // 6 times faster
+    for(uint8_t i = 0; i < b->height; i++) {
+        for(uint8_t j = 0; j < b->width; j++) {
+            if(board_is_legal_move(b, i, j)) {
+                append_pal(edges, create_coord(i, j));
             }
         }
-
-        free(c);
     }
 
-    for(uint64_t i = 0; i < queue->pointer; i++) free(queue->data[i]);  // In case I missed one?
-    destroy_ptr_arraylist(queue);
+    // for(uint8_t i = 0; i < b->height; i++) 
+    //     for(uint8_t j = 0; j < b->width; j++) 
+    //         visited[i][j] = 0;
+
+    // append_pal(queue, create_coord(sr, sc));
+
+    // while(queue->pointer) {
+    //     coord c = pop_front_pal(queue);
+    //     visited[c->row][c->column] = 1;
+
+    //     for(int8_t rd = -1; rd < 2; rd++) {
+    //         for(int8_t cd = -1; cd < 2; cd++) {
+    //             if(!rd && !cd) continue;
+                
+    //             sr = c->row + rd;
+    //             sc = c->column + cd;
+
+    //             if(sr >= 0 && sr < b->height && sc >= 0 && sc < b->width) {
+    //                 uint8_t v = visited[sr][sc];
+    //                 if(board_get(b, sr, sc) && !v) 
+    //                     append_pal(queue, create_coord(sr, sc));
+    //                 else if(!v && board_get(b, c->row, c->column) != b->player) {
+    //                     visited[sr][sc] = 1;
+    //                     if(board_is_legal_move(b, sr, sc))
+    //                         append_pal(edges, create_coord(sr, sc));
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     free(c);
+    // }
+
+    // for(uint64_t i = 0; i < queue->pointer; i++) free(queue->data[i]);  // In case I missed one?
+    // destroy_ptr_arraylist(queue);
     coord* result = (coord*)(edges->data);
     free(edges);
     return result;
@@ -134,7 +143,7 @@ void* walker_processor(void* args) {
     // Unpack the arguments
     processor_args pargs = (processor_args)args;
     if(pargs && pargs->starting_board) {
-        ptr_arraylist search_stack = create_ptr_arraylist(1000);
+        ptr_arraylist search_stack = create_ptr_arraylist(10000);
         append_pal(search_stack, pargs->starting_board);
         pargs->starting_board = (board)search_stack;
         return walker_processor_pre_stacked(pargs);

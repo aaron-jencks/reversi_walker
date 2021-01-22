@@ -22,7 +22,7 @@ main.o: main.c $(objects)
 	$(cc) $(cflags) -o $@ -c $<
 
 tester.o: tester.c $(objects) $(test_objects)
-	$(cc) $(cflags) -o $@ -c $<
+	$(cc) -g $(cflags) -o $@ -c $<
 
 reversi.o: ./gameplay/reversi.c ./gameplay/reversi.h
 	$(cc) $(cflags) -o $@ -c $<

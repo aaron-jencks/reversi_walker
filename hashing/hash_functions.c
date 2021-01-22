@@ -59,22 +59,22 @@ __uint128_t board_spiral_hash(void* brd) {
             for(iter = 0; iter < spiral_dimension; iter++) {
                 v = board_get(b, r - iter, c);
                 result += v;
-                if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
+                result = result << 2;
             }
             for(iter = 1; iter < spiral_dimension; iter++) {
                 v = board_get(b, r - delta_dimension, c - iter);
                 result += v;
-                if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
+                result = result << 2;
             }
             for(iter = 1; iter < spiral_dimension; iter++) {
                 v = board_get(b, r - delta_dimension + iter, c - delta_dimension);
                 result += v;
-                if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
+                result = result << 2;
             }
             for(iter = 1; iter < (spiral_dimension - 1); iter++) {
                 v = board_get(b, r, c - delta_dimension + iter);
                 result += v;
-                if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
+                if(iter < spiral_dimension - 2 || r < b->height - 1 && c < b->width - 1) result = result << 2;
             }
 
             // Move to the next spiral
