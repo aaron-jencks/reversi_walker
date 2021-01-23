@@ -216,7 +216,8 @@ void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* 
     // Save the hashtable
     printf("\nSaving the hashtable\n");
     while(pthread_mutex_trylock(file_lock)) sched_yield();
-    to_file_heir(*checkpoint_file, cache);
+    // to_file_heir(*checkpoint_file, cache);
+    fwrite(cache->final_level->file_directory, sizeof(uint8_t), strlen(cache->final_level->file_directory), *checkpoint_file);
     pthread_mutex_unlock(file_lock);
 
     fclose(*checkpoint_file);

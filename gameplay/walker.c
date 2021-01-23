@@ -176,8 +176,42 @@ void* walker_processor_pre_stacked(void* args) {
             //     display_board(sb);
             // #endif
 
-            if(heirarchy_insert(cache, board_spiral_hash(sb))) {
-                coord* next_moves = find_next_boards(sb);
+            coord* next_moves = find_next_boards(sb);
+
+            if(next_moves[0]) {
+                uint8_t move_count = 0;
+                // If the move is legal, then append it to the search stack
+                for(uint8_t im = 0; next_moves[im]; im++) {
+                    coord mm = next_moves[im];
+                    bc = clone_board(sb);
+
+                    if(board_is_legal_move(bc, mm->row, mm->column)) {
+                        board_place_piece(bc, mm->row, mm->column);
+                        append_pal(search_stack, bc);
+                        move_count++;
+                    }
+                    else {
+                        destroy_board(bc);
+                    }
+
+                    free(mm);
+                }
+
+                #ifdef debug
+                    printf("Found %u moves\n", move_count);
+                #endif
+
+                free(next_moves);
+            }
+            else {
+                // The opponenet has no moves, try the other player
+                #ifdef debug
+                    printf("No moves for opponent, switching back to the current player\n");
+                #endif
+                sb->player = (sb->player == 1) ? 2 : 1;
+
+                free(next_moves);
+                next_moves = find_next_boards(sb);
 
                 if(next_moves[0]) {
                     uint8_t move_count = 0;
@@ -198,69 +232,36 @@ void* walker_processor_pre_stacked(void* args) {
                         free(mm);
                     }
 
-                    #ifdef debug
-                        printf("Found %u moves\n", move_count);
-                    #endif
-
                     free(next_moves);
                 }
                 else {
                     // The opponenet has no moves, try the other player
                     #ifdef debug
-                        printf("No moves for opponent, switching back to the current player\n");
+                        printf("No moves for anybody, game has ended.\n");
                     #endif
-                    sb->player = (sb->player == 1) ? 2 : 1;
 
                     free(next_moves);
-                    next_moves = find_next_boards(sb);
 
-                    if(next_moves[0]) {
-                        uint8_t move_count = 0;
-                        // If the move is legal, then append it to the search stack
-                        for(uint8_t im = 0; next_moves[im]; im++) {
-                            coord mm = next_moves[im];
-                            bc = clone_board(sb);
+                    // if(!exists_hs(cache, sb)) {
+                    //     put_hs(cache, sb);
+                    //     while(pthread_mutex_trylock(counter_lock)) sched_yield();
+                    //     *counter += 1;
+                    //     // *explored += count;
+                    //     pthread_mutex_unlock(counter_lock);
 
-                            if(board_is_legal_move(bc, mm->row, mm->column)) {
-                                board_place_piece(bc, mm->row, mm->column);
-                                append_pal(search_stack, bc);
-                                move_count++;
-                            }
-                            else {
-                                destroy_board(bc);
-                            }
+                    //     // while(pthread_mutex_trylock(explored_lock)) sched_yield();
+                    //     // *explored += count;
+                    //     // pthread_mutex_unlock(explored_lock);
 
-                            free(mm);
-                        }
+                    //     count = 0;
+                    // }
+                    // else {
+                    //     #ifdef debug
+                    //         printf("The given board is already counted\n");
+                    //     #endif
+                    // }
 
-                        free(next_moves);
-                    }
-                    else {
-                        // The opponenet has no moves, try the other player
-                        #ifdef debug
-                            printf("No moves for anybody, game has ended.\n");
-                        #endif
-
-                        free(next_moves);
-
-                        // if(!exists_hs(cache, sb)) {
-                        //     put_hs(cache, sb);
-                        //     while(pthread_mutex_trylock(counter_lock)) sched_yield();
-                        //     *counter += 1;
-                        //     // *explored += count;
-                        //     pthread_mutex_unlock(counter_lock);
-
-                        //     // while(pthread_mutex_trylock(explored_lock)) sched_yield();
-                        //     // *explored += count;
-                        //     // pthread_mutex_unlock(explored_lock);
-
-                        //     count = 0;
-                        // }
-                        // else {
-                        //     #ifdef debug
-                        //         printf("The given board is already counted\n");
-                        //     #endif
-                        // }
+                    if(heirarchy_insert(cache, board_spiral_hash(sb))) {
 
                         // printf("Found a new board to count\n");
                         while(pthread_mutex_trylock(counter_lock)) sched_yield();
@@ -274,18 +275,17 @@ void* walker_processor_pre_stacked(void* args) {
 
                         // count = 0;
                     }
+                    else {
+                        while(pthread_mutex_trylock(repeated_lock)) sched_yield();
+                        *repeated += 1;
+                        pthread_mutex_unlock(repeated_lock);
+                    }
                 }
-
-                while(pthread_mutex_trylock(explored_lock)) sched_yield();
-                *explored += 1;
-                pthread_mutex_unlock(explored_lock);
-
             }
-            else {
-                while(pthread_mutex_trylock(repeated_lock)) sched_yield();
-                *repeated += 1;
-                pthread_mutex_unlock(repeated_lock);
-            }
+
+            while(pthread_mutex_trylock(explored_lock)) sched_yield();
+            *explored += 1;
+            pthread_mutex_unlock(explored_lock);
 
             destroy_board(sb);
 

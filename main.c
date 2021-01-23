@@ -8,6 +8,7 @@
 #include <time.h>
 #include <string.h>
 #include <signal.h>
+#include <locale.h>
 
 #include "./gameplay/reversi.h"
 #include "./hashing/hash_functions.h"
@@ -112,6 +113,8 @@ int main() {
 
     // This way we can remove the mmapped files
     signal(SIGINT, graceful_shutdown);
+
+    setlocale(LC_NUMERIC, "");
 
     char d;
     while(1) {
@@ -376,7 +379,7 @@ int main() {
         }
 
         #ifndef hideprint
-            printf("\rFound %lu final board states. Explored %lu boards @ %lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
+            printf("\rFound %'lu final board states. Explored %'lu boards @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
                 count, explored_count, fps,
                 run_days, run_hours, run_minutes, run_seconds,
                 cpu_days, cpu_hours, cpu_minutes, cpu_seconds,

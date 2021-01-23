@@ -31,7 +31,7 @@ heirarchy create_heirarchy() {
     h->num_levels = 128 / shifts;
     h->num_bits_per_final_level = shifts + (128 % shifts); // To ensure that we use every bit
 
-    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, 1 << (h->num_bits_per_final_level - 3));
+    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3));
 
     h->first_level = calloc(h->page_size, sizeof(void*));
     if(!h->first_level) err(1, "Memory error while allocating heirarchical memory system\n");
@@ -93,17 +93,19 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
         // #endif
 
         if(level < (h->num_levels - 1) && !phase[bits]) {
+            // printf("Allocating %lu[%lu]\n", level, bits);
             phase[bits] = calloc(h->page_size, sizeof(void*));
             if(!phase[bits]) err(1, "Memory Error while allocating bin for key hash\n");
         }
         else if(!phase[bits]) {
             // Allocate a new bin
-            phase[bits] = (void**)calloc(h->final_level->elements_per_bin, sizeof(uint8_t)); // mmap_man_allocate_bin(h->final_level);
+            phase[bits] = mmap_allocate_bin(h->final_level);
 
             // for(size_t b = 0; b < h->final_level->max_page_size; b++) ((uint8_t*)(phase[bits]))[b] = 0;
+            ((__uint128_t*)phase[bits])[0] = key >> h->num_bits_per_final_level + 3;
             size_t num_jumps = h->final_level->elements_per_bin / 8;
-            for(size_t b = 0; b < num_jumps; b++) ((uint64_t*)(phase[bits]))[b] = 0;
-            for(size_t b = 0; b < h->final_level->elements_per_bin % 8; b++) ((uint8_t*)(phase[bits]))[b] = 0;
+            for(size_t b = 2; b < num_jumps; b++) ((uint64_t*)(phase[bits]))[b] = 0;
+            for(size_t b = 0; b < h->final_level->elements_per_bin % 8; b++) ((uint8_t*)(phase[bits]))[num_jumps + b] = 0;
             
             #ifdef heirdebug
                 printf("Generating a new bin for entry %lu[%lu] @ %p\n", level - 1, bits, phase[bits]);
@@ -175,73 +177,151 @@ void to_file_heir(FILE* fp, heirarchy h) {
         size_t* level_ids = calloc(h->num_levels + 1, sizeof(size_t));
         if(!level_ids) err(1, "Memory Error while allocating array id array for heirarchy file saving algorithm\n");
 
-        typedef struct __array_file_cluster_t {
-            void** ptr;
-            size_t id;
+        typedef struct __file_node_cluster_t {
             size_t level;
-        } array_file_cluster_t;
+            size_t index;
+            uint64_arraylist children;
+            size_t num_children;
+            size_t id;
+            void** data;
+        } file_node_cluster_t;
+
+        typedef struct __file_bin_cluster_t {
+            uint8_t* bin;
+            size_t index;
+            size_t id;
+        } file_bin_cluster_t;
+
+        file_node_cluster_t* v, *vc;
+        file_bin_cluster_t* b;
+
+        printf("Iterating over heirarchy\n");
 
         // These capacity numbers are purposely low to reduce memory consumption
         ptr_arraylist q = create_ptr_arraylist(h->num_levels * h->page_size), 
                       qq = create_ptr_arraylist(h->num_levels * h->page_size),
                       qb = create_ptr_arraylist(h->num_levels * h->page_size);
 
-        array_file_cluster_t* v = malloc(sizeof(array_file_cluster_t)), *vc;
-        if(!v) err(1, "Memory error while allocating page information for array\n");
-        v->ptr = h->first_level;
-        v->id = level_ids[0]++;
-        v->level = 0;
+        uint64_arraylist first_children = create_uint64_arraylist(h->page_size);
 
-        append_pal(qq, v);
+        // Iterate over the first level and queue up the non-zero elements
+        for(size_t c = 0; c < h->page_size; c++) {
+            if(h->first_level[c]) {
+                v = malloc(sizeof(file_node_cluster_t)), *vc;
+                if(!v) err(1, "Memory error while allocating page information for array\n");
+                v->level = 0;
+                v->id = level_ids[0]++;
+                v->num_children = 0;
+                v->index = c;
+                v->data = (void**)h->first_level[c];
+                v->children = create_uint64_arraylist(h->page_size);
 
-        // Perform BFS and migrate all of the values into q
-        while(qq->pointer) {
-            v = pop_front_pal(qq);
-
-            #ifdef heirdebug
-                printf("Level %lu[%lu] @ %p's Children are:\n", v->level, v->id, v->ptr);
-            #endif
-
-            uint16_t* contents = malloc(sizeof(uint16_t) * h->page_size);
-            if(!contents) err(1, "Memory error while allocating id array for array\n");
-
-            size_t vc_level = v->level + 1;
-
-            for(size_t c = 0; c < h->page_size; c++) {
-                if(v->ptr[c]) {
-                    vc = malloc(sizeof(array_file_cluster_t));
-                    if(!vc) err(1, "Memory error while allocating page information for array\n");
-                    vc->ptr = (void**)(v->ptr[c]);
-                    vc->id = level_ids[vc_level]++;
-                    vc->level = vc_level;
-
-                    if(vc_level < (h->num_levels - 1)) append_pal(qq, vc);
-                    else {
-                        // We are at the bit level
-                        append_pal(qb, vc);
-                    }
-
-                    contents[c] = vc->id;
-
-                    #ifdef heirdebug
-                        printf("\t%lu[%lu] @ %p\n", vc->level, vc->id, vc->ptr);
-                    #endif
-                }
-                else contents[c] = 65535;
+                append_pal(qq, v);
+                append_pal(q, v);
+                append_dal(first_children, v->id);
             }
-
-            v->ptr = contents;
-
-            append_pal(q, v);
         }
 
-        // So that I know how many arrays are in each level
-        fwrite(level_ids, sizeof(size_t), h->num_levels + 1, fp);
+        // Write the ids of the first level's children
+        fwrite(&first_children->pointer, sizeof(first_children->pointer), 1, fp);
+        fwrite(first_children->data, sizeof(uint64_t), first_children->pointer, fp);
+
+        destroy_uint64_arraylist(first_children);
+
+        // Try BFS and create a path int that marks which keys map to which bins
+        size_t current_level = 0, num_save = 0, previous_save = 1, explore_counter = 0;
+        while(qq->pointer) {
+            ++explore_counter;
+            v = pop_front_pal(qq);
+
+            if(v->level > current_level) {
+                printf("\nSaving level %lu\n", current_level);
+
+                for(size_t i = 1; i <= previous_save && q->pointer; i++) {
+                    printf("%lu/%lu\r", i, previous_save);
+                    fflush(stdout);
+
+                    vc = pop_front_pal(q);
+                    if(vc->level == v->level) break;
+
+                    fwrite(&vc->level, sizeof(vc->level), 1, fp);
+                    fwrite(&vc->index, sizeof(vc->index), 1, fp);
+                    fwrite(&vc->id, sizeof(vc->id), 1, fp);
+                    fwrite(&vc->children->pointer, sizeof(vc->children->pointer), 1, fp);
+                    fwrite(vc->children->data, sizeof(uint64_t), vc->children->pointer, fp);
+
+                    destroy_uint64_arraylist(vc->children);
+                    free(vc);
+                }
+                explore_counter = 0;
+                current_level = v->level;
+                previous_save = num_save;
+                num_save = 0;
+
+                printf("\n");
+            }
+
+            size_t vc_level = v->level + 1;
+            // printf("Iterating over page %lu[%lu]\n", v->level, v->index);
+            for(size_t c = 0; c < h->page_size; c++) {
+                printf("Iterating over page %lu[%lu](%lu/%lu): %lu/%lu\r", v->level, v->index, explore_counter, previous_save, c + 1, h->page_size);
+                fflush(stdout);
+
+                if(v->data[c]) {
+                    if(v->level < h->num_levels - 2) {
+                        vc = malloc(sizeof(file_node_cluster_t));
+                        if(!vc) err(1, "Memory error while allocating page information for array\n");
+                        vc->data = (void**)(v->data[c]);
+                        vc->id = level_ids[vc_level]++;
+                        vc->level = vc_level;
+                        vc->index = c;
+                        vc->children = create_uint64_arraylist(h->page_size);
+
+                        append_pal(qq, vc);
+                        append_pal(q, vc);
+                        append_dal(v->children, vc->id);
+                        num_save++;
+                    }
+                    else {
+                        b = malloc(sizeof(file_bin_cluster_t));
+                        if(!b) err(1, "Memory error while allocating bit page information for file\n");
+                        b->bin = (uint8_t*)v->data[c];
+                        b->id = level_ids[vc_level]++;
+                        b->index = c;
+
+                        append_pal(qb, b);
+                        append_dal(v->children, b->id);
+                    }
+                }
+            }
+        }
+
+        printf("\nSaving remaining pages\n");
+        num_save = q->pointer;
+        for(size_t i = 1; i <= num_save && q->pointer; i++) {
+            printf("%lu/%lu\r", i, num_save);
+
+            vc = pop_front_pal(q);
+
+            fwrite(&vc->level, sizeof(vc->level), 1, fp);
+            fwrite(&vc->index, sizeof(vc->index), 1, fp);
+            fwrite(&vc->id, sizeof(vc->id), 1, fp);
+            fwrite(&vc->children->pointer, sizeof(vc->children->pointer), 1, fp);
+            fwrite(vc->children->data, sizeof(uint64_t), vc->children->pointer, fp);
+
+            destroy_uint64_arraylist(vc->children);
+            free(vc);
+        }
+
+        printf("\nSaving bits\n");
 
         // Write the bit results first
-        while(qb->pointer) {
-            v = pop_back_pal(qb);
-            uint8_t* bytes = (uint8_t*)(v->ptr);
+        num_save = qb->pointer;
+        for(size_t i = 1; i <= num_save && qb->pointer; i++) {
+            printf("%lu/%lu\r", i, num_save);
+
+            b = pop_back_pal(qb);
+            uint8_t* bytes = (uint8_t*)(b->bin);
 
             #ifdef heirdebug
                 printf("Saving array (address: %p, level: %lu, id: %lu, count: %lu) to file\nContents: [", bytes, v->level, v->id, h->final_level->elements_per_bin);
@@ -252,23 +332,11 @@ void to_file_heir(FILE* fp, heirarchy h) {
                 printf("]\n");
             #endif
 
-            fwrite(&v->level, sizeof(v->level), 1, fp);
-            fwrite(&v->id, sizeof(v->id), 1, fp);
+            fwrite(&b->id, sizeof(b->id), 1, fp);
             fwrite(bytes, sizeof(uint8_t), h->final_level->elements_per_bin, fp);
 
             // free((uint16_t*)bytes); Don't free ranges of the file
-            free(v);
-        }
-
-        // Reverse q and place the elements into the file
-        while(q->pointer) {
-            v = pop_back_pal(q);
-            fwrite(&v->level, sizeof(v->level), 1, fp);
-            fwrite(&v->id, sizeof(v->id), 1, fp);
-            fwrite(v->ptr, sizeof(uint16_t), h->page_size, fp);
-
-            free(v->ptr);
-            free(v);
+            free(b);
         }
 
         free(level_ids);
