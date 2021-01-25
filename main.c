@@ -116,6 +116,22 @@ int main() {
 
     setlocale(LC_NUMERIC, "");
 
+    char* temp_dir = (getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/temp";
+
+    #ifndef reusefiles
+        char* temp_result = malloc(sizeof(char) * (strlen(temp_dir) + 16));
+        snprintf(temp_result, strlen(temp_dir) + 16, "%s/reversi.XXXXXX", temp_dir);
+        temp_dir = temp_result;
+    #endif
+
+    char* checkpoint_filename;
+
+    if(!getenv("CHECKPOINT_PATH")) {
+        checkpoint_filename = malloc(sizeof(char) * (strlen(temp_dir) + 16));
+        snprintf(checkpoint_filename, strlen(temp_dir) + 16, "%s/checkpoint.bin", temp_dir);
+    }
+    else checkpoint_filename = getenv("CHECKPOINT_PATH");
+
     char d;
     while(1) {
         printf("Would you like to restore from a checkpoint?(y/N): ");
@@ -226,7 +242,7 @@ int main() {
             d = getc(stdin);
             // printf("%c\n", d);
             if(d == '\n' || d == 'n' || d == 'N') {
-                checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : find_temp_filename("checkpoint.bin\0");
+                checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
                 break;
             }
             else if(d == 'y' || d == 'Y') {
@@ -315,9 +331,9 @@ int main() {
         // #else
         //     cache = create_hashtable(1000000, &board_hash);
         // #endif
-        cache = create_heirarchy();
+        cache = create_heirarchy(temp_dir);
 
-        checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : find_temp_filename("checkpoint.bin\0");
+        checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
 
         // Distribute the initial states to a set of new pthreads.
         threads = create_ptr_arraylist(procs + 1);

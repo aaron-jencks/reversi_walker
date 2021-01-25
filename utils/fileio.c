@@ -305,12 +305,20 @@ processed_file restore_progress_v2(char* filename) {
  */
 char* find_temp_directory() {
     // Setup the checkpoint saving system
-    struct passwd *p = getpwuid(getuid());  // Check for NULL!
-    if(!p) err(1, "Memory Error while getting username for page swap\n");
+    char* temp_str;
+    if(!getenv("TEMP_DIR")) {
+        struct passwd *p = getpwuid(getuid());  // Check for NULL!
+        if(!p) err(1, "Memory Error while getting username for page swap\n");
 
-    char* temp_str = malloc(sizeof(char) * strlen(p->pw_name) + 27);
-    if(!temp_str) err(1, "Memory Error while allocating temporary directory for swap\n");
-    snprintf(temp_str, strlen(p->pw_name) + 27, "/home/%s/Temp/reversi.XXXXXX", p->pw_name);
+        temp_str = malloc(sizeof(char) * strlen(p->pw_name) + 27);
+        if(!temp_str) err(1, "Memory Error while allocating temporary directory for swap\n");
+        snprintf(temp_str, strlen(p->pw_name) + 27, "/home/%s/Temp/reversi.XXXXXX", p->pw_name);
+    }
+    else {
+        temp_str = malloc(sizeof(char) * (strlen(getenv("TEMP_DIR")) + 16));
+        if(!temp_str) err(1, "Memory Error while allocating temporary directory for swap\n");
+        snprintf(temp_str, strlen(getenv("TEMP_DIR")) + 16, "%s/reversi.XXXXXX", getenv("TEMP_DIR"));
+    }
 
     char* dir_ptr = mkdtemp(temp_str), *result = malloc(sizeof(char) * (strlen(dir_ptr) + 1));
     memcpy(result, dir_ptr, strlen(dir_ptr) + 1);

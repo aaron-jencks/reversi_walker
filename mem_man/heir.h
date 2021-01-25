@@ -20,7 +20,7 @@ typedef heirarchy_str* heirarchy;
 
 extern pthread_mutex_t heirarchy_lock;
 
-heirarchy create_heirarchy();
+heirarchy create_heirarchy(char* file_directory);
 void destroy_heirarchy(heirarchy h);
 
 uint8_t heirarchy_insert(heirarchy h, __uint128_t key);

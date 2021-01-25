@@ -11,7 +11,7 @@
 
 pthread_mutex_t heirarchy_lock;
 
-heirarchy create_heirarchy() {
+heirarchy create_heirarchy(char* file_directory) {
     heirarchy h = malloc(sizeof(heirarchy_str));
     if(!h) err(1, "Memory error while allocating heirarchical memory system\n");
 
@@ -31,7 +31,7 @@ heirarchy create_heirarchy() {
     h->num_levels = 128 / shifts;
     h->num_bits_per_final_level = shifts + (128 % shifts); // To ensure that we use every bit
 
-    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3));
+    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3), file_directory);
 
     h->first_level = calloc(h->page_size, sizeof(void*));
     if(!h->first_level) err(1, "Memory error while allocating heirarchical memory system\n");
@@ -88,9 +88,9 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
         bits = (size_t)((key_copy & bit_placeholder) >> (128 - h->num_bits_per_level));
         key_copy = key_copy << h->num_bits_per_level;
 
-        // #ifdef heirdebug
-        //     printf("Bits for level %lu is %lu\n", level, bits);
-        // #endif
+        #ifdef heirdebug
+            printf("Bits for level %lu is %lu\n", level, bits);
+        #endif
 
         if(level < (h->num_levels - 1) && !phase[bits]) {
             // printf("Allocating %lu[%lu]\n", level, bits);
@@ -124,12 +124,12 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
 
     // Extract the bit from the last level
     key_copy = key_copy >> (128 - h->num_bits_per_final_level);
-    bits = (size_t)(key_copy >> 3);
+    bits = (size_t)((key_copy >> 3) + sizeof(__uint128_t));
     uint8_t bit = key_copy & 7;
 
-    // #ifdef heirdebug
-    //     printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
-    // #endif
+    #ifdef heirdebug
+        printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
+    #endif
 
     // Insert the new bit if it's not already in the array
     // printf("Bit value: %lu\n", bits);
@@ -365,7 +365,7 @@ heirarchy from_file_heir(FILE* fp) {
     if(!level_counts) err(1, "Memory error while allocating level counts for heirarchy file read\n");
     fread(level_counts, sizeof(size_t), h->num_levels + 1, fp);
 
-    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, 1 << (h->num_bits_per_final_level - 3));
+    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, 1 << (h->num_bits_per_final_level - 3), "/tmp"); // TODO update for current file io
 
     size_t level, id;
     uint8_t* mmap_ptr;
