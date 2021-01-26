@@ -116,12 +116,12 @@ int main() {
 
     setlocale(LC_NUMERIC, "");
 
-    char* temp_dir = (getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/temp";
+    char* temp_dir = (getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/tmp";
 
     #ifndef reusefiles
         char* temp_result = malloc(sizeof(char) * (strlen(temp_dir) + 16));
         snprintf(temp_result, strlen(temp_dir) + 16, "%s/reversi.XXXXXX", temp_dir);
-        temp_dir = temp_result;
+        temp_dir = mkdtemp(temp_result);
     #endif
 
     char* checkpoint_filename;
@@ -152,7 +152,7 @@ int main() {
     heirarchy cache;
     uint64_t count = 0, explored_count = 1, repeated_count = 0;
     size_t finished_count = 0;
-    char* checkpoint_filename;
+    // char* checkpoint_filename;
 
     // Calculate the number of processors to use
     uint32_t procs = get_nprocs();

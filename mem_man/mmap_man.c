@@ -35,7 +35,8 @@ mmap_page create_mmap_page(const char* filename, size_t size) {
     mmap_page page = malloc(sizeof(mmap_page_str));
     if(!page) err(1, "Memory error while allocating mmap for mmap manager\n");
     page->filename = malloc(sizeof(char) * (strlen(filename) + 1));
-    memcpy(page->filename, filename, strlen(filename) + 1);
+    memcpy(page->filename, filename, sizeof(char) * (strlen(filename) + 1));
+    page->filename[strlen(filename)] = 0;
 
     #ifdef mmapdebug
         printf("Creating mmap_page at %s\n", page->filename);
@@ -70,8 +71,9 @@ mmap_man create_mmap_man(size_t page_size, size_t bin_size, char* file_directory
     man->pages = malloc(sizeof(mmap_page) * man->num_pages);
     if(!man->pages) err(1, "Memory error while allocating pages for mmap manager\n");
 
-    man->file_directory = malloc(strlen(file_directory));
-    man->file_directory = memcpy(man->file_directory, file_directory, sizeof(char) * strlen(file_directory));
+    man->file_directory = malloc(sizeof(char) * (1 + strlen(file_directory)));
+    man->file_directory = memcpy(man->file_directory, file_directory, sizeof(char) * (strlen(file_directory) + 1));
+    man->file_directory[strlen(file_directory)] = 0;
 
     man->max_page_size = page_size;
     man->bins_per_page = page_size / bin_size;
@@ -135,7 +137,7 @@ void destroy_mmap_man(mmap_man man) {
 
 uint8_t* mmap_allocate_bin(mmap_man man) {
     if(man->pages[man->num_pages - 1]->size >= man->bins_per_page) {
-        man->pages = realloc(man->pages, man->num_pages++ + 1);
+        man->pages = realloc(man->pages, sizeof(mmap_page) * ++man->num_pages);
 
         char* filename = find_abs_path(man->num_pages - 1, man->file_directory);
         man->pages[man->num_pages - 1] = create_mmap_page(filename, man->max_page_size);

@@ -24,7 +24,7 @@ void display_board(board b) {
 
 
 void mmap_test_readback() {
-    heirarchy h = create_heirarchy();
+    heirarchy h = create_heirarchy("/home/aaron/Temp");
     printf("Heirarchy statistics:\nBits per level: %lu\nNumber of bits in the final level: %lu\nNumber of levels: %lu\n", h->num_bits_per_level, h->num_bits_per_final_level, h->num_levels);
 
     __uint128_t k = 0;
@@ -84,4 +84,13 @@ void mmap_spiral_hash_test() {
     }
 
     destroy_board(b);
+}
+
+void mmap_bin_test() {
+    heirarchy h = create_heirarchy("/home/aaron/Temp");
+    printf("Testing bin allocation method\n");
+    for(size_t i = 0; i < h->final_level->bins_per_page << 1; i++) {
+        mmap_allocate_bin(h->final_level);
+    }
+    destroy_heirarchy(h);
 }

@@ -333,7 +333,8 @@ char* find_temp_directory() {
 }
 
 char* find_abs_path(size_t page_index, const char* swap_directory) {
-    char* filename = malloc(sizeof(char) * 16), *abs_path = malloc(sizeof(char) * (17 + strlen(swap_directory)));
+    char *filename = malloc(sizeof(char) * 16), 
+         *abs_path = malloc(sizeof(char) * (17 + strlen(swap_directory)));
     if(!filename) err(1, "Memory Error while allocating filename for swap page\n");
     filename[15] = 0;
     snprintf(filename, 15, "p%lu.bin", page_index);

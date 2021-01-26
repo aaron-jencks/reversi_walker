@@ -58,7 +58,7 @@ void fio_test_heir_write() {
     printf("Testing fileio with a full heirarchy\n");
     char* checkpoint_filename = find_temp_filename("checkpoint.bin\0");
     printf("Saving to %s\n", checkpoint_filename);
-    heirarchy h = create_heirarchy();
+    heirarchy h = create_heirarchy("/home/aaron/Temp");
 
     printf("Inserting elements\n");
     for(uint32_t k = 0; k < INSERTIONS; k++) {
