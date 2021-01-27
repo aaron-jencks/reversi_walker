@@ -9,6 +9,7 @@
 
 typedef struct __heirarchy_str {
     void** first_level;
+    mmap_man level_map;
     mmap_man final_level;
     size_t num_bits_per_level;
     size_t num_bits_per_final_level;

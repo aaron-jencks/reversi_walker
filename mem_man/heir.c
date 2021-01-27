@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <pthread.h>
 
 #define INITIAL_CACHE_SIZE 34359738368
 #define INITIAL_PAGE_SIZE 5368709120
@@ -31,10 +34,25 @@ heirarchy create_heirarchy(char* file_directory) {
     h->num_levels = 128 / shifts;
     h->num_bits_per_final_level = shifts + (128 % shifts); // To ensure that we use every bit
 
-    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3), file_directory);
+    // Setup the bit directory
+    struct stat st;
+    char* temp = malloc(sizeof(char) * (strlen(file_directory) + 6));
+    temp = memcpy(temp, file_directory, strlen(file_directory));
+    memcpy(temp + strlen(file_directory), "/bits", 6);
+    if(stat(temp, &st) == -1) mkdir(temp, 0700);
+    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3), temp);
+    free(temp);
 
-    h->first_level = calloc(h->page_size, sizeof(void*));
-    if(!h->first_level) err(1, "Memory error while allocating heirarchical memory system\n");
+    // Setup the level directory
+    temp = malloc(sizeof(char) * (strlen(file_directory) + 8));
+    temp = memcpy(temp, file_directory, strlen(file_directory));
+    memcpy(temp + strlen(file_directory), "/levels", 8);
+    if(stat(temp, &st) == -1) mkdir(temp, 0700);
+    h->level_map = create_mmap_man(INITIAL_PAGE_SIZE, sizeof(void*) * h->page_size, temp);
+    free(temp);
+
+    h->first_level = mmap_allocate_bin(h->level_map);
+    for(size_t i = 0; i < h->page_size; i++) h->first_level[i] = 0;
 
     return h;
 }
@@ -42,31 +60,7 @@ heirarchy create_heirarchy(char* file_directory) {
 void destroy_heirarchy(heirarchy h) {
     if(h) {
         destroy_mmap_man(h->final_level);
-
-        // free the first and all following levels, use DFS?
-        ptr_arraylist stack = create_ptr_arraylist(h->page_size * h->num_levels + 1);
-        uint64_arraylist dstack = create_uint64_arraylist(h->page_size * h->num_levels + 1);
-
-        // Queue up the first level
-        for(size_t i = 0; i < h->page_size; i++) {
-            append_pal(stack, h->first_level[i]);
-            append_dal(dstack, 1);
-        }
-        free(h->first_level);
-
-        // Perform DFS
-        while(stack->pointer) {
-            void** k = (void**)pop_back_pal(stack);
-            uint64_t d = pop_back_dal(dstack);
-            if(d < (h->num_levels - 1) && k) {
-                for(size_t i = 0; i < h->page_size; i++) {
-                    append_pal(stack, k[i]);
-                    append_dal(dstack, d + 1);
-                }
-                free(k);
-            }
-        }
-
+        destroy_mmap_man(h->level_map);
         free(h);
     }
 }
@@ -75,6 +69,8 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     // #ifdef heirdebug
     //     printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
     // #endif
+
+    while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
 
     __uint128_t key_copy = key, bit_placeholder = 0; 
     size_t bits, level = 1;
@@ -94,8 +90,9 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
 
         if(level < (h->num_levels - 1) && !phase[bits]) {
             // printf("Allocating %lu[%lu]\n", level, bits);
-            phase[bits] = calloc(h->page_size, sizeof(void*));
-            if(!phase[bits]) err(1, "Memory Error while allocating bin for key hash\n");
+            phase[bits] = mmap_allocate_bin(h->level_map);
+            for(size_t i = 0; i < h->page_size; i++) 
+                ((uint64_t*)phase[bits])[i] = 0;
         }
         else if(!phase[bits]) {
             // Allocate a new bin
@@ -135,8 +132,6 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     // printf("Bit value: %lu\n", bits);
     uint8_t byte = ((uint8_t*)phase)[bits];
     uint8_t ph = 1 << bit;
-
-    while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
 
     if(byte & ph) {
         // #ifdef heirdebug
