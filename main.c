@@ -5,6 +5,7 @@
 #include <err.h>
 #include <pthread.h>
 #include <sys/sysinfo.h>
+#include <sys/statvfs.h>
 #include <time.h>
 #include <string.h>
 #include <signal.h>
@@ -359,13 +360,24 @@ int main() {
     printf("Running on %d threads\n", procs);
     printf("Saving checkpoints to %s\n", checkpoint_filename);
 
+    struct statvfs disk_usage_buff;
+    const double GB = 1024 * 1024 * 1024;
+    if(statvfs("/tmp", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
+    const double disk_total = (double)(disk_usage_buff.f_blocks * disk_usage_buff.f_frsize) / GB;
+
     // for(uint64_t t = 0; t < threads->pointer; t++) pthread_join(*(pthread_t*)(threads->data[0]), 0);
-    time_t start = time(0), current, save_timer = time(0), fps_timer = time(0);
+    time_t start = time(0), current, save_timer = time(0), fps_timer = time(0), sleep_timer = time(0);
     clock_t cstart = clock();
     uint32_t cpu_time, cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
-             run_time, run_days, run_hours, run_minutes, run_seconds, save_time, previous_run_time = start, fps_update_time;
+             run_time, run_days, run_hours, run_minutes, run_seconds, save_time, previous_run_time = start, fps_update_time, print_sleep;
     uint64_t previous_board_count = 0, fps = 0;
+    double disk_avail, disk_used, disk_perc;
     while(1) {
+        if(statvfs("/tmp", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
+        disk_avail = (double)(disk_usage_buff.f_bfree * disk_usage_buff.f_frsize) / GB;
+        disk_used = disk_total - disk_avail;
+        disk_perc = (double)(disk_used / disk_total) * (double)100;
+        
         current = time(0);
         run_time = current - start;
 
@@ -373,6 +385,10 @@ int main() {
             save_time = (current - save_timer) / 5;
         #else
             save_time = (current - save_timer) / 3600;
+        #endif
+
+        #ifdef slowprint
+            print_sleep = (current - sleep_timer) / 60;
         #endif
 
         fps_update_time = (current - fps_timer) / 1;
@@ -395,14 +411,27 @@ int main() {
         }
 
         #ifndef hideprint
-            printf("\rFound %'lu final board states. Explored %'lu boards @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d %s", 
+        
+        #ifdef slowprint
+            if(print_sleep) {
+                sleep_timer = time(0);
+        #else
+            printf("\r");
+        #endif
+        
+            printf("Found %'lu final board states. Explored %'lu boards @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d Disk usage: %.2f%% %s", 
                 count, explored_count, fps,
                 run_days, run_hours, run_minutes, run_seconds,
                 cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
+                disk_perc,
                 (save_time) ? "Saving..." : "");
-        #endif
+
         #ifdef slowprint
-            sleep(60);
+                printf("\n");
+            }
+            else sched_yield();
+        #endif
+        
         #endif
 
         if(finished_count == procs) break;
