@@ -401,6 +401,9 @@ int main() {
                 cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                 (save_time) ? "Saving..." : "");
         #endif
+        #ifdef slowprint
+            sleep(60);
+        #endif
 
         if(finished_count == procs) break;
 
