@@ -1,5 +1,5 @@
 #include "mempage.h"
-#include "../utils/fileio.h"
+#include "../utils/path_util.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -534,6 +534,209 @@ void bit_mempage_append_page(bit_mempage mp) {
     
     mp->pages[new_index] = mp->mpages[new_index]->map;
     for(size_t b = 0; b < mp->count_per_page; b++) mp->pages[new_index][b] = 0; // Initialize the data
+}
+
+#pragma endregion
+
+#pragma region mempage swapping
+
+/**
+ * @brief Saves a page from a mempage struct to disk
+ * 
+ * @param mp mempage to save from
+ * @param page_index page to save
+ * @param swap_directory directory where disk pages are being stored
+ */
+void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Saving files for page %ld in %s\n", page_index, swap_directory);
+    #endif
+
+    char* abs_path = find_abs_path(page_index, swap_directory);
+
+    /*
+     * page_size (number of bins)
+     * bin_counts (number of elements in each bin)
+     * bin_contents (array of all elements)
+     */
+
+    FILE* fp = fopen(abs_path, "wb+");
+    if(!fp) err(7, "Unable to open or create swap file\n");
+
+    // Write page size
+    fwrite(&mp->count_per_page, sizeof(mp->count_per_page), 1, fp);
+
+    // Write the bin sizes
+    fwrite(mp->bin_counts[page_index], sizeof(size_t), mp->count_per_page, fp);
+
+    // Write the keys
+    for(size_t b = 0; b < mp->count_per_page; b++) {
+        fwrite(mp->pages[page_index][b], sizeof(__uint128_t), mp->bin_counts[page_index][b], fp);
+        free(mp->pages[page_index][b]);
+    }
+
+    fclose(fp);
+    free(abs_path);
+    free(mp->bin_counts[page_index]);
+    free(mp->pages[page_index]);
+
+    // Mark the page as not present in RAM
+    size_t byte = page_index >> 3, bit = page_index % 8;
+    uint8_t ph = 1 << bit;
+    mp->page_present[byte] ^= ph;
+
+    // Reset the access counts
+    for(size_t p = 0; p < mp->page_count; p++) mp->access_counts[p] = 0;
+}
+
+void load_mempage_page(mempage mp, size_t page_index, const char* swap_directory) {
+    #ifdef swapdebug
+        printf("Loading files for page %ld\n", page_index);
+    #endif
+
+    char* abs_path = find_abs_path(page_index, swap_directory);
+
+    FILE* fp = fopen(abs_path, "rb");
+    if(!fp) err(7, "Unable to open or create swap file\n");
+
+    size_t page_size = 0;
+    fread(&page_size, sizeof(page_size), 1, fp);
+
+    size_t *sizes = malloc(sizeof(size_t) * page_size);
+    if(!sizes) err(1, "Memory Error while allocating page from swap file\n");
+
+    fread(sizes, sizeof(size_t), page_size, fp);
+    mp->bin_counts[page_index] = sizes;
+
+    __uint128_t** bins = malloc(sizeof(__uint128_t*) * page_size);
+    if(!bins) err(1, "Memory Error while allocating page from swap file\n");
+    mp->pages[page_index] = bins;
+
+    for(size_t b = 0; b < page_size; b++) {
+        __uint128_t* bin = malloc(sizeof(__uint128_t) * mp->bin_counts[page_index][b]);
+        if(!bin) err(1, "Memory Error while allocating bin from swap file\n");
+        fread(bin, sizeof(__uint128_t), mp->bin_counts[page_index][b], fp);
+        bins[b] = bin;
+    }
+
+
+    fclose(fp);
+    free(abs_path);
+
+    // Mark the page as not present in RAM
+    size_t byte = page_index >> 3, bit = page_index % 8;
+    uint8_t ph = 1 << bit;
+    mp->page_present[byte] |= ph;
+}
+
+/**
+ * @brief Swaps a page from a mempage struct with a page that is in memory
+ * 
+ * @param mp mempage to swap from
+ * @param spage_index page to save
+ * @param rpage_index page to read
+ * @param swap_directory the directory where swap file are stored
+ */
+void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Swapping files for indices %ld and %ld\n", spage_index, rpage_index);
+    #endif
+
+    save_mempage_page(mp, spage_index, swap_directory);
+    load_mempage_page(mp, rpage_index, swap_directory);
+}
+
+#pragma endregion
+#pragma region mempage_buff swapping
+
+/**
+ * @brief Saves a page from a mempage struct to disk
+ * 
+ * @param mp mempage to save from
+ * @param page_index page to save
+ * @param swap_directory directory where disk pages are being stored
+ */
+void save_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Saving files for page %ld\n", page_index);
+    #endif
+
+    char* abs_path = find_abs_path(page_index, swap_directory);
+
+    /*
+     * page_size (number of bins)
+     * bin_counts (number of elements in each bin)
+     * bin_contents (array of all elements)
+     */
+
+    FILE* fp = fopen(abs_path, "wb+");
+    if(!fp) err(7, "Unable to open or create swap file\n");
+
+    // Write page size
+    fwrite(&mp->count_per_page, sizeof(mp->count_per_page), 1, fp);
+
+    // Write the keys
+    fwrite(mp->pages[page_index], sizeof(__uint128_t), mp->count_per_page, fp);
+    free(mp->pages[page_index]);
+
+    fclose(fp);
+    free(abs_path);
+    free(mp->pages[page_index]);
+
+    // Mark the page as not present in RAM
+    size_t byte = page_index >> 3, bit = page_index % 8;
+    uint8_t ph = 1 << bit;
+    mp->page_present[byte] ^= ph;
+}
+
+void load_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Loading files for page %ld\n", page_index);
+    #endif
+
+    char* abs_path = find_abs_path(page_index, swap_directory);
+
+    FILE* fp = fopen(abs_path, "rb");
+    if(!fp) err(7, "Unable to open or create swap file\n");
+
+    size_t page_size = 0;
+    fread(&page_size, sizeof(page_size), 1, fp);
+
+    __uint128_t* bins = malloc(sizeof(__uint128_t*) * page_size);
+    if(!bins) err(1, "Memory Error while allocating page from swap file\n");
+    mp->pages[page_index] = bins;
+
+    fread(bins, sizeof(__uint128_t), page_size, fp);
+
+    fclose(fp);
+    free(abs_path);
+
+    // Mark the page as not present in RAM
+    size_t byte = page_index >> 3, bit = page_index % 8;
+    uint8_t ph = 1 << bit;
+    mp->page_present[byte] |= ph;
+}
+
+/**
+ * @brief Swaps a page from a mempage struct with a page that is in memory
+ * 
+ * @param mp mempage to swap from
+ * @param spage_index page to save
+ * @param rpage_index page to read
+ * @param swap_directory the directory where swap file are stored
+ */
+void swap_mempage_buff_page(mempage_buff mp, size_t spage_index, size_t rpage_index, const char* swap_directory) {
+
+    #ifdef swapdebug
+        printf("Swapping files for indices %ld and %ld\n", spage_index, rpage_index);
+    #endif
+
+    save_mempage_buff_page(mp, spage_index, swap_directory);
+    load_mempage_buff_page(mp, rpage_index, swap_directory);
 }
 
 #pragma endregion

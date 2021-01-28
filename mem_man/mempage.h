@@ -125,3 +125,42 @@ uint8_t bit_mempage_get(bit_mempage buff, __uint128_t index);
 void bit_mempage_append_page(bit_mempage mp);
 
 #pragma endregion
+
+#pragma region mempage swapping
+
+/**
+ * @brief Saves a page from a mempage struct to disk
+ * 
+ * @param mp mempage to save from
+ * @param page_index page to save
+ * @param swap_directory directory where disk pages are being stored
+ */
+void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory);
+
+/**
+ * @brief Loads a page for the mempage struct from disk
+ * 
+ * @param mp mempage to load into
+ * @param page_index page to load
+ * @param swap_directory directory where disk pages are being stored
+ */
+void load_mempage_page(mempage mp, size_t page_index, const char* swap_directory);
+
+/**
+ * @brief Swaps a page from a mempage struct with a page that is in memory
+ * 
+ * @param mp mempage to swap from
+ * @param spage_index page to save
+ * @param rpage_index page to read
+ * @param swap_directory the directory where swap file are stored
+ */
+void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const char* swap_directory);
+
+#pragma endregion
+#pragma region mempage buff swapping
+
+void save_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory);
+void swap_mempage_buff_page(mempage_buff mp, size_t spage_index, size_t rpage_index, const char* swap_directory);
+void load_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory);
+
+#pragma endregion

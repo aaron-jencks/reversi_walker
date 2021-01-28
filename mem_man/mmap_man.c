@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 
 #include "mmap_man.h"
-#include "../utils/fileio.h"
+#include "../utils/path_util.h"
 
 #ifdef mmapdebug
     #include <stdio.h>

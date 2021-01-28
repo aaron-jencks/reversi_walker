@@ -19,6 +19,7 @@
 #include "./utils/arraylist.h"
 #include "./gameplay/valid_moves.h"
 #include "./utils/fileio.h"
+#include "./utils/path_util.h"
 
 // TODO you can use the previous two board states to predict the next set of valid moves.
 

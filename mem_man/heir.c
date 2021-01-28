@@ -51,7 +51,7 @@ heirarchy create_heirarchy(char* file_directory) {
     h->level_map = create_mmap_man(INITIAL_PAGE_SIZE, sizeof(void*) * h->page_size, temp);
     free(temp);
 
-    h->first_level = mmap_allocate_bin(h->level_map);
+    h->first_level = (void**)mmap_allocate_bin(h->level_map);
     for(size_t i = 0; i < h->page_size; i++) h->first_level[i] = 0;
 
     return h;

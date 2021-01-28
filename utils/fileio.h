@@ -43,14 +43,6 @@ typedef struct __processed_file_str {
  */
 typedef processed_file_str* processed_file;
 
-/**
- * @brief Generates a unique filename in the /tmp directory for checkpoint saving
- * 
- * @param filename The name of the file to save the data to in the /tmp directory (ex. "checkpoint.bin")
- * @return char* Returns a null terminated string that contains the absolute path of the generated temporary filename.
- */
-char* find_temp_filename(const char* filename);
-
 #pragma region version 1
 
 /**
@@ -102,57 +94,4 @@ void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* 
 processed_file restore_progress_v2(char* filename);
 
 #pragma endregion
-#pragma endregion
-#pragma region mempage swapping
-
-/**
- * @brief Generates a unique directory in the /home/$USER/Temp directory for mempage swapping
- * 
- * @return char* Returns a null terminated string that contains the absolute path of the generated temporary directory. Must be free'd by the user
- */
-char* find_temp_directory();
-
-/**
- * @brief Generates a unique filename in the given directory
- * 
- * @param directory The directory to prepend the filename with
- * @return char* Returns a null terminated string that contains the absolute path of the generated temporary file. Must be free'd by the user
- */
-char* find_abs_path(size_t page_index, const char* directory);
-
-/**
- * @brief Saves a page from a mempage struct to disk
- * 
- * @param mp mempage to save from
- * @param page_index page to save
- * @param swap_directory directory where disk pages are being stored
- */
-void save_mempage_page(mempage mp, size_t page_index, const char* swap_directory);
-
-/**
- * @brief Loads a page for the mempage struct from disk
- * 
- * @param mp mempage to load into
- * @param page_index page to load
- * @param swap_directory directory where disk pages are being stored
- */
-void load_mempage_page(mempage mp, size_t page_index, const char* swap_directory);
-
-/**
- * @brief Swaps a page from a mempage struct with a page that is in memory
- * 
- * @param mp mempage to swap from
- * @param spage_index page to save
- * @param rpage_index page to read
- * @param swap_directory the directory where swap file are stored
- */
-void swap_mempage_page(mempage mp, size_t spage_index, size_t rpage_index, const char* swap_directory);
-
-#pragma endregion
-#pragma region mempage buff swapping
-
-void save_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory);
-void swap_mempage_buff_page(mempage_buff mp, size_t spage_index, size_t rpage_index, const char* swap_directory);
-void load_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory);
-
 #pragma endregion
