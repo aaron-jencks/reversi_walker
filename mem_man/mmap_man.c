@@ -45,7 +45,7 @@ mmap_page create_mmap_page(const char* filename, size_t size) {
     page->fd = open(filename, O_RDWR | O_CREAT);
     posix_fallocate(page->fd, 0, size);
 
-    page->map = (uint8_t*)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_NORESERVE, page->fd, 0);
+    page->map = (uint8_t*)mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, page->fd, 0);
     if(page->map == MAP_FAILED) err(11, "Mapping failed!\n");
     page->free_pointer = page->map;
     page->size = 0;
