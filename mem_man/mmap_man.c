@@ -47,6 +47,8 @@ mmap_page create_mmap_page(const char* filename, size_t size) {
 
     page->map = (uint8_t*)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_NORESERVE, page->fd, 0);
     if(page->map == MAP_FAILED) err(11, "Mapping failed!\n");
+
+    close(page->fd);
     page->free_pointer = page->map;
     page->size = 0;
 
@@ -56,7 +58,7 @@ mmap_page create_mmap_page(const char* filename, size_t size) {
 void destroy_mmap_page(mmap_page page, size_t size){
     if(page) {
         munmap(page->map, size);
-        close(page->fd);
+        // close(page->fd);
         remove(page->filename);
         free(page->filename);
         free(page);
