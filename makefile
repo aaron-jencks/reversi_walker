@@ -1,6 +1,6 @@
 cc=gcc
 # cflags=$(cflags)
-objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o hash_functions.o heir.o path_util.o saving_algorithms.o
+objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o hash_functions.o heir.o path_util.o saving_algorithms.o heir_swapper.o
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
 
@@ -39,7 +39,10 @@ lookup.o: ./hashing/lookup3.c ./hashing/lookup3.h
 ll.o: ./utils/ll.c ./utils/ll.h
 	$(cc) $(cflags) -o $@ -c $<
 
-heir.o: ./mem_man/heir.c ./mem_man/heir.h hash_functions.o reversi.o 
+heir.o: ./mem_man/heir.c ./mem_man/heir.h hash_functions.o reversi.o mmap_man.o
+	$(cc) $(cflags) -o $@ -c $<
+
+heir_swapper.o: ./mem_man/heir_swapper.c ./mem_man/heir_swapper.h heir.o  mmap_man.o
 	$(cc) $(cflags) -o $@ -c $<
 
 hashtable.o: ./hashing/hashtable.c ./hashing/hashtable.h mempage.o arraylist.o

@@ -25,7 +25,7 @@ void display_board(board b) {
 
 void mmap_test_readback() {
     heirarchy h = create_heirarchy("/home/aaron/Temp");
-    printf("Heirarchy statistics:\nBits per level: %lu\nNumber of bits in the final level: %lu\nNumber of levels: %lu\n", h->num_bits_per_level, h->num_bits_per_final_level, h->num_levels);
+    // printf("Heirarchy statistics:\nBits per level: %lu\nNumber of bits in the final level: %lu\nNumber of levels: %lu\n", h->num_bits_per_level, h->num_bits_per_final_level, h->num_levels);
 
     __uint128_t k = 0;
     for(size_t b = 0; b < 65536; b++) {
