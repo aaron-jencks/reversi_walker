@@ -132,7 +132,7 @@ uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
     d->indices[bin] += 1;
 
     if(d->indices[bin] == d->bin_sizes[bin]) {
-        printf("Reallocating bin %lu\n", bin);
+        // printf("Reallocating bin %lu\n", bin);
         d->bin_sizes[bin] += d->bin_size;
         d->bins[bin] = realloc(d->bins[bin], sizeof(uint8_t*) * d->bin_sizes[bin]);
         d->mappings[bin] = realloc(d->mappings[bin], sizeof(uint8_t*) * d->bin_sizes[bin]);
