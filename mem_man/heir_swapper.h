@@ -13,12 +13,13 @@ typedef struct __bin_dict_t {
     size_t* bin_sizes;
     size_t bin_count;
     size_t bin_size;
+    size_t element_size;
     size_t loaded_count;
 } bin_dict_t;
 
 typedef bin_dict_t* bin_dict;
 
-bin_dict create_bin_dict(size_t num_bins, size_t bin_size);
+bin_dict create_bin_dict(size_t num_bins, size_t bin_size, size_t element_size);
 void destroy_bin_dict(bin_dict d);
 
 uint8_t* bin_dict_get(bin_dict d, __uint128_t k);

@@ -12,6 +12,7 @@
 #define INITIAL_CACHE_SIZE 34359738368
 #define INITIAL_PAGE_SIZE 5368709120
 #define INITIAL_BIN_COUNT 1000000
+#define SMALL_INITIAL_BIN_COUNT 10
 
 pthread_mutex_t heirarchy_lock;
 
@@ -41,10 +42,15 @@ heirarchy create_heirarchy(char* file_directory) {
     temp = memcpy(temp, file_directory, strlen(file_directory));
     memcpy(temp + strlen(file_directory), "/bits", 6);
     if(stat(temp, &st) == -1) mkdir(temp, 0700);
-    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3), temp);
+    size_t bin_size = (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3);
+    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, bin_size, temp);
     free(temp);
 
-    h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3));
+    #ifdef heir_small_bin_count
+        h->bin_map = create_bin_dict(SMALL_INITIAL_BIN_COUNT, (1 << (h->num_bits_per_final_level - 3)), bin_size);
+    #else
+        h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, (1 << (h->num_bits_per_final_level - 3)), bin_size);
+    #endif
 
     // // Setup the level directory
     // temp = malloc(sizeof(char) * (strlen(file_directory) + 8));
@@ -387,10 +393,11 @@ heirarchy from_file_heir(FILE* fp) {
     // if(!level_counts) err(1, "Memory error while allocating level counts for heirarchy file read\n");
     // fread(level_counts, sizeof(size_t), h->num_levels + 1, fp);
 
-    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, 1 << (h->num_bits_per_final_level - 3), file_directory); // TODO update for current file io
+    size_t bin_size = (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3);
+    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, bin_size, file_directory); // TODO update for current file io
     free(file_directory);
 
-    h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, 1 << (h->num_bits_per_final_level - 3));
+    h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, 1 << (h->num_bits_per_final_level - 3), bin_size);
 
     // size_t level, id;
     // uint8_t* mmap_ptr;
