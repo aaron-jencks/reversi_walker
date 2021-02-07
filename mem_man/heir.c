@@ -141,9 +141,8 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     size_t bits = (size_t)((key_ph >> 3) + sizeof(__uint128_t));
     uint8_t bit = key_ph & 7;
 
-    printf("Key Stats: %lu %lu %lu %u\n", ((uint64_t*)&lower_key)[0], ((uint64_t*)&lower_key)[1], bits, bit);
-
     #ifdef heirdebug
+        printf("Key Stats: %lu %lu %lu %u\n", ((uint64_t*)&lower_key)[0], ((uint64_t*)&lower_key)[1], bits, bit);
         printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
     #endif
 
