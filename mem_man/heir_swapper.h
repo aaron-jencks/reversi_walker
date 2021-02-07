@@ -22,4 +22,4 @@ bin_dict create_bin_dict(size_t num_bins, size_t bin_size);
 void destroy_bin_dict(bin_dict d);
 
 uint8_t* bin_dict_get(bin_dict d, __uint128_t k);
-void bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr);
+uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr);

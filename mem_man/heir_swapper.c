@@ -67,8 +67,10 @@ void bin_dict_load_page(bin_dict d, size_t bin, size_t e) {
     }
     else {
         uint64_t target = find_swap_target(d);
-        free(d->bins[(size_t)(target >> 32)][(size_t)target]);
-        d->bins[(size_t)(target >> 32)][(size_t)target] = 0;
+        size_t bt = target >> 32, et = (size_t)target;
+        memcpy(d->mappings[bt][et], d->bins[bt][et], sizeof(uint8_t) * d->bin_size);
+        free(d->bins[bt][et]);
+        d->bins[bt][et] = d->mappings[bt][et];
 
         uint8_t* newbin = malloc(sizeof(uint8_t) * d->bin_size);
         if(!newbin) err(1, "Memory error while allocating bin for bin_dict\n");
@@ -91,7 +93,7 @@ uint8_t* bin_dict_get(bin_dict d, __uint128_t k) {
     return 0;
 }
 
-void bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
+uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
     size_t bin = k % d->bin_count;
     if(!d->indices[bin]) {
         d->keys[bin] = malloc(sizeof(__uint128_t) * d->bin_size);
@@ -110,7 +112,9 @@ void bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
 
     bin_dict_load_page(d, bin, d->indices[bin]);
 
-    if(++d->indices[bin] == d->bin_sizes[bin]) {
+    d->indices[bin] += 1;
+
+    if(d->indices[bin] == d->bin_sizes[bin]) {
         d->bin_sizes[bin] += d->bin_size;
         d->bins[bin] = realloc(d->bins[bin], sizeof(uint8_t*) * d->bin_sizes[bin]);
         d->mappings[bin] = realloc(d->mappings[bin], sizeof(uint8_t*) * d->bin_sizes[bin]);
@@ -119,4 +123,6 @@ void bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
         if(!(d->bins[bin] || d->keys[bin] ||
              d->usage_counters[bin])) err(1, "Memory error while allocating bin for bin_dict\n");
     }
+
+    return d->bins[bin][d->indices[bin] - 1];
 }

@@ -44,7 +44,7 @@ heirarchy create_heirarchy(char* file_directory) {
     h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3), temp);
     free(temp);
 
-    h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, 1 << (h->num_bits_per_final_level - 3));
+    h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3));
 
     // // Setup the level directory
     // temp = malloc(sizeof(char) * (strlen(file_directory) + 8));
@@ -76,14 +76,13 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
 
     while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
 
-    __uint128_t lower_key = key >> (128 - h->num_bits_per_final_level);
-    uint8_t* dict_resp = bin_dict_get(h->bin_map, lower_key >> 3);
+    __uint128_t lower_key = key >> h->num_bits_per_final_level;
+    uint8_t* dict_resp = bin_dict_get(h->bin_map, lower_key);
 
     if(!dict_resp) {
         // Allocate a new bin for it
         uint8_t* new_bin = mmap_allocate_bin(h->final_level);
-        bin_dict_put(h->bin_map, lower_key, new_bin);
-        dict_resp = new_bin;
+        dict_resp = bin_dict_put(h->bin_map, lower_key, new_bin);
     }
 
 
@@ -137,8 +136,12 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
 
     // Extract the bit from the last level
     // __uint128_t key_copy = key >> (128 - h->num_bits_per_final_level);
-    size_t bits = (size_t)((lower_key >> 3) + sizeof(__uint128_t));
-    uint8_t bit = lower_key & 7;
+
+    __uint128_t key_ph = key & ((((__uint128_t)1) << h->num_bits_per_final_level) - 1);
+    size_t bits = (size_t)((key_ph >> 3) + sizeof(__uint128_t));
+    uint8_t bit = key_ph & 7;
+
+    printf("Key Stats: %lu %lu %lu %u\n", ((uint64_t*)&lower_key)[0], ((uint64_t*)&lower_key)[1], bits, bit);
 
     #ifdef heirdebug
         printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
