@@ -143,6 +143,7 @@ uint8_t* mmap_allocate_bin(mmap_man man) {
 
         char* filename = find_abs_path(man->num_pages - 1, man->file_directory);
         man->pages[man->num_pages - 1] = create_mmap_page(filename, man->max_page_size);
+        free(filename);
     }
 
     mmap_page page = man->pages[man->num_pages - 1];

@@ -30,11 +30,15 @@ void destroy_bin_dict(bin_dict d) {
     if(d) {
         for(size_t b = 0; b < d->bin_count; b++) {
             if(d->indices[b]) {
+                for(size_t e = 0; e < d->indices[b]; e++) if(d->bins[b][e] != d->mappings[b][e]) free(d->bins[b][e]);
                 free(d->bins[b]);
                 free(d->keys[b]);
                 free(d->usage_counters[b]);
+                free(d->mappings[b]);
             }
         }
+        free(d->usage_counters);
+        free(d->mappings);
         free(d->bins);
         free(d->keys);
         free(d->bin_sizes);

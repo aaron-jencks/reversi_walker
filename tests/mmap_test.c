@@ -34,9 +34,6 @@ void mmap_test_readback() {
         printf("Testing duplicate insertion\n");
         assert(!heirarchy_insert(h, k));
     }
-
-    printf("Testing special edge case insertion\n");
-    heirarchy_insert(h, 1575653403543112165717);
     
     destroy_heirarchy(h);
 }
