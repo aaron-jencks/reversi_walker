@@ -94,7 +94,7 @@ mmap_test.o: tests/mmap_test.c tests/mmap_test.h heir.o reversi.o hash_functions
 
 .PHONY : clean
 clean:
-	rm main main.o $(objects) gmain $(cuda_objects)
+	rm main main.o $(objects) gmain $(cuda_objects) tester tester.o $(test_objects)
 
 .PHONY : tests
 tests: tester $(objects) $(test_objects)
