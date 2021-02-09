@@ -67,6 +67,9 @@ mmap_page create_mmap_page_no_alloc(const char* filename, size_t size) {
     #endif
 
     page->fd = open(filename, O_RDWR | O_CREAT);
+    fchmod(page->fd, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH);
+
+    printf("Remapping file %s\n", filename);
 
     page->map = (uint8_t*)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_NORESERVE, page->fd, 0);
     if(page->map == MAP_FAILED) err(11, "Mapping failed!\n");
@@ -191,6 +194,11 @@ mmap_man mmap_from_file(FILE* fp) {
     fread(&man->num_pages, sizeof(size_t), 1, fp);
     fread(&man->elements_per_bin, sizeof(size_t), 1, fp);
     fread(&man->max_page_size, sizeof(size_t), 1, fp);
+
+    man->bins_per_page = man->max_page_size / man->elements_per_bin;
+
+    man->pages = malloc(sizeof(mmap_page) * man->num_pages);
+    if(!man->pages) err(1, "Memory error while allocating mmap man\n");
 
     for(size_t p = 0; p < man->num_pages; p++) {
         fread(&psize, sizeof(size_t), 1, fp);
