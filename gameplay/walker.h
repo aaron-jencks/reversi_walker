@@ -47,7 +47,13 @@ typedef processor_args_str* processor_args;
  * @brief when set to > 0, will cause all walker_processor calls to save their work.
  * 
  */
-uint8_t SAVING_FLAG;
+extern uint8_t SAVING_FLAG;
+
+/**
+ * @brief when set to > 0, will cause all the walker_processor calls to exit.
+ * 
+ */
+extern uint8_t WALKER_KILL_FLAG;
 pthread_mutex_t saving_lock;
 
 /**

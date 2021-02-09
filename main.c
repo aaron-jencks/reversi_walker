@@ -446,6 +446,8 @@ int main() {
         if(SHUTDOWN_FLAG) {
             fflush(stdout);
             save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
+            WALKER_KILL_FLAG = 1;
+            while(finished_count < procs) sched_yield();
             destroy_heirarchy(cache);
             exit(0);
         }

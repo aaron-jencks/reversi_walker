@@ -21,7 +21,7 @@ void display_board_w(board b) {
 }
 #endif
 
-uint8_t SAVING_FLAG = 0;
+uint8_t SAVING_FLAG = 0, WALKER_KILL_FLAG = 0;
 pthread_mutex_t saving_lock;
 
 coord create_coord(uint8_t row, uint8_t col) {
@@ -312,6 +312,8 @@ void* walker_processor_pre_stacked(void* args) {
                     sched_yield();
                 }
             }
+
+            if(WALKER_KILL_FLAG) break;
         }
 
         printf("Processor %d has finished\n", pargs->identifier);
@@ -319,6 +321,10 @@ void* walker_processor_pre_stacked(void* args) {
         while(pthread_mutex_trylock(pargs->finished_lock)) sched_yield();
         *pargs->finished_count += 1;
         pthread_mutex_unlock(pargs->finished_lock);
+
+        free(pargs);
+        while(search_stack->pointer) destroy_board(pop_back_pal(search_stack));
+        destroy_ptr_arraylist(search_stack);
 
         return 0;
     }

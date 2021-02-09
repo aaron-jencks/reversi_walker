@@ -1,5 +1,6 @@
 #include "fileio.h"
 #include "../gameplay/walker.h"
+#include "../mem_man/heir.h"
 #include "../utils/path_util.h"
 
 #include <err.h>
@@ -176,7 +177,6 @@ void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* 
     while(pthread_mutex_trylock(file_lock)) sched_yield();
     fwrite(&found_counter, sizeof(found_counter), 1, *checkpoint_file);
     fwrite(&explored_counter, sizeof(explored_counter), 1, *checkpoint_file);
-    fwrite(&repeated_counter, sizeof(repeated_counter), 1, *checkpoint_file);
     fwrite(&num_processors, sizeof(num_processors), 1, *checkpoint_file);
     pthread_mutex_unlock(file_lock);
 
@@ -198,8 +198,7 @@ void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* 
     // Save the hashtable
     printf("\nSaving the hashtable\n");
     while(pthread_mutex_trylock(file_lock)) sched_yield();
-    // to_file_heir(*checkpoint_file, cache);
-    fwrite(cache->final_level->file_directory, sizeof(uint8_t), strlen(cache->final_level->file_directory), *checkpoint_file);
+    to_file_heir(*checkpoint_file, cache);
     pthread_mutex_unlock(file_lock);
 
     fclose(*checkpoint_file);

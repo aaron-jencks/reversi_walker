@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
 
 /*
  * We need a linked list that is specific to this manager
@@ -88,3 +89,6 @@ uint8_t* mmap_allocate_bin(mmap_man man);
 //  * @param bin_index 
 //  */
 // void mmap_man_migrate_bin(mmap_man man, __uint128_t bin_index);
+
+void mmap_to_file(mmap_man man, FILE* fp);
+mmap_man mmap_from_file(FILE* fp);

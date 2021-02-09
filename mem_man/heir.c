@@ -34,7 +34,8 @@ heirarchy create_heirarchy(char* file_directory) {
 
     // h->num_bits_per_level = --shifts;
     // h->num_levels = 128 / shifts;
-    h->num_bits_per_final_level = shifts + (128 % --shifts); // To ensure that we use every bit
+    shifts--;
+    h->num_bits_per_final_level = shifts + (128 % shifts); // To ensure that we use every bit
 
     // Setup the bit directory
     struct stat st;
@@ -190,9 +191,7 @@ void to_file_heir(FILE* fp, heirarchy h) {
         if(!fwrite(&h->num_bits_per_final_level, sizeof(h->num_bits_per_final_level), 1, fp)) err(12, "Error while writing file data\n");
         // fwrite(&h->num_levels, sizeof(h->num_levels), 1, fp);
         fwrite(&h->page_size, sizeof(h->page_size), 1, fp);
-        size_t flen = strlen(h->final_level->file_directory);
-        fwrite(&flen, sizeof(size_t), 1, fp);
-        fwrite(h->final_level->file_directory, sizeof(char) * (flen + 1), 1, fp);
+        mmap_to_file(h->final_level, fp);
 
         printf("Heirarchy stats:\n\tBits: %lu\n\tSize: %lu\n", h->num_bits_per_final_level, h->page_size);
 
@@ -383,21 +382,16 @@ heirarchy from_file_heir(FILE* fp) {
 
     printf("Heirarchy stats:\n\tBits: %lu\n\tSize: %lu\n", h->num_bits_per_final_level, h->page_size);
 
-    size_t flen = 0;
-    fread(&flen, sizeof(size_t), 1, fp);
+    h->final_level = mmap_from_file(fp);
 
-    char* file_directory = malloc(sizeof(char) * 1024); // TODO Update to read the strlen before the string
-    fread(file_directory, sizeof(char), flen + 1, fp);
-
-    // size_t *level_counts  = malloc(sizeof(size_t) * (h->num_levels + 1));
-    // if(!level_counts) err(1, "Memory error while allocating level counts for heirarchy file read\n");
-    // fread(level_counts, sizeof(size_t), h->num_levels + 1, fp);
-
-    size_t bin_size = (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3);
-    h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, bin_size, file_directory); // TODO update for current file io
-    free(file_directory);
-
-    h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, 1 << (h->num_bits_per_final_level - 3), bin_size);
+    h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, 1 << (h->num_bits_per_final_level - 3), h->final_level->elements_per_bin);
+    for(size_t p = 0; p < h->final_level->num_pages; p++) {
+        for(size_t b = 0; b < h->final_level->pages[p]->size; b++) {
+            size_t bin_index = h->final_level->elements_per_bin * b;
+            mmap_page mp = h->final_level->pages[p];
+            bin_dict_put(h->bin_map, ((__uint128_t*)(mp->map + bin_index))[0], mp->map + bin_index);
+        }
+    }
 
     // size_t level, id;
     // uint8_t* mmap_ptr;

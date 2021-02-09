@@ -3,10 +3,10 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/mman.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <math.h>
 
 #include "mmap_man.h"
 #include "../utils/path_util.h"
@@ -55,11 +55,34 @@ mmap_page create_mmap_page(const char* filename, size_t size) {
     return page;
 }
 
+mmap_page create_mmap_page_no_alloc(const char* filename, size_t size) {
+    mmap_page page = malloc(sizeof(mmap_page_str));
+    if(!page) err(1, "Memory error while allocating mmap for mmap manager\n");
+    page->filename = malloc(sizeof(char) * (strlen(filename) + 1));
+    memcpy(page->filename, filename, sizeof(char) * (strlen(filename) + 1));
+    page->filename[strlen(filename)] = 0;
+
+    #ifdef mmapdebug
+        printf("Creating mmap_page at %s\n", page->filename);
+    #endif
+
+    page->fd = open(filename, O_RDWR | O_CREAT);
+
+    page->map = (uint8_t*)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_NORESERVE, page->fd, 0);
+    if(page->map == MAP_FAILED) err(11, "Mapping failed!\n");
+
+    close(page->fd);
+    page->free_pointer = page->map;
+    page->size = 0;
+
+    return page;
+}
+
 void destroy_mmap_page(mmap_page page, size_t size){
     if(page) {
         munmap(page->map, size);
         // close(page->fd);
-        remove(page->filename);
+        // remove(page->filename);
         free(page->filename);
         free(page);
     }
@@ -136,6 +159,54 @@ void destroy_mmap_man(mmap_man man) {
 // void mmap_man_migrate_bin(mmap_man man, __uint128_t bin_index) {
 
 // }
+
+void mmap_to_file(mmap_man man, FILE* fp) {
+    size_t flen = strlen(man->file_directory) + 1;
+    fwrite(&flen, sizeof(size_t), 1, fp);
+    fwrite(man->file_directory, sizeof(char), flen, fp);
+
+    fwrite(&man->num_pages, sizeof(size_t), 1, fp);
+    fwrite(&man->elements_per_bin, sizeof(size_t), 1, fp);
+    fwrite(&man->max_page_size, sizeof(size_t), 1, fp);
+
+    for(size_t p = 0; p < man->num_pages; p++) {
+        fwrite(&man->pages[p]->size, sizeof(size_t), 1, fp);
+        flen = strlen(man->pages[p]->filename) + 1;
+        fwrite(&flen, sizeof(size_t), 1, fp);
+        fwrite(man->pages[p]->filename, sizeof(char), flen, fp);
+    }
+}
+
+mmap_man mmap_from_file(FILE* fp) {
+    size_t flen = 0, *sizes, psize;
+    char* pfilename;
+    fread(&flen, sizeof(size_t), 1, fp);
+
+    mmap_man man = malloc(sizeof(mmap_man_str));
+    if(!man) err(1, "Memory error while allocating mmap man\n");
+
+    man->file_directory = malloc(sizeof(char) * flen);
+    if(!man->file_directory) err(1, "Memory error while allocating mmap man\n");
+    fread(man->file_directory, sizeof(char), flen, fp);
+    fread(&man->num_pages, sizeof(size_t), 1, fp);
+    fread(&man->elements_per_bin, sizeof(size_t), 1, fp);
+    fread(&man->max_page_size, sizeof(size_t), 1, fp);
+
+    for(size_t p = 0; p < man->num_pages; p++) {
+        fread(&psize, sizeof(size_t), 1, fp);
+        fread(&flen, sizeof(size_t), 1, fp);
+        pfilename = malloc(sizeof(char) * flen);
+        if(!pfilename) err(1, "Memory error while allocating bin for mmap man\n");
+        fread(pfilename, sizeof(char), flen, fp);
+
+        man->pages[p] = create_mmap_page_no_alloc(pfilename, man->max_page_size);
+        man->pages[p]->free_pointer += man->elements_per_bin * psize;
+        man->pages[p]->size = psize;
+        free(pfilename);
+    }
+
+    return man;
+}
 
 uint8_t* mmap_allocate_bin(mmap_man man) {
     if(man->pages[man->num_pages - 1]->size >= man->bins_per_page) {
