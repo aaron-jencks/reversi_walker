@@ -9,6 +9,8 @@
 #include "../mem_man/heir.h"
 #include "arraylist.h"
 
+void clear_file_cache();
+
 #pragma region checkpoint saving and restoring
 
 /**

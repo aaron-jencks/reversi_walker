@@ -43,6 +43,7 @@ mmap_page create_mmap_page(const char* filename, size_t size) {
     #endif
 
     page->fd = open(filename, O_RDWR | O_CREAT);
+    fchmod(page->fd, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH);
     posix_fallocate(page->fd, 0, size);
 
     page->map = (uint8_t*)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_NORESERVE, page->fd, 0);

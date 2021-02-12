@@ -9,7 +9,18 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
-#include <stdio.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+void clear_file_cache() {
+    printf("Clearing filesystem cache\n");
+    while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+    sync();
+    int fd = open("/proc/sys/vm/drop_caches", O_WRONLY);
+    write(fd, "3", sizeof(char));
+    close(fd);
+    pthread_mutex_unlock(&heirarchy_lock);
+}
 
 #pragma region checkpoing saving and restoring
 
@@ -203,6 +214,8 @@ void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* 
 
     fclose(*checkpoint_file);
 
+    clear_file_cache();
+
     while(pthread_mutex_trylock(&saving_lock)) sched_yield();
     SAVING_FLAG = 0;
     pthread_mutex_unlock(&saving_lock);
@@ -270,6 +283,7 @@ processed_file restore_progress_v2(char* filename) {
     // Read in the hashtable
     printf("Restoring cache\n");
     result->cache = from_file_heir(fp);
+    clear_file_cache();
 
     return result;
 }

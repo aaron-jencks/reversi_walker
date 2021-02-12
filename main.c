@@ -6,9 +6,6 @@
 #include <pthread.h>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <time.h>
 #include <string.h>
 #include <signal.h>
@@ -447,13 +444,6 @@ int main() {
         if(save_time) {
             // SHUTDOWN_FLAG = 1;
             save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
-            // Flush the file system cache
-            while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
-            sync();
-            int fd = open("/proc/sys/vm/drop_caches", O_WRONLY);
-            write(fd, "3", sizeof(char));
-            close(fd);
-            pthread_mutex_unlock(&heirarchy_lock);
             save_timer = time(0);
         }
 
