@@ -385,6 +385,8 @@ heirarchy from_file_heir(FILE* fp) {
     h->final_level = mmap_from_file(fp);
 
     h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, 1 << (h->num_bits_per_final_level - 3), h->final_level->elements_per_bin);
+
+    printf("Loading previous bins... This might take awhile\n");
     for(size_t p = 0; p < h->final_level->num_pages; p++) {
         for(size_t b = 0; b < h->final_level->pages[p]->size; b++) {
             size_t bin_index = h->final_level->elements_per_bin * b;
@@ -392,6 +394,7 @@ heirarchy from_file_heir(FILE* fp) {
             bin_dict_put(h->bin_map, ((__uint128_t*)(mp->map + bin_index))[0], mp->map + bin_index);
         }
     }
+    printf("Bin loading Complete!\n");
 
     // size_t level, id;
     // uint8_t* mmap_ptr;

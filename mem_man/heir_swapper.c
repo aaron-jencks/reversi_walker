@@ -1,10 +1,12 @@
 #include "./heir_swapper.h"
+#include "../utils/heapsort.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
 
-#define MAX_LOAD_COUNT 34000000
+#define MAX_LOAD_COUNT 51000000
 #define SMALL_LOAD_COUNT 5
 
 bin_dict create_bin_dict(size_t num_bins, size_t bin_size, size_t element_size) {
@@ -68,6 +70,43 @@ size_t* find_swap_target(bin_dict d) {
     return result;
 }
 
+size_t** find_n_swap_targets(bin_dict d, size_t n) {
+    // TODO collect all of the loaded values
+    size_t **result = malloc(sizeof(size_t*) * n), **arr = malloc(sizeof(size_t*) * d->loaded_count);
+    if(!(result || arr)) err(1, "Memory error while allocating bin_dict swap targets\n");
+
+    size_t arr_index = 0, b, e;
+    for(size_t b = 0; b < d->bin_count; b++) {
+        for(size_t e = 0; e < d->indices[b]; e++) {
+            if(d->bins[b][e] != d->mappings[b][e]) {
+                // printf("Found loaded entry at %lu %lu, %p != %p\n", b, e, d->bins[b][e], d->mappings[b][e]);
+                arr[arr_index] = malloc(sizeof(size_t) * 3);
+                if(!arr[arr_index]) err(1, "Memory error while allocating bin for swap targets\n");
+                arr[arr_index][0] = d->usage_counters[b][e];
+                arr[arr_index][1] = b;
+                arr[arr_index++][2] = e;
+            }
+        }
+    }
+
+    printf("Found %lu loaded values\n", arr_index);
+
+    // printf("Unsorted array is: [%lu %p, %lu %p, %lu %p, %lu %p, %lu %p]\n", arr[0][0], arr[0], arr[1][0], arr[1], arr[2][0], arr[2], arr[3][0], arr[3], arr[4][0], arr[4]);
+    // sort the loaded values
+    heapsort(arr, arr_index);
+    // printf("Sorted array is: [%lu %p, %lu %p, %lu %p, %lu %p, %lu %p]\n", arr[0][0], arr[0], arr[1][0], arr[1], arr[2][0], arr[2], arr[3][0], arr[3], arr[4][0], arr[4]);
+    
+    // slice of the lowest n values
+    memcpy(result, arr, sizeof(size_t*) * ((arr_index < n) ? arr_index : n));
+
+    for(size_t a = n; a < arr_index; a++) {
+        free(arr[a]);
+    }
+    free(arr);
+
+    return result;
+}
+
 void bin_dict_load_page(bin_dict d, size_t bin, size_t e) {
     #ifdef bin_dict_small_load
         if(d->loaded_count < SMALL_LOAD_COUNT) {
@@ -81,13 +120,37 @@ void bin_dict_load_page(bin_dict d, size_t bin, size_t e) {
         d->loaded_count++;
     }
     else {
-        size_t* target = find_swap_target(d);
-        size_t bt = target[0], et = target[1];
-        if(et == INT64_MAX) err(12, "No valid target found for swapping %lu[%lu]\n", bin, e);
-        // printf("Swapping out %lu[%lu] for %lu[%lu]\n", bt, et, bin, e);
-        memcpy(d->mappings[bt][et], d->bins[bt][et], sizeof(uint8_t) * d->element_size);
-        free(d->bins[bt][et]);
-        d->bins[bt][et] = d->mappings[bt][et];
+        printf("Unloading bins\n");
+        #ifdef bin_dict_small_load
+            size_t** data = find_n_swap_targets(d, 3);
+        #else
+            size_t** data = find_n_swap_targets(d, 30000000);
+        #endif
+        printf("Found the swap targets\n");
+        #ifdef bin_dict_small_load
+            for(size_t i = 0; i < 3; i++) {
+                printf("\r%lu/3", i + 1);
+        #else
+            for(size_t i = 0; i < 30000000; i++) {
+                printf("\r%lu/30,000,000", i + 1);
+        #endif
+            size_t* target = data[i];
+            size_t bt = target[1], et = target[2];
+            if(et == INT64_MAX) err(12, "No valid target found for swapping %lu[%lu]\n", bin, e);
+            // printf("Swapping out %lu[%lu] for %lu[%lu]\n", bt, et, bin, e);
+            memcpy(d->mappings[bt][et], d->bins[bt][et], sizeof(uint8_t) * d->element_size);
+            free(d->bins[bt][et]);
+            free(data[i]);
+            d->bins[bt][et] = d->mappings[bt][et];
+        }
+        free(data);
+        printf("\n");
+
+        #ifdef bin_dict_small_load
+            d->loaded_count -= 2;
+        #else
+            d->loaded_count -= 29999999;
+        #endif
 
         uint8_t* newbin = malloc(sizeof(uint8_t) * d->element_size);
         if(!newbin) err(1, "Memory error while allocating bin for bin_dict\n");
@@ -102,7 +165,7 @@ uint8_t* bin_dict_get(bin_dict d, __uint128_t k) {
         for(size_t e = 0; e < d->indices[bin]; e++) if(d->keys[bin][e] == k) {
             d->usage_counters[bin][e]++;
             
-            if(d->bins[bin][e] == d->mappings[bin][e]) bin_dict_load_page(d, bin, e);
+            // if(d->bins[bin][e] == d->mappings[bin][e]) bin_dict_load_page(d, bin, e);
 
             return d->bins[bin][e];
         }
@@ -122,12 +185,14 @@ uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
         d->bin_sizes[bin] = d->bin_size;
     }
 
+    // printf("Inserting new element into %lu %lu @ %p\n", bin, d->indices[bin], ptr);
+
     d->bins[bin][d->indices[bin]] = ptr;
     d->mappings[bin][d->indices[bin]] = ptr;
     d->keys[bin][d->indices[bin]] = k;
     d->usage_counters[bin][d->indices[bin]] = 1;
 
-    bin_dict_load_page(d, bin, d->indices[bin]);
+    // bin_dict_load_page(d, bin, d->indices[bin]);
 
     d->indices[bin] += 1;
 

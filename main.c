@@ -6,6 +6,9 @@
 #include <pthread.h>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <time.h>
 #include <string.h>
 #include <signal.h>
@@ -105,6 +108,7 @@ void graceful_shutdown(int sig) {
     pthread_mutex_lock(&shutdown_lock);
     if(sig == SIGINT) {
         printf("Shutting down processor\n");
+        if(SHUTDOWN_FLAG) exit(0);
         SHUTDOWN_FLAG = 1;
     }
     pthread_mutex_unlock(&shutdown_lock);
@@ -115,6 +119,8 @@ int main() {
 
     // This way we can remove the mmapped files
     signal(SIGINT, graceful_shutdown);
+
+    SHUTDOWN_FLAG = 1;
 
     setlocale(LC_NUMERIC, "");
 
@@ -367,6 +373,7 @@ int main() {
     const double disk_total = (double)(disk_usage_buff.f_blocks * disk_usage_buff.f_frsize) / GB;
 
     // for(uint64_t t = 0; t < threads->pointer; t++) pthread_join(*(pthread_t*)(threads->data[0]), 0);
+    SHUTDOWN_FLAG = 0;
     time_t start = time(0), current, save_timer = time(0), fps_timer = time(0), sleep_timer = time(0);
     clock_t cstart = clock();
     uint32_t cpu_time, cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
@@ -440,6 +447,13 @@ int main() {
         if(save_time) {
             // SHUTDOWN_FLAG = 1;
             save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
+            // Flush the file system cache
+            while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+            sync();
+            int fd = open("/proc/sys/vm/drop_caches", O_WRONLY);
+            write(fd, "3", sizeof(char));
+            close(fd);
+            pthread_mutex_unlock(&heirarchy_lock);
             save_timer = time(0);
         }
 
