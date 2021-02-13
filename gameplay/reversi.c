@@ -111,15 +111,24 @@ board clone_board(board b) {
     if(!bc) err(1, "Memory Error Occured while allocating a board.");
     if(!bc->board) err(1, "Memory Error Occured while allocating a board.");
 
-    if(b) {
-        bc->height = b->height;
-        bc->width = b->width;
-        bc->player = b->player;
-        for(uint8_t i = 0; i < ((b->height * b->width) >> 2); i++) bc->board[i] = b->board[i];
-    }
-    else err(2, "Cannot clone an empty board pointer");
+    clone_into_board(b, bc);
 
     return bc;
+}
+
+/**
+ * @brief Clones a board into a given already allocated board.
+ * 
+ * @param src 
+ * @param dest 
+ */
+void clone_into_board(board src, board dest) {
+    if(src && dest) {
+        dest->height = src->height;
+        dest->width = src->width;
+        dest->player = src->player;
+        for(uint8_t i = 0; i < ((src->height * src->width) >> 2); i++) dest->board[i] = src->board[i];
+    }
 }
 
 void destroy_board(board b) {

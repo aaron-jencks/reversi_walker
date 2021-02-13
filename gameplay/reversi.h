@@ -54,6 +54,14 @@ board create_board_unhash_6(uint8_t starting_player, __uint128_t key);
 board clone_board(board b);
 
 /**
+ * @brief Clones a board into a given already allocated board.
+ * 
+ * @param src 
+ * @param dest 
+ */
+void clone_into_board(board src, board dest);
+
+/**
  * @brief Destroys a given board
  * 
  * @param b 

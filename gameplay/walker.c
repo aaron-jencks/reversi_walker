@@ -32,57 +32,21 @@ coord create_coord(uint8_t row, uint8_t col) {
     return c;
 }
 
-coord* find_next_boards(board b) {
+void find_next_boards(board b, ptr_arraylist edges, ptr_arraylist coord_cache) {
     uint8_t sr = (b->height >> 1) - 1, sc = (b->width >> 1) - 1, visited[b->height][b->width];
-    ptr_arraylist edges = create_ptr_arraylist(65); // , queue = create_ptr_arraylist(65);
+    edges->pointer = 0;
 
     // 6 times faster
     for(uint8_t i = 0; i < b->height; i++) {
         for(uint8_t j = 0; j < b->width; j++) {
             if(board_is_legal_move(b, i, j)) {
-                append_pal(edges, create_coord(i, j));
+                coord c = pop_back_pal(coord_cache);
+                c->column = j;
+                c->row = i;
+                append_pal(edges, c);
             }
         }
     }
-
-    // for(uint8_t i = 0; i < b->height; i++) 
-    //     for(uint8_t j = 0; j < b->width; j++) 
-    //         visited[i][j] = 0;
-
-    // append_pal(queue, create_coord(sr, sc));
-
-    // while(queue->pointer) {
-    //     coord c = pop_front_pal(queue);
-    //     visited[c->row][c->column] = 1;
-
-    //     for(int8_t rd = -1; rd < 2; rd++) {
-    //         for(int8_t cd = -1; cd < 2; cd++) {
-    //             if(!rd && !cd) continue;
-                
-    //             sr = c->row + rd;
-    //             sc = c->column + cd;
-
-    //             if(sr >= 0 && sr < b->height && sc >= 0 && sc < b->width) {
-    //                 uint8_t v = visited[sr][sc];
-    //                 if(board_get(b, sr, sc) && !v) 
-    //                     append_pal(queue, create_coord(sr, sc));
-    //                 else if(!v && board_get(b, c->row, c->column) != b->player) {
-    //                     visited[sr][sc] = 1;
-    //                     if(board_is_legal_move(b, sr, sc))
-    //                         append_pal(edges, create_coord(sr, sc));
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     free(c);
-    // }
-
-    // for(uint64_t i = 0; i < queue->pointer; i++) free(queue->data[i]);  // In case I missed one?
-    // destroy_ptr_arraylist(queue);
-    coord* result = (coord*)(edges->data);
-    free(edges);
-    return result;
 }
 
 
@@ -165,6 +129,11 @@ void* walker_processor_pre_stacked(void* args) {
         // Setup the stacks
         uint64_t count = 0;
         ptr_arraylist search_stack = starting_stack;
+        ptr_arraylist board_cache = create_ptr_arraylist(1000), coord_cache = create_ptr_arraylist(1000), coord_buff = create_ptr_arraylist(65);
+        for(size_t bc = 0; bc < 1000; bc++) {
+            append_pal(board_cache, create_board(1, 6, 6));
+            append_pal(coord_cache, create_coord(0, 0));
+        }
 
         // printf("Starting walk...\n");
 
@@ -176,14 +145,18 @@ void* walker_processor_pre_stacked(void* args) {
             //     display_board(sb);
             // #endif
 
-            coord* next_moves = find_next_boards(sb);
+            find_next_boards(sb, coord_buff, coord_cache);
 
-            if(next_moves[0]) {
+            if(coord_buff->pointer) {
                 uint8_t move_count = 0;
                 // If the move is legal, then append it to the search stack
-                for(uint8_t im = 0; next_moves[im]; im++) {
-                    coord mm = next_moves[im];
-                    bc = clone_board(sb);
+                for(uint8_t im = 0; im < coord_buff->pointer; im++) {
+                    coord mm = coord_buff->data[im];
+
+                    if(board_cache->pointer) bc = pop_back_pal(board_cache);
+                    else bc = create_board(1, sb->height, sb->width);
+
+                    clone_into_board(sb, bc);
 
                     if(board_is_legal_move(bc, mm->row, mm->column)) {
                         board_place_piece(bc, mm->row, mm->column);
@@ -191,17 +164,15 @@ void* walker_processor_pre_stacked(void* args) {
                         move_count++;
                     }
                     else {
-                        destroy_board(bc);
+                        append_pal(board_cache, bc);
                     }
 
-                    free(mm);
+                    append_pal(coord_cache, mm);
                 }
 
                 #ifdef debug
                     printf("Found %u moves\n", move_count);
                 #endif
-
-                free(next_moves);
             }
             else {
                 // The opponenet has no moves, try the other player
@@ -210,15 +181,18 @@ void* walker_processor_pre_stacked(void* args) {
                 #endif
                 sb->player = (sb->player == 1) ? 2 : 1;
 
-                free(next_moves);
-                next_moves = find_next_boards(sb);
+                find_next_boards(sb, coord_buff, coord_cache);
 
-                if(next_moves[0]) {
+                if(coord_buff->pointer) {
                     uint8_t move_count = 0;
                     // If the move is legal, then append it to the search stack
-                    for(uint8_t im = 0; next_moves[im]; im++) {
-                        coord mm = next_moves[im];
-                        bc = clone_board(sb);
+                    for(uint8_t im = 0; im < coord_buff->pointer; im++) {
+                        coord mm = coord_buff->data[im];
+                        
+                        if(board_cache->pointer) bc = pop_back_pal(board_cache);
+                        else bc = create_board(1, sb->height, sb->width);
+
+                        clone_into_board(sb, bc);
 
                         if(board_is_legal_move(bc, mm->row, mm->column)) {
                             board_place_piece(bc, mm->row, mm->column);
@@ -226,21 +200,17 @@ void* walker_processor_pre_stacked(void* args) {
                             move_count++;
                         }
                         else {
-                            destroy_board(bc);
+                            append_pal(board_cache, bc);
                         }
 
-                        free(mm);
+                        append_pal(coord_cache, mm);
                     }
-
-                    free(next_moves);
                 }
                 else {
                     // The opponenet has no moves, try the other player
                     #ifdef debug
                         printf("No moves for anybody, game has ended.\n");
                     #endif
-
-                    free(next_moves);
 
                     // if(!exists_hs(cache, sb)) {
                     //     put_hs(cache, sb);
@@ -325,6 +295,16 @@ void* walker_processor_pre_stacked(void* args) {
         free(pargs);
         while(search_stack->pointer) destroy_board(pop_back_pal(search_stack));
         destroy_ptr_arraylist(search_stack);
+
+        while(board_cache->pointer) {
+            destroy_board(pop_back_pal(board_cache));
+        }
+        destroy_ptr_arraylist(board_cache);
+
+        while(coord_cache->pointer) {
+            free(pop_back_pal(coord_cache));
+        }
+        destroy_ptr_arraylist(coord_cache);
 
         return 0;
     }

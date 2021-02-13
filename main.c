@@ -186,35 +186,31 @@ int main() {
     
     // Setup the queue
     ptr_arraylist search_queue = create_ptr_arraylist(procs + 1);
+    ptr_arraylist coord_buff = create_ptr_arraylist(65), coord_cache = create_ptr_arraylist(1000);
+    for(size_t c = 0; c < 1000; c++) append_pal(coord_cache, create_coord(0, 0));
 
     // Account for reflections and symmetry by using 1 of the 4 possible starting moves
-    coord* next_moves = find_next_boards(b);
+    find_next_boards(b, coord_buff, coord_cache);
 
-    for(char im = 0; next_moves[im]; im++) {
-        coord m = next_moves[im];
+    for(char im = 0; im < coord_buff->pointer; im++) {
+        coord m = coord_buff->data[im];
         uint16_t sm = coord_to_short(m);
         board cb = clone_board(b);
         board_place_piece(cb, m->row, m->column);
         append_pal(search_queue, cb);
-        free(m);
+        append_pal(coord_cache, m);
         break;
     }
 
-    for(char im = 1; next_moves[im]; im++) {
-        coord m = next_moves[im];
-        free(m);
-    }
-
-    free(next_moves);
     destroy_board(b);
 
     // Perform the BFS
     while(search_queue->pointer < procs) {
         b = pop_front_pal(search_queue);
-        next_moves = find_next_boards(b);
+        find_next_boards(b, coord_buff, coord_cache);
 
-        for(char im = 0; next_moves[im]; im++) {
-            coord m = next_moves[im];
+        for(char im = 0; im < coord_buff->pointer; im++) {
+            coord m = coord_buff->data[im];
             uint16_t sm = coord_to_short(m);
             board cb = clone_board(b);
             board_place_piece(cb, m->row, m->column);
@@ -224,11 +220,11 @@ int main() {
 
         explored_count++;
 
-        free(next_moves);
         destroy_board(b);
     }
 
     procs = search_queue->pointer;
+    while(coord_cache->pointer) free(pop_back_pal(coord_cache));
 
     printf("Rounded nprocs to %d threads\n", procs);
     #pragma endregion
