@@ -387,14 +387,17 @@ heirarchy from_file_heir(FILE* fp) {
     h->bin_map = create_bin_dict(INITIAL_BIN_COUNT, 1 << (h->num_bits_per_final_level - 3), h->final_level->elements_per_bin);
 
     printf("Loading previous bins... This might take awhile\n");
+    size_t total = 0, current = 0;
+    for(size_t p = 0; p < h->final_level->num_pages; p++) total += h->final_level->pages[p]->size;
     for(size_t p = 0; p < h->final_level->num_pages; p++) {
         for(size_t b = 0; b < h->final_level->pages[p]->size; b++) {
+            printf("\rIterating over %'lu/%'lu", ++current, total);
             size_t bin_index = h->final_level->elements_per_bin * b;
             mmap_page mp = h->final_level->pages[p];
             bin_dict_put(h->bin_map, ((__uint128_t*)(mp->map + bin_index))[0], mp->map + bin_index);
         }
     }
-    printf("Bin loading Complete!\n");
+    printf("\nBin loading Complete!\n");
 
     // size_t level, id;
     // uint8_t* mmap_ptr;
