@@ -1,6 +1,6 @@
 cc=gcc
 # cflags=$(cflags)
-objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o hash_functions.o heir.o path_util.o saving_algorithms.o heir_swapper.o heapsort.o
+objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o hash_functions.o heir.o path_util.o saving_algorithms.o heir_swapper.o heapsort.o csv.o
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
 
@@ -73,6 +73,9 @@ saving_algorithms.o: ./utils/saving_algorithms.c ./utils/saving_algorithms.h
 	$(cc) $(cflags) -o $@ -c $<
 
 heapsort.o: ./utils/heapsort.c ./utils/heapsort.h 
+	$(cc) $(cflags) -o $@ -c $<
+
+csv.o: ./utils/csv.c ./utils/csv.h 
 	$(cc) $(cflags) -o $@ -c $<
 
 # Tests

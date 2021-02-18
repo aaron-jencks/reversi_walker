@@ -20,6 +20,7 @@
 #include "./gameplay/valid_moves.h"
 #include "./utils/fileio.h"
 #include "./utils/path_util.h"
+#include "./utils/csv.h"
 
 // TODO you can use the previous two board states to predict the next set of valid moves.
 
@@ -35,7 +36,6 @@
  */
 
 // TODO Maybe try to use heroseh's gui stuff to make interface look nice
-// TODO interpret the Ctrl+C interrupt to shutdown gracefully and remove mmapped files
 
 uint8_t SHUTDOWN_FLAG = 0;
 pthread_mutex_t shutdown_lock;
@@ -129,13 +129,17 @@ int main() {
         temp_dir = mkdtemp(temp_result);
     #endif
 
-    char* checkpoint_filename;
+    char* checkpoint_filename, *csv_filename;
 
     if(!getenv("CHECKPOINT_PATH")) {
         checkpoint_filename = malloc(sizeof(char) * (strlen(temp_dir) + 16));
         snprintf(checkpoint_filename, strlen(temp_dir) + 16, "%s/checkpoint.bin", temp_dir);
     }
     else checkpoint_filename = getenv("CHECKPOINT_PATH");
+
+    csv_filename = malloc(sizeof(char) * (strlen(temp_dir) + 9));
+    if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
+    snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
 
     char d;
     while(1) {
@@ -230,6 +234,8 @@ int main() {
     #pragma endregion
 
     ptr_arraylist threads;
+
+    #pragma region determine if loading checkpoint
 
     if(d == 'y') {
         char** restore_filename = malloc(sizeof(char*));
@@ -356,23 +362,29 @@ int main() {
         }
     }
 
+    #pragma endregion
+
     printf("Starting walk...\n");
     printf("Running on %d threads\n", procs);
     printf("Saving checkpoints to %s\n", checkpoint_filename);
 
     struct statvfs disk_usage_buff;
     const double GB = 1024 * 1024 * 1024;
-    if(statvfs("/tmp", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
+    if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
     const double disk_total = (double)(disk_usage_buff.f_blocks * disk_usage_buff.f_frsize) / GB;
 
     // for(uint64_t t = 0; t < threads->pointer; t++) pthread_join(*(pthread_t*)(threads->data[0]), 0);
     SHUTDOWN_FLAG = 0;
-    time_t start = time(0), current, save_timer = time(0), fps_timer = time(0), sleep_timer = time(0);
+    time_t start = time(0), current, save_timer = time(0), fps_timer = time(0), sleep_timer = time(0), log_timer = time(0);
     clock_t cstart = clock();
     uint32_t cpu_time, cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
              run_time, run_days, run_hours, run_minutes, run_seconds, save_time, previous_run_time = start, fps_update_time, print_sleep;
     uint64_t previous_board_count = 0, fps = 0;
     double disk_avail, disk_used, disk_perc;
+
+    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f\n", 5);
+    initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage");
+
     while(1) {
         if(statvfs("/tmp", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
         disk_avail = (double)(disk_usage_buff.f_bfree * disk_usage_buff.f_frsize) / GB;
@@ -409,6 +421,11 @@ int main() {
             fps = (explored_count - previous_board_count);
             previous_board_count = explored_count;
             fps_timer = time(0);
+        }
+
+        if((current - log_timer) / 60) {
+            append_data(csv, run_time, fps, count, explored_count, disk_perc);
+            log_timer = time(0);
         }
 
         #ifndef hideprint
