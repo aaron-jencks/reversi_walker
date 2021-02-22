@@ -6,10 +6,12 @@
 #include <pthread.h>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <string.h>
 #include <signal.h>
 #include <locale.h>
+#include <libgen.h>
 
 #include "./gameplay/reversi.h"
 #include "./hashing/hash_functions.h"
@@ -244,21 +246,34 @@ int main() {
         getc(stdin);    // Read the extra \n character
         processed_file pf = restore_progress_v2(*restore_filename);
 
-        while(1) {
-            printf("Would you like to continue saving to this checkpoint?(y/N): ");
-            d = getc(stdin);
-            // printf("%c\n", d);
-            if(d == '\n' || d == 'n' || d == 'N') {
-                checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
-                break;
+        #ifndef skipconfirm
+            while(1) {
+                printf("Would you like to continue saving to this checkpoint?(y/N): ");
+                d = getc(stdin);
+                // printf("%c\n", d);
+                if(d == '\n' || d == 'n' || d == 'N') {
+                    checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
+                    break;
+                }
+                else if(d == 'y' || d == 'Y') {
+                    checkpoint_filename = malloc(sizeof(char) * strlen(*restore_filename));
+                    strcpy(checkpoint_filename, *restore_filename);
+                    csv_filename = malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
+                    if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
+                    temp_dir = dirname(checkpoint_filename);
+                    snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
+                    break;
+                }
+                else printf("\n");
             }
-            else if(d == 'y' || d == 'Y') {
-                checkpoint_filename = malloc(sizeof(char) * strlen(*restore_filename));
-                strcpy(checkpoint_filename, *restore_filename);
-                break;
-            }
-            else printf("\n");
-        }
+        #else
+            checkpoint_filename = malloc(sizeof(char) * strlen(*restore_filename));
+            strcpy(checkpoint_filename, *restore_filename);
+            csv_filename = malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
+            if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
+            temp_dir = dirname(checkpoint_filename);
+            snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
+        #endif
 
         free(*restore_filename);
 
@@ -382,8 +397,9 @@ int main() {
     uint64_t previous_board_count = 0, fps = 0;
     double disk_avail, disk_used, disk_perc;
 
-    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f\n", 5);
-    initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage");
+    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f\n", 5);
+    struct stat sbuff;
+    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", "hash_load_factor");
 
     while(1) {
         if(statvfs("/tmp", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
@@ -424,7 +440,7 @@ int main() {
         }
 
         if((current - log_timer) / 60) {
-            append_data(csv, run_time, fps, count, explored_count, disk_perc);
+            append_data(csv, run_time, fps, count, explored_count, disk_perc, bin_dict_load_factor(cache->bin_map));
             log_timer = time(0);
         }
 
