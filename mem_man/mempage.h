@@ -8,6 +8,7 @@
 
 typedef struct _mempage_str {
     __uint128_t*** pages;
+    uint8_t**** ptr_pages;
     size_t** bin_counts;
     size_t* access_counts;
     uint8_t* page_present;
@@ -33,8 +34,9 @@ size_t mempage_find_total_size(mempage mp);
 
 // void mempage_put(mempage mp, __uint128_t index, void* data);
 
-void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value);
+void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t key, void* value);
 uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t value);
+uint8_t* mempage_get(mempage mp, __uint128_t bin_index, __uint128_t key);
 void mempage_clear_all(mempage mp);
 void mempage_realloc(mempage mp, __uint128_t bin_count);
 

@@ -16,7 +16,7 @@
  * @param hash The hash function for hashing the data into the hashtable
  * @return hashtable 
  */
-hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*)) {
+hashtable create_hashtable(uint64_t initial_bin_count) {
     assert(initial_bin_count);
     hashtable t = malloc(sizeof(hashtable_str));
     if(!t) err(1, "Memory Error while trying to allocate hashtable\n");
@@ -25,7 +25,6 @@ hashtable create_hashtable(uint64_t initial_bin_count, __uint128_t (*hash)(void*
     // for(uint64_t i = 0; i < initial_bin_count; i++) mempage_put(t->bins, i, create_uint128_arraylist(65));
     t->bin_count = initial_bin_count;
     t->size = 0;
-    t->hash = hash;
     return t;
 }
 
@@ -90,12 +89,12 @@ mempage_buff get_pairs(hashtable t) {
  * @param value The value to insert
  * @return uint64_t Returns the value of the key that value hashed to
  */
-__uint128_t put_hs(hashtable t, void* value) {
+void put_hs(hashtable t, __uint128_t k, void* value) {
     if(t) {
         while(1) {
             if(!pthread_mutex_trylock(&t->table_lock)){
-                __uint128_t k = t->hash(value), b = k % (t->bin_count);
-                if(!k) err(2, "Hit a hash value that is 0\n");
+                __uint128_t b = k % (t->bin_count);
+                // if(!k) err(2, "Hit a hash value that is 0\n");
 
                 mempage_append_bin(t->bins, b, k);
                 
@@ -161,6 +160,16 @@ __uint128_t put_hs(hashtable t, void* value) {
     return 0;
 }
 
+void* get_hs(hashtable t, __uint128_t k) {
+    if(t) {
+        __uint128_t b = k % t->bin_count;
+
+        while(pthread_mutex_trylock(&t->table_lock)) sched_yield();
+
+        
+    }
+}
+
 /**
  * @brief Checks if the given value exists in the hashtable
  * 
@@ -168,15 +177,15 @@ __uint128_t put_hs(hashtable t, void* value) {
  * @param value The value to check for
  * @return uint8_t Returns 1 if the value exists, and 0 otherwise
  */
-uint8_t exists_hs(hashtable t, void* value) {
+uint8_t exists_hs(hashtable t, __uint128_t k) {
     if(t && t->size) {
         while(1) {
             while(pthread_mutex_trylock(&t->table_lock)) sched_yield();
 
-            __uint128_t key = t->hash(value), b = key % t->bin_count;
-            if(!key) err(2, "Hit a hash value that is 0\n");
+            __uint128_t b = k % t->bin_count;
+            // if(!key) err(2, "Hit a hash value that is 0\n");
 
-            uint8_t res = mempage_value_in_bin(t->bins, b, key);
+            uint8_t res = mempage_value_in_bin(t->bins, b, k);
 
             pthread_mutex_unlock(&t->table_lock);
 
@@ -231,7 +240,7 @@ hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
 
     printf("\n");
 
-    hashtable ht = create_hashtable(bin_count, hash);
+    hashtable ht = create_hashtable(bin_count);
     
     // Insert the keys
     for(__uint128_t p = 0; p < size; p++) {
