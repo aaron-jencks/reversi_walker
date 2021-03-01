@@ -25,4 +25,4 @@ void destroy_bin_dict(bin_dict d);
 
 uint8_t* bin_dict_get(bin_dict d, __uint128_t k);
 uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr);
-inline double bin_dict_load_factor(bin_dict d) { return (double)d->element_count / (double)d->bin_count; }
+double bin_dict_load_factor(bin_dict d);

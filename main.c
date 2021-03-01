@@ -260,7 +260,10 @@ int main() {
                     strcpy(checkpoint_filename, *restore_filename);
                     csv_filename = malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
                     if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
-                    temp_dir = dirname(checkpoint_filename);
+                    temp_dir = malloc(sizeof(char) * strlen(checkpoint_filename));
+                    if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
+                    strcpy(temp_dir, checkpoint_filename);
+                    temp_dir = dirname(temp_dir);
                     snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
                     break;
                 }
@@ -271,7 +274,10 @@ int main() {
             strcpy(checkpoint_filename, *restore_filename);
             csv_filename = malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
             if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
-            temp_dir = dirname(checkpoint_filename);
+            temp_dir = malloc(sizeof(char) * strlen(checkpoint_filename));
+            if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
+            strcpy(temp_dir, checkpoint_filename);
+            temp_dir = dirname(temp_dir);
             snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
         #endif
 
@@ -402,7 +408,7 @@ int main() {
     if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", "hash_load_factor");
 
     while(1) {
-        if(statvfs("/tmp", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
+        if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
         disk_avail = (double)(disk_usage_buff.f_bfree * disk_usage_buff.f_frsize) / GB;
         disk_used = disk_total - disk_avail;
         disk_perc = (double)(disk_used / disk_total) * (double)100;
