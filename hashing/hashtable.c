@@ -69,7 +69,7 @@ mempage_buff get_pairs(hashtable t) {
                         fflush(stdout);
                     #endif
                     
-                    mempage_buff_put(buff, offset++, bin[be]);
+                    mempage_buff_put(buff, offset++, bin[be], mempage_get(t->bins, b, bin[be]));
                 }
             }
         }
@@ -96,7 +96,7 @@ void put_hs(hashtable t, __uint128_t k, void* value) {
                 __uint128_t b = k % (t->bin_count);
                 // if(!k) err(2, "Hit a hash value that is 0\n");
 
-                mempage_append_bin(t->bins, b, k);
+                mempage_append_bin(t->bins, b, k, value);
                 
                 if(++t->size > (t->bin_count * 15)) {
                     #ifdef hashdebug
@@ -130,13 +130,13 @@ void put_hs(hashtable t, __uint128_t k, void* value) {
                     #endif
 
                     for(__uint128_t p = 0; p < buff->num_element; p++) {
-                        __uint128_t k = mempage_buff_get(buff, p);
+                        map_tuple k = mempage_buff_get(buff, p);
 
                         #ifdef hashdebug
                             printf("\rInserting element %lu %lu: %lu %lu", ((uint64_t*)&p)[1], ((uint64_t*)&p)[0], ((uint64_t*)&k)[1], ((uint64_t*)&k)[0]);
                         #endif
 
-                        mempage_append_bin(t->bins, k % t->bins->num_bins, k);
+                        mempage_append_bin(t->bins, k->k % t->bins->num_bins, k->k, k->ptr);
                     }
 
                     #ifdef hashdebug
@@ -150,14 +150,11 @@ void put_hs(hashtable t, __uint128_t k, void* value) {
                 }
 
                 pthread_mutex_unlock(&t->table_lock);
-
-                return k;
+                return;
             }
             sched_yield();
         }
     }
-
-    return 0;
 }
 
 void* get_hs(hashtable t, __uint128_t k) {
@@ -166,8 +163,9 @@ void* get_hs(hashtable t, __uint128_t k) {
 
         while(pthread_mutex_trylock(&t->table_lock)) sched_yield();
 
-        
+        return mempage_get(t->bins, b, k);
     }
+    return (void*)0;
 }
 
 /**
@@ -195,68 +193,68 @@ uint8_t exists_hs(hashtable t, __uint128_t k) {
     return 0;
 }
 
-void to_file_hs(FILE* fp, hashtable t) {
-    if(t) {
-        if(fwrite(&t->bin_count, sizeof(t->bin_count), 1, fp) < 1) err(10, "Failed to write bin count to file\n");
-        fwrite(&t->size, sizeof(t->size), 1, fp);
+// void to_file_hs(FILE* fp, hashtable t) {
+//     if(t) {
+//         if(fwrite(&t->bin_count, sizeof(t->bin_count), 1, fp) < 1) err(10, "Failed to write bin count to file\n");
+//         fwrite(&t->size, sizeof(t->size), 1, fp);
 
-        mempage_buff pairs = get_pairs(t);
-        uint64_t count = 0;
+//         mempage_buff pairs = get_pairs(t);
+//         uint64_t count = 0;
 
-        printf("Writing %lu %lu entries to disk\n", ((uint64_t*)&pairs->num_element)[1], ((uint64_t*)&pairs->num_element)[0]);
+//         printf("Writing %lu %lu entries to disk\n", ((uint64_t*)&pairs->num_element)[1], ((uint64_t*)&pairs->num_element)[0]);
 
-        for(__uint128_t p = 0; p < pairs->num_element; p++) {
-            __uint128_t k = mempage_buff_get(pairs, p);
-            size_t written = fwrite(&k, sizeof(__uint128_t), 1, fp);
-            if(written < 1) err(10, "Failed to save hashtable key, only wrote %lu/%lu on entry %lu\n", written, sizeof(__uint128_t), count);
-            count++;
-        }
+//         for(__uint128_t p = 0; p < pairs->num_element; p++) {
+//             __uint128_t k = mempage_buff_get(pairs, p);
+//             size_t written = fwrite(&k, sizeof(__uint128_t), 1, fp);
+//             if(written < 1) err(10, "Failed to save hashtable key, only wrote %lu/%lu on entry %lu\n", written, sizeof(__uint128_t), count);
+//             count++;
+//         }
 
-        printf("Wrote %ld entries\n", count);
+//         printf("Wrote %ld entries\n", count);
 
-        destroy_mempage_buff(pairs);
+//         destroy_mempage_buff(pairs);
 
-        __uint128_t spacer = 0;
-        fwrite(&spacer, sizeof(__uint128_t), 1, fp);
-    }
-}
+//         __uint128_t spacer = 0;
+//         fwrite(&spacer, sizeof(__uint128_t), 1, fp);
+//     }
+// }
 
-hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
-    __uint128_t bin_count, size;
-    fread(&bin_count, sizeof(__uint128_t), 1, fp);
-    fread(&size, sizeof(__uint128_t), 1, fp);
-    // fscanf(fp, "%lu%lu", &bin_count, &size);
+// hashtable from_file_hs(FILE* fp, __uint128_t (*hash)(void*)) {
+//     __uint128_t bin_count, size;
+//     fread(&bin_count, sizeof(__uint128_t), 1, fp);
+//     fread(&size, sizeof(__uint128_t), 1, fp);
+//     // fscanf(fp, "%lu%lu", &bin_count, &size);
 
-    mempage_buff keys = create_mempage_buff(size, BIN_PAGE_COUNT);
-    __uint128_t bk;
-    for(__uint128_t k = 0; k < size; k++) {
-        printf("\rReading %lu %lu/%lu %lu", ((uint64_t*)&k)[1], ((uint64_t*)&k)[0],
-                                            ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
-        if(fread(&bk, sizeof(__uint128_t), 1, fp) < 1) err(11, "Failed to read hashtable key %lu %lu/%lu %lu\n", ((uint64_t*)&k)[1], ((uint64_t*)&k)[0], 
-                                                                                                                 ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
-        if(bk) mempage_buff_put(keys, k, bk);
-        else break;
-    }
+//     mempage_buff keys = create_mempage_buff(size, BIN_PAGE_COUNT);
+//     __uint128_t bk;
+//     for(__uint128_t k = 0; k < size; k++) {
+//         printf("\rReading %lu %lu/%lu %lu", ((uint64_t*)&k)[1], ((uint64_t*)&k)[0],
+//                                             ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
+//         if(fread(&bk, sizeof(__uint128_t), 1, fp) < 1) err(11, "Failed to read hashtable key %lu %lu/%lu %lu\n", ((uint64_t*)&k)[1], ((uint64_t*)&k)[0], 
+//                                                                                                                  ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
+//         if(bk) mempage_buff_put(keys, k, bk);
+//         else break;
+//     }
 
-    printf("\n");
+//     printf("\n");
 
-    hashtable ht = create_hashtable(bin_count);
+//     hashtable ht = create_hashtable(bin_count);
     
-    // Insert the keys
-    for(__uint128_t p = 0; p < size; p++) {
-        printf("\rInserting %lu %lu/%lu %lu", ((uint64_t*)&p)[1], ((uint64_t*)&p)[0],
-                                              ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
-        fflush(stdout);
-        __uint128_t k = mempage_buff_get(keys, p);
-        // printf("Retrieved the file from the buffer\n");
-        mempage_append_bin(ht->bins, k % ht->bin_count, k);
-    }
-    ht->size = size;
+//     // Insert the keys
+//     for(__uint128_t p = 0; p < size; p++) {
+//         printf("\rInserting %lu %lu/%lu %lu", ((uint64_t*)&p)[1], ((uint64_t*)&p)[0],
+//                                               ((uint64_t*)&size)[1], ((uint64_t*)&size)[0]);
+//         fflush(stdout);
+//         __uint128_t k = mempage_buff_get(keys, p);
+//         // printf("Retrieved the file from the buffer\n");
+//         mempage_append_bin(ht->bins, k % ht->bin_count, k);
+//     }
+//     ht->size = size;
 
-    printf("\nRead in a hashtable with %lu %lu entries and %lu %lu bins\n", ((uint64_t*)&size)[1], ((uint64_t*)&size)[0], 
-                                                                            ((uint64_t*)&bin_count)[1], ((uint64_t*)&bin_count)[0]);
+//     printf("\nRead in a hashtable with %lu %lu entries and %lu %lu bins\n", ((uint64_t*)&size)[1], ((uint64_t*)&size)[0], 
+//                                                                             ((uint64_t*)&bin_count)[1], ((uint64_t*)&bin_count)[0]);
 
-    destroy_mempage_buff(keys);
+//     destroy_mempage_buff(keys);
 
-    return ht;
-}
+//     return ht;
+// }

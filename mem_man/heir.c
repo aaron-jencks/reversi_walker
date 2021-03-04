@@ -142,6 +142,7 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     // bit_placeholder = (1 << (h->num_bits_per_final_level - 2)) - 1;
 
     // Extract the bit from the last level
+    // 00111
     // __uint128_t key_copy = key >> (128 - h->num_bits_per_final_level);
 
     __uint128_t key_ph = key & ((((__uint128_t)1) << h->num_bits_per_final_level) - 1);

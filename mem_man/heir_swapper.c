@@ -9,6 +9,8 @@
 #define MAX_LOAD_COUNT 51000000
 #define SMALL_LOAD_COUNT 5
 
+double bin_dict_load_factor(bin_dict d) { return (double)d->element_count / (double)d->bin_count; }
+
 bin_dict create_bin_dict(size_t num_bins, size_t bin_size, size_t element_size) {
     bin_dict d = malloc(sizeof(bin_dict_t));
     if(!d) err(1, "Memory error while allocating bin_dict\n");
@@ -169,9 +171,7 @@ uint8_t* bin_dict_get(bin_dict d, __uint128_t k) {
         }
     }
     // TODO miss, check the cache
-    if(exists_hs(d->cache, k)) {
-
-    }
+    if(exists_hs(d->cache, k)) return get_hs(d->cache, k);
     
     return 0;
 }

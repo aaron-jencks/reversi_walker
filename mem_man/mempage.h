@@ -45,6 +45,7 @@ void mempage_realloc(mempage mp, __uint128_t bin_count);
 
 typedef struct _mempage_buff_str {
     __uint128_t** pages;
+    uint8_t*** ptr_pages;
     size_t page_count;
     size_t count_per_page;
     __uint128_t num_element;
@@ -53,7 +54,13 @@ typedef struct _mempage_buff_str {
     size_t save_interv_counter;
 } mempage_buff_str;
 
+typedef struct _map_tuple_t {
+    __uint128_t k;
+    uint8_t* ptr;
+} map_tuple_t;
+
 typedef mempage_buff_str* mempage_buff;
+typedef map_tuple_t* map_tuple;
 
 mempage_buff create_mempage_buff(__uint128_t num_elements, size_t page_size);
 void destroy_mempage_buff(mempage_buff buff);
@@ -62,8 +69,8 @@ uint8_t mempage_buff_page_exists(mempage_buff mp, size_t page_index);
 size_t mempage_buff_find_least_used_page(mempage_buff mp);
 size_t mempage_buff_find_total_size(mempage_buff buff);
 
-void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t value);
-__uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index);
+void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t k, void* value);
+map_tuple mempage_buff_get(mempage_buff buff, __uint128_t index);
 
 #pragma endregion
 #pragma region mmap mempages
