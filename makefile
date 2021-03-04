@@ -42,7 +42,7 @@ ll.o: ./utils/ll.c ./utils/ll.h
 heir.o: ./mem_man/heir.c ./mem_man/heir.h hash_functions.o reversi.o mmap_man.o
 	$(cc) $(cflags) -o $@ -c $<
 
-heir_swapper.o: ./mem_man/heir_swapper.c ./mem_man/heir_swapper.h heir.o  mmap_man.o heapsort.o
+heir_swapper.o: ./mem_man/heir_swapper.c ./mem_man/heir_swapper.h mmap_man.o heapsort.o hashtable.o 
 	$(cc) $(cflags) -o $@ -c $<
 
 hashtable.o: ./hashing/hashtable.c ./hashing/hashtable.h mempage.o arraylist.o
