@@ -19,6 +19,7 @@ bin_dict create_bin_dict(size_t num_bins, size_t bin_size, size_t element_size) 
     d->bin_count = num_bins;
     d->element_size = element_size;
     d->loaded_count = 0;
+    d->element_count = 0;
     d->bins = malloc(sizeof(uint8_t**) * num_bins);
     // d->mappings = malloc(sizeof(uint8_t**) * num_bins);
     d->indices = calloc(num_bins, sizeof(size_t));
@@ -194,6 +195,7 @@ uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
     // d->mappings[bin][d->indices[bin]] = ptr;
     d->keys[bin][d->indices[bin]] = k;
     d->usage_counters[bin][d->indices[bin]] = 1;
+    d->element_count++;
 
     if(bin_dict_load_factor(d) > 15) {
         size_t** targets = find_n_swap_targets(d, 14 * d->bin_count);
@@ -237,3 +239,5 @@ uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
 
     return d->bins[bin][d->indices[bin] - 1];
 }
+
+double bin_dict_load_factor(bin_dict d) { return (double)d->element_count / (double)d->bin_count; }
