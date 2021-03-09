@@ -46,3 +46,47 @@ void heapsort(size_t** arr, size_t n) {
         min_heapify(arr, i, 0);
     }
 }
+
+void swap_heap_elements_dict(dict_element_t* arr, size_t a, size_t b) {
+    dict_element_t temp;
+    temp = arr[a];
+    arr[a] = arr[b];
+    arr[b] = temp;
+}
+
+/**
+ * parent = (i >> 1) - 1
+ * left = (i + 1 << 1) - 1
+ * right = i + 1 << 1
+ */
+
+void min_heapify_dict(dict_element_t* arr, size_t n, size_t i) {
+    size_t l, r, smallest;
+
+    while(1) {
+        l = (i << 1) + 1;
+        r = (i << 1) + 2;
+
+        if(l < n && arr[l].pair.usage < arr[i].pair.usage) smallest = l;
+        else smallest = i;
+        if(r < n && arr[r].pair.usage < arr[i].pair.usage) smallest = r;
+        if(smallest != i) {
+            swap_heap_elements(arr, i, smallest);
+            i = smallest;
+        }
+        else break;
+    }
+}
+
+void build_min_heap_dict(dict_element_t* arr, size_t n) {
+    for(size_t i = (n >> 1) - 1; i > 0; i--) min_heapify(arr, n, i);
+    min_heapify(arr, n, 0);
+}
+
+void heapsort_dict(dict_element_t* arr, size_t n) {
+    build_min_heap(arr, n);
+    for(size_t i = n - 1; i > 0; i--) {
+        swap_heap_elements(arr, i, 0);
+        min_heapify(arr, i, 0);
+    }
+}

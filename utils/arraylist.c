@@ -70,6 +70,26 @@ void* pop_front_pal(ptr_arraylist l) {
     return 0;
 }
 
+void realloc_pal(ptr_arraylist l, size_t size) {
+    if(l && size) {
+        l->data = realloc(l->data, sizeof(void*) * size);
+        if(l->pointer >= size) l->pointer = size - 1;
+        l->size = size;
+    } 
+}
+
+void* pop_pal(ptr_arraylist l, size_t index) {
+    if(l && l->size) {
+        if(index <= l->pointer) {
+            void* v = l->data[index];
+            l->pointer--;
+            for(size_t e = index; e < l->pointer; e++) l->data[e] = l->data[e + 1];
+            return v;
+        }
+    }
+    return 0;
+}
+
 #pragma endregion
 
 #pragma region uint8
@@ -244,6 +264,26 @@ uint64_t pop_back_dal(uint64_arraylist l) {
     return 0;
 }
 
+void realloc_dal(uint64_arraylist l, size_t size) {
+    if(l && size) {
+        l->data = realloc(l->data, sizeof(uint64_t) * size);
+        if(l->pointer >= size) l->pointer = size - 1;
+        l->size = size;
+    } 
+}
+
+uint64_t pop_dal(uint64_arraylist l, size_t index) {
+    if(l && l->size) {
+        if(index <= l->pointer) {
+            void* v = l->data[index];
+            l->pointer--;
+            for(size_t e = index; e < l->pointer; e++) l->data[e] = l->data[e + 1];
+            return v;
+        }
+    }
+    return 0;
+}
+
 #pragma endregion
 
 #pragma region double double
@@ -301,5 +341,161 @@ __uint128_t pop_back_ddal(uint128_arraylist l) {
     }
     return 0;
 }
+
+void realloc_ddal(uint128_arraylist l, size_t size) {
+    if(l && size) {
+        l->data = realloc(l->data, sizeof(__uint128_t) * size);
+        if(l->pointer >= size) l->pointer = size - 1;
+        l->size = size;
+    } 
+}
+
+__uint128_t pop_ddal(uint128_arraylist l, size_t index) {
+    if(l && l->size) {
+        if(index <= l->pointer) {
+            void* v = l->data[index];
+            l->pointer--;
+            for(size_t e = index; e < l->pointer; e++) l->data[e] = l->data[e + 1];
+            return v;
+        }
+    }
+    return 0;
+}
+
+#pragma endregion
+
+#pragma region dicts
+
+#pragma region udict
+
+// TODO implement
+
+/**
+ * @brief Create a arraylist object
+ * 
+ * @param initial_capacity The initial maximum capacity for this list,
+ * the capacity is automatically adjusted once it runs out of room, 
+ * be careful not to overflow a 64 bit int though.
+ * @return arraylist 
+ */
+udict_arraylist create_udict_arraylist(uint64_t initial_capacity);
+
+/**
+ * @brief Destroys an arraylist
+ * 
+ * @param l 
+ */
+void destroy_udict_arraylist(udict_arraylist l);
+
+/**
+ * @brief Appends an item to the array list, re allocating the array if necessary
+ * 
+ * @param l 
+ * @param data Data to insert
+ */
+void append_udal(udict_arraylist l, dict_usage_pair_t data);
+
+/**
+ * @brief Inserts an item into the array list, re allocating the array if necessary
+ * 
+ * @param l 
+ * @param data Data to insert
+ * @param index The position to insert this data at
+ */
+void insert_udal(udict_arraylist l, uint64_t index, dict_usage_pair_t data);
+
+/**
+ * @brief Removes the last element from the arraylist, if there is one
+ * 
+ * @param l 
+ * @return void* Returns the last element of the arraylist, or 0 if there isn't one
+ */
+dict_usage_pair_t pop_back_udal(udict_arraylist l);
+
+/**
+ * @brief Reallocates the arraylist to a given size, 
+ * if the new size is smaller than the last one, data may be lost.
+ * 
+ * @param l 
+ * @param size The new size for the arraylist, in elements.
+ */
+void realloc_udal(udict_arraylist l, size_t size);
+
+/**
+ * @brief Removes an element from the arraylist
+ * 
+ * @param l 
+ * @param index 
+ * @return void* Returns the removed element
+ */
+dict_usage_pair_t pop_udal(udict_arraylist l, size_t index);
+
+#pragma endregion
+
+#pragma region dict
+
+// TODO implement
+
+/**
+ * @brief Create a arraylist object
+ * 
+ * @param initial_capacity The initial maximum capacity for this list,
+ * the capacity is automatically adjusted once it runs out of room, 
+ * be careful not to overflow a 64 bit int though.
+ * @return arraylist 
+ */
+dict_arraylist create_dict_arraylist(uint64_t initial_capacity);
+
+/**
+ * @brief Destroys an arraylist
+ * 
+ * @param l 
+ */
+void destroy_dict_arraylist(dict_arraylist l);
+
+/**
+ * @brief Appends an item to the array list, re allocating the array if necessary
+ * 
+ * @param l 
+ * @param data Data to insert
+ */
+void append_dtdal(dict_arraylist l, dict_pair_t data);
+
+/**
+ * @brief Inserts an item into the array list, re allocating the array if necessary
+ * 
+ * @param l 
+ * @param data Data to insert
+ * @param index The position to insert this data at
+ */
+void insert_dtdal(dict_arraylist l, uint64_t index, dict_pair_t data);
+
+/**
+ * @brief Removes the last element from the arraylist, if there is one
+ * 
+ * @param l 
+ * @return void* Returns the last element of the arraylist, or 0 if there isn't one
+ */
+dict_pair_t pop_back_dtdal(dict_arraylist l);
+
+/**
+ * @brief Reallocates the arraylist to a given size, 
+ * if the new size is smaller than the last one, data may be lost.
+ * 
+ * @param l 
+ * @param size The new size for the arraylist, in elements.
+ */
+void realloc_dtdal(dict_arraylist l, size_t size);
+
+/**
+ * @brief Removes an element from the arraylist
+ * 
+ * @param l 
+ * @param index 
+ * @return void* Returns the removed element
+ */
+dict_pair_t pop_dtdal(dict_arraylist l, size_t index);
+
+#pragma endregion
 
 #pragma endregion
