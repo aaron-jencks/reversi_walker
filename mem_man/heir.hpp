@@ -6,12 +6,15 @@
 #include <pthread.h>
 
 #include "mmap_man.h"
-#include "heir_swapper.h"
+#include "../utils/dictionary/dict_def.h"
+#include "../utils/dictionary/fdict.hpp"
+#include "../utils/dictionary/hdict.hpp"
 
 typedef struct __heirarchy_str {
     // void** first_level;
     mmap_man final_level;
-    bin_dict bin_map;
+    fdict fixed_cache;
+    hdict rehashing_cache;
     // size_t num_bits_per_level;
     size_t num_bits_per_final_level;
     // size_t num_levels;
