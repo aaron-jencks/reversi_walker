@@ -1,4 +1,4 @@
-#include "arraylist.h"
+#include "arraylist.hpp"
 
 #include <stdlib.h>
 #include <err.h>
@@ -378,14 +378,27 @@ __uint128_t pop_ddal(uint128_arraylist l, size_t index) {
  * be careful not to overflow a 64 bit int though.
  * @return arraylist 
  */
-udict_arraylist create_udict_arraylist(uint64_t initial_capacity);
+udict_arraylist create_udict_arraylist(uint64_t initial_capacity) {
+    udict_arraylist l = malloc(sizeof(udict_arraylist_str));
+    if(!l) err(1, "Memory Error while allocating ptr_arraylist\n");
+    l->data = calloc(initial_capacity, sizeof(dict_usage_pair_t));
+    if(!l->data) err(1, "Memory Error while allocating ptr_arraylist\n");
+    l->pointer = 0;
+    l->size = initial_capacity;
+    return l;
+}
 
 /**
  * @brief Destroys an arraylist
  * 
  * @param l 
  */
-void destroy_udict_arraylist(udict_arraylist l);
+void destroy_udict_arraylist(udict_arraylist l) {
+    if(l) {
+        if(l->data) free(l->data);
+        free(l);
+    }
+}
 
 /**
  * @brief Appends an item to the array list, re allocating the array if necessary

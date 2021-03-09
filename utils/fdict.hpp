@@ -2,13 +2,11 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "arraylist.h"
+#include "tarraylist.hpp"
 #include "dict_def.h"
 
 typedef struct _fdict_t {
-    uint128_arraylist* bins;
-    ptr_arraylist* ptrs;
-    uint64_arraylist* usage_counters;
+    Arraylist<dict_usage_pair_t>* bins;
     size_t bin_count;
     size_t max_element_count;
     size_t size;
