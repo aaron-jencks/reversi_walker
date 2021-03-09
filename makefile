@@ -1,8 +1,8 @@
 cc=gcc
 pp=g++
 # cflags=$(cflags)
-objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o hash_functions.o heir.o path_util.o saving_algorithms.o heir_swapper.o heapsort.o csv.o
-cpp_objects=tarraylist.o fdict.o 
+objects=reversi.o ll.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o mmap_man.o hash_functions.o path_util.o saving_algorithms.o heapsort.o csv.o dmempage.o 
+cpp_objects=tarraylist.o fdict.o hdict.o heir.o fileio.o walker.o 
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
 
@@ -20,8 +20,8 @@ gmain: gmain.cu $(cuda_objects)
 tester: tester.o $(objects) $(test_objects)
 	$(cc) $(cflags) -o $@ $< $(objects) $(test_objects) -pthread
 
-main.o: main.c $(objects)
-	$(cc) $(cflags) -o $@ -c $<
+main.o: main.cpp $(objects) $(cpp_objects)
+	$(pp) $(cflags) -o $@ -c $<
 
 tester.o: tester.c $(objects) $(test_objects)
 	$(cc) -g $(cflags) -o $@ -c $<
@@ -41,8 +41,8 @@ lookup.o: ./hashing/lookup3.c ./hashing/lookup3.h
 ll.o: ./utils/ll.c ./utils/ll.h
 	$(cc) $(cflags) -o $@ -c $<
 
-heir.o: ./mem_man/heir.c ./mem_man/heir.h hash_functions.o reversi.o mmap_man.o
-	$(cc) $(cflags) -o $@ -c $<
+heir.o: ./mem_man/heir.cpp ./mem_man/heir.hpp hash_functions.o reversi.o mmap_man.o hdict.o fdict.o 
+	$(pp) $(cflags) -o $@ -c $<
 
 heir_swapper.o: ./mem_man/heir_swapper.c ./mem_man/heir_swapper.h mmap_man.o heapsort.o hashtable.o 
 	$(cc) $(cflags) -o $@ -c $<
@@ -62,11 +62,11 @@ mmap_man.o: ./mem_man/mmap_man.c ./mem_man/mmap_man.h path_util.o
 mempage.o: ./mem_man/mempage.c ./mem_man/mempage.h path_util.o
 	$(cc) $(cflags) -o $@ -c $<
 
-walker.o: ./gameplay/walker.c ./gameplay/walker.h reversi.o ll.o arraylist.o
-	$(cc) $(cflags) -o $@ -c $<
+walker.o: ./gameplay/walker.cpp ./gameplay/walker.hpp reversi.o ll.o arraylist.o heir.o 
+	$(pp) $(cflags) -o $@ -c $<
 
-fileio.o: ./utils/fileio.c ./utils/fileio.h walker.o arraylist.o hashtable.o  path_util.o saving_algorithms.o
-	$(cc) $(cflags) -o $@ -c $<
+fileio.o: ./utils/fileio.cpp ./utils/fileio.hpp walker.o tarraylist.o hashtable.o  path_util.o saving_algorithms.o heir.o 
+	$(pp) $(cflags) -o $@ -c $<
 
 path_util.o: ./utils/path_util.c ./utils/path_util.h
 	$(cc) $(cflags) -o $@ -c $<
@@ -80,7 +80,13 @@ heapsort.o: ./utils/heapsort.c ./utils/heapsort.h
 csv.o: ./utils/csv.c ./utils/csv.h 
 	$(cc) $(cflags) -o $@ -c $<
 
-fdict.o: ./utils/fdict.c ./utils/fdict.h ./utils/dict_def.h heapsort.o tarraylist.o
+dmempage.o: ./utils/dictionary/dmempage.c ./utils/dictionary/dmempage.h ./utils/dictionary/dict_def.h 
+	$(cc) $(cflags) -o $@ -c $<
+
+fdict.o: ./utils/dictionary/fdict.cpp ./utils/dictionary/fdict.hpp ./utils/dictionary/dict_def.h heapsort.o tarraylist.o
+	$(pp) $(cflags) -o $@ -c $<
+
+hdict.o: ./utils/dictionary/hdict.cpp ./utils/dictionary/hdict.hpp dmempage.o 
 	$(pp) $(cflags) -o $@ -c $<
 
 tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp
@@ -108,7 +114,7 @@ mmap_test.o: tests/mmap_test.c tests/mmap_test.h heir.o reversi.o hash_functions
 
 .PHONY : clean
 clean:
-	rm main main.o $(objects) gmain $(cuda_objects) tester tester.o $(test_objects)
+	rm main main.o $(objects) gmain $(cuda_objects) tester tester.o $(test_objects) $(cpp_objects)
 
 .PHONY : tests
 tests: tester $(objects) $(test_objects)

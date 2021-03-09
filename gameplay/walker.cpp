@@ -1,4 +1,4 @@
-#include "walker.h"
+#include "walker.hpp"
 #include "../utils/ll.h"
 #include "../utils/arraylist.h"
 #include "../hashing/hash_functions.h"
@@ -25,7 +25,7 @@ uint8_t SAVING_FLAG = 0, WALKER_KILL_FLAG = 0;
 pthread_mutex_t saving_lock;
 
 coord create_coord(uint8_t row, uint8_t col) {
-    coord c = malloc(sizeof(coord_str));
+    coord c = (coord)malloc(sizeof(coord_str));
     if(!c) err(1, "Memory error while allocating a coordinate\n");
     c->column = col;
     c->row = row;
@@ -40,7 +40,7 @@ void find_next_boards(board b, ptr_arraylist edges, ptr_arraylist coord_cache) {
     for(uint8_t i = 0; i < b->height; i++) {
         for(uint8_t j = 0; j < b->width; j++) {
             if(board_is_legal_move(b, i, j)) {
-                coord c = pop_back_pal(coord_cache);
+                coord c = (coord)pop_back_pal(coord_cache);
                 c->column = j;
                 c->row = i;
                 append_pal(edges, c);
@@ -139,7 +139,7 @@ void* walker_processor_pre_stacked(void* args) {
 
         uint64_t iter = 0, intercap = 0;
         while(search_stack->pointer) {
-            board sb = pop_back_pal(search_stack), bc;
+            board sb = (board)pop_back_pal(search_stack), bc;
 
             // #ifdef debug
             //     display_board(sb);
@@ -151,9 +151,9 @@ void* walker_processor_pre_stacked(void* args) {
                 uint8_t move_count = 0;
                 // If the move is legal, then append it to the search stack
                 for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-                    coord mm = coord_buff->data[im];
+                    coord mm = (coord)coord_buff->data[im];
 
-                    if(board_cache->pointer) bc = pop_back_pal(board_cache);
+                    if(board_cache->pointer) bc = (board)pop_back_pal(board_cache);
                     else bc = create_board(1, sb->height, sb->width);
 
                     clone_into_board(sb, bc);
@@ -187,9 +187,9 @@ void* walker_processor_pre_stacked(void* args) {
                     uint8_t move_count = 0;
                     // If the move is legal, then append it to the search stack
                     for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-                        coord mm = coord_buff->data[im];
+                        coord mm = (coord)coord_buff->data[im];
                         
-                        if(board_cache->pointer) bc = pop_back_pal(board_cache);
+                        if(board_cache->pointer) bc = (board)pop_back_pal(board_cache);
                         else bc = create_board(1, sb->height, sb->width);
 
                         clone_into_board(sb, bc);
@@ -293,11 +293,11 @@ void* walker_processor_pre_stacked(void* args) {
         pthread_mutex_unlock(pargs->finished_lock);
 
         free(pargs);
-        while(search_stack->pointer) destroy_board(pop_back_pal(search_stack));
+        while(search_stack->pointer) destroy_board((board)pop_back_pal(search_stack));
         destroy_ptr_arraylist(search_stack);
 
         while(board_cache->pointer) {
-            destroy_board(pop_back_pal(board_cache));
+            destroy_board((board)pop_back_pal(board_cache));
         }
         destroy_ptr_arraylist(board_cache);
 
@@ -335,7 +335,7 @@ processor_args create_processor_args(uint32_t identifier, board starting_board, 
                                      uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
                                      uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock,
                                      size_t* finished_count, pthread_mutex_t* finished_lock) {
-    processor_args args = malloc(sizeof(processor_args_str));
+    processor_args args = (processor_args)malloc(sizeof(processor_args_str));
     if(!args) err(1, "Memory error while allocating processor args\n");
 
     args->identifier = identifier;

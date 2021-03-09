@@ -1,6 +1,5 @@
-#include "fileio.h"
-#include "../gameplay/walker.h"
-#include "../mem_man/heir.h"
+#include "fileio.hpp"
+#include "../gameplay/walker.hpp"
 #include "../utils/path_util.h"
 
 #include <err.h>
@@ -227,7 +226,7 @@ processed_file restore_progress_v2(char* filename) {
 
     printf("Restoring from file %s\n", filename);
 
-    processed_file result = calloc(1, sizeof(processed_file_str));
+    processed_file result = (processed_file)calloc(1, sizeof(processed_file_str));
     if(!result) err(1, "Memory error while allocating processed file\n");
 
     // Read the counters

@@ -15,12 +15,12 @@
 
 #include "./gameplay/reversi.h"
 #include "./hashing/hash_functions.h"
-#include "./mem_man/heir.h"
-#include "./gameplay/walker.h"
+#include "./mem_man/heir.hpp"
+#include "./gameplay/walker.hpp"
 #include "./utils/ll.h"
-#include "./utils/arraylist.h"
+#include "./utils/tarraylist.hpp"
 #include "./gameplay/valid_moves.h"
-#include "./utils/fileio.h"
+#include "./utils/fileio.hpp"
 #include "./utils/path_util.h"
 #include "./utils/csv.h"
 
@@ -123,10 +123,10 @@ int main() {
 
     setlocale(LC_NUMERIC, "");
 
-    char* temp_dir = (getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/tmp";
+    char* temp_dir = (char*)((getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/tmp");
 
     #ifndef reusefiles
-        char* temp_result = malloc(sizeof(char) * (strlen(temp_dir) + 16));
+        char* temp_result = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 16));
         snprintf(temp_result, strlen(temp_dir) + 16, "%s/reversi.XXXXXX", temp_dir);
         temp_dir = mkdtemp(temp_result);
     #endif
@@ -134,12 +134,12 @@ int main() {
     char* checkpoint_filename, *csv_filename;
 
     if(!getenv("CHECKPOINT_PATH")) {
-        checkpoint_filename = malloc(sizeof(char) * (strlen(temp_dir) + 16));
+        checkpoint_filename = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 16));
         snprintf(checkpoint_filename, strlen(temp_dir) + 16, "%s/checkpoint.bin", temp_dir);
     }
     else checkpoint_filename = getenv("CHECKPOINT_PATH");
 
-    csv_filename = malloc(sizeof(char) * (strlen(temp_dir) + 9));
+    csv_filename = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 9));
     if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
     snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
 
@@ -177,7 +177,7 @@ int main() {
     pthread_mutex_t counter_lock, explored_lock, file_lock, repeated_lock, finished_lock;
 
     // Setup the checkpoint saving system
-    FILE** checkpoint_file = malloc(sizeof(FILE*));
+    FILE** checkpoint_file = (FILE**)malloc(sizeof(FILE*));
     if(!checkpoint_file) err(1, "Memory error while allocating checkpoint file pointer\n");
     uint64_t saving_counter;
 
@@ -199,7 +199,7 @@ int main() {
     find_next_boards(b, coord_buff, coord_cache);
 
     for(char im = 0; im < coord_buff->pointer; im++) {
-        coord m = coord_buff->data[im];
+        coord m = (coord)coord_buff->data[im];
         uint16_t sm = coord_to_short(m);
         board cb = clone_board(b);
         board_place_piece(cb, m->row, m->column);
@@ -212,11 +212,11 @@ int main() {
 
     // Perform the BFS
     while(search_queue->pointer < procs) {
-        b = pop_front_pal(search_queue);
+        b = (board)pop_front_pal(search_queue);
         find_next_boards(b, coord_buff, coord_cache);
 
         for(char im = 0; im < coord_buff->pointer; im++) {
-            coord m = coord_buff->data[im];
+            coord m = (coord)coord_buff->data[im];
             uint16_t sm = coord_to_short(m);
             board cb = clone_board(b);
             board_place_piece(cb, m->row, m->column);
@@ -240,7 +240,7 @@ int main() {
     #pragma region determine if loading checkpoint
 
     if(d == 'y') {
-        char** restore_filename = malloc(sizeof(char*));
+        char** restore_filename = (char**)malloc(sizeof(char*));
         printf("Please enter a file to restore from: ");
         scanf("%ms", restore_filename);
         getc(stdin);    // Read the extra \n character
@@ -256,11 +256,11 @@ int main() {
                     break;
                 }
                 else if(d == 'y' || d == 'Y') {
-                    checkpoint_filename = malloc(sizeof(char) * strlen(*restore_filename));
+                    checkpoint_filename = (char*)malloc(sizeof(char) * strlen(*restore_filename));
                     strcpy(checkpoint_filename, *restore_filename);
-                    csv_filename = malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
+                    csv_filename = (char*)malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
                     if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
-                    temp_dir = malloc(sizeof(char) * strlen(checkpoint_filename));
+                    temp_dir = (char*)malloc(sizeof(char) * strlen(checkpoint_filename));
                     if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
                     strcpy(temp_dir, checkpoint_filename);
                     temp_dir = dirname(temp_dir);
@@ -284,7 +284,7 @@ int main() {
         free(*restore_filename);
 
         // De-allocate the stuff we did to round procs, because we don't need it now.
-        while(search_queue->pointer) destroy_board(pop_front_pal(search_queue));
+        while(search_queue->pointer) destroy_board((board)pop_front_pal(search_queue));
         destroy_ptr_arraylist(search_queue);
 
         // Begin restore
@@ -298,7 +298,7 @@ int main() {
             ptr_arraylist all_current_boards = create_ptr_arraylist(procs * 1000), important_boards = create_ptr_arraylist(pf->num_processors + 1);
             for(ptr_arraylist* p = (ptr_arraylist*)pf->processor_stacks->data; *p; p++) {
                 for(uint64_t pb = 0; pb < (*p)->pointer; pb++) {
-                    board b = (*p)->data[pb];
+                    board b = (board)(*p)->data[pb];
                     // printf("Collected\n"); display_board(b);
                     append_pal((pb) ? all_current_boards : important_boards, b);
                 }
@@ -314,12 +314,12 @@ int main() {
             uint64_t p_ptr = 0;
 
             while(important_boards->pointer) {
-                append_pal(stacks->data[p_ptr++], pop_back_pal(important_boards));
+                append_pal((ptr_arraylist)stacks->data[p_ptr++], pop_back_pal(important_boards));
                 if(p_ptr == procs) p_ptr = 0;
             }
 
             while(all_current_boards->pointer) {
-                append_pal(stacks->data[p_ptr++], pop_back_pal(all_current_boards));
+                append_pal((ptr_arraylist)stacks->data[p_ptr++], pop_back_pal(all_current_boards));
                 if(p_ptr == procs) p_ptr = 0;
             }
         }
@@ -339,7 +339,7 @@ int main() {
                                                     ((ptr_arraylist)(stacks->data[t]))->pointer);
             #endif
 
-            processor_args args = create_processor_args(t, stacks->data[t], pf->cache, 
+            processor_args args = create_processor_args(t, (board)stacks->data[t], pf->cache, 
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
                                                         &repeated_count, &repeated_lock,
@@ -370,7 +370,7 @@ int main() {
             pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
             if(!thread_id) err(1, "Memory error while allocating thread id\n");
 
-            processor_args args = create_processor_args(t, search_queue->data[t], cache, 
+            processor_args args = create_processor_args(t, (board)search_queue->data[t], cache, 
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
                                                         &repeated_count, &repeated_lock,
@@ -403,9 +403,9 @@ int main() {
     uint64_t previous_board_count = 0, fps = 0;
     double disk_avail, disk_used, disk_perc;
 
-    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f\n", 5);
+    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f\n", 5);
     struct stat sbuff;
-    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", "hash_load_factor");
+    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", "fixed_hash_load_factor", "hash_load_factor");
 
     while(1) {
         if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
@@ -446,7 +446,7 @@ int main() {
         }
 
         if((current - log_timer) / 60) {
-            append_data(csv, run_time, fps, count, explored_count, disk_perc, bin_dict_load_factor(cache->bin_map));
+            append_data(csv, run_time, fps, count, explored_count, disk_perc, fdict_load_factor(cache->fixed_cache), hdict_load_factor(cache->rehashing_cache));
             log_timer = time(0);
         }
 

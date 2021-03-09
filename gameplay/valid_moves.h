@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include "reversi.h"
-#include "walker.h"
+#include "reversi_defs.h"
 
 /**
  * @brief Sets the corresponding bit to 1 in the given board int

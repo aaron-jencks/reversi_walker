@@ -5,8 +5,7 @@
 #include <stdint.h>
 
 #include "../hashing/hashtable.h"
-#include "../mem_man/heir.h"
-#include "../mem_man/heir.h"
+#include "../mem_man/heir.hpp"
 #include "arraylist.h"
 
 void clear_file_cache();
