@@ -1,6 +1,8 @@
 cc=gcc
+pp=g++
 # cflags=$(cflags)
-objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o hash_functions.o heir.o path_util.o saving_algorithms.o heir_swapper.o heapsort.o csv.o fdict.o
+objects=reversi.o ll.o walker.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o fileio.o mmap_man.o hash_functions.o heir.o path_util.o saving_algorithms.o heir_swapper.o heapsort.o csv.o
+cpp_objects=tarraylist.o fdict.o 
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
 
@@ -78,8 +80,11 @@ heapsort.o: ./utils/heapsort.c ./utils/heapsort.h
 csv.o: ./utils/csv.c ./utils/csv.h 
 	$(cc) $(cflags) -o $@ -c $<
 
-fdict.o: ./utils/fdict.c ./utils/fdict.h heapsort.o 
-	$(cc) $(cflags) -o $@ -c $<
+fdict.o: ./utils/fdict.c ./utils/fdict.h ./utils/dict_def.h heapsort.o tarraylist.o
+	$(pp) $(cflags) -o $@ -c $<
+
+tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp
+	$(pp) $(cflags) -o $@ -c $<
 
 # Tests
 
