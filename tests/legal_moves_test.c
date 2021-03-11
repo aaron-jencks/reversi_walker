@@ -6,6 +6,7 @@
 #include "legal_moves_test.h"
 #include "../gameplay/reversi.h"
 #include "../gameplay/walker.h"
+#include "../utils/arraylist.h"
 
 uint8_t is_valid_coord(coord c, coord* accept) {
     for(coord* ct = accept; *ct; ct++) if(c->row == (*ct)->row && c->column == (*ct)->column) return 1;
@@ -14,7 +15,10 @@ uint8_t is_valid_coord(coord c, coord* accept) {
 
 void lm_test_initial() {
     board b = create_board(1, 8, 8);
-    coord* cs = find_next_boards(b);
+    ptr_arraylist coord_buff = create_ptr_arraylist(65), coord_cache = create_ptr_arraylist(1000);
+    for(size_t c = 0; c < 1000; c++) append_pal(coord_cache, create_coord(0, 0));
+    find_next_boards(b, coord_buff, coord_cache);
+    coord* cs = coord_buff->data;
     coord acceptance[5] = {
         create_coord(3, 2),
         create_coord(2, 3),

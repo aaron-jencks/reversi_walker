@@ -16,6 +16,7 @@ typedef struct __heirarchy_str {
     size_t num_bits_per_final_level;
     // size_t num_levels;
     size_t page_size;
+    size_t collision_count;
 } heirarchy_str;
 
 typedef heirarchy_str* heirarchy;

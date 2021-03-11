@@ -22,6 +22,7 @@ heirarchy create_heirarchy(char* file_directory) {
 
     // The number of pointers that will fit in one page of memory
     h->page_size = getpagesize() / sizeof(void*);   // This is why you don't have to use the full 12 bits, 4096 / 8 bytes, gives you something less
+    h->collision_count = 0;
 
     // Find the minimum number of levels
     __uint128_t b;
@@ -162,6 +163,7 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
         // #ifdef heirdebug
         //     printf("%lu %lu is already in the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
         // #endif
+        h->collision_count++;
 
         pthread_mutex_unlock(&heirarchy_lock);
 

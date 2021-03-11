@@ -83,7 +83,7 @@ csv.o: ./utils/csv.c ./utils/csv.h
 capturecounts_test.o: tests/capturecounts_test.c tests/capturecounts_test.h reversi.o
 	$(cc) $(cflags) -o $@ -c $<
 
-legal_moves_test.o: tests/legal_moves_test.c tests/legal_moves_test.h reversi.o walker.o
+legal_moves_test.o: tests/legal_moves_test.c tests/legal_moves_test.h reversi.o walker.o arraylist.o 
 	$(cc) $(cflags) -o $@ -c $<
 
 board_placement_test.o: tests/board_placement.c tests/board_placement.h reversi.o

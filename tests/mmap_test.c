@@ -24,7 +24,7 @@ void display_board(board b) {
 
 
 void mmap_test_readback() {
-    heirarchy h = create_heirarchy("/home/aaron/Temp");
+    heirarchy h = create_heirarchy("/tmp/reversi.debug");
     // printf("Heirarchy statistics:\nBits per level: %lu\nNumber of bits in the final level: %lu\nNumber of levels: %lu\n", h->num_bits_per_level, h->num_bits_per_final_level, h->num_levels);
 
     __uint128_t k = 0;
@@ -36,18 +36,27 @@ void mmap_test_readback() {
     }
     
     destroy_heirarchy(h);
+    remove("/tmp/reversi.debug/bits/p0.bin");
+    remove("/tmp/reversi.debug/bits/p1.bin");
 }
 
 void mmap_spiral_hash_test() {
     printf("Testing hash function uniqueness\n");
+    heirarchy h = create_heirarchy("/tmp/reversi.debug");
     uint128_arraylist keys = create_uint128_arraylist(10000000);
     ptr_arraylist boards = create_ptr_arraylist(10000000);
-    board b = create_board(2, 8, 8), bb;
+    board b = create_board(1, 4, 4), bb;
     uint8_t finished = 0;
+    size_t iteration = 0;
+
+    printf("Finished setting up\n");
 
     append_ddal(keys, board_spiral_hash(b));
+    heirarchy_insert(h, board_spiral_hash(b));
 
     while(!finished) {
+        printf("\rIteration %lu", ++iteration);
+
         board bb = clone_board(b);
 
         finished = 1;
@@ -62,17 +71,19 @@ void mmap_spiral_hash_test() {
         }
 
         __uint128_t hash = board_spiral_hash(bb);
-        for(size_t k = 0; k < keys->pointer; k++) {
-            if(keys->data[k] == hash) {
-                printf("Identical hashes for boards:\n");
-                display_board(bb);
-                printf("matches:\n");
-                display_board(boards->data[k]);
-                printf("with hash %lu %lu and id %lu matches hash %lu %lu from board id %lu\n",
-                ((uint64_t*)(&hash))[1], ((uint64_t*)(&hash))[0], keys->pointer, 
-                ((uint64_t*)(&keys->data[k]))[1], ((uint64_t*)(&keys->data[k]))[0], k);
+        if(!heirarchy_insert(h, hash)) {
+            for(size_t k = 0; k < keys->pointer; k++) {
+                if(keys->data[k] == hash) {
+                    printf("Identical hashes for boards:\n");
+                    display_board(bb);
+                    printf("matches:\n");
+                    display_board(boards->data[k]);
+                    printf("with hash %lu %lu and id %lu matches hash %lu %lu from board id %lu\n",
+                    ((uint64_t*)(&hash))[1], ((uint64_t*)(&hash))[0], keys->pointer, 
+                    ((uint64_t*)(&keys->data[k]))[1], ((uint64_t*)(&keys->data[k]))[0], k);
+                }
+                assert(keys->data[k] != hash);
             }
-            assert(keys->data[k] != hash);
         }
         append_ddal(keys, hash);
         append_pal(boards, bb);
@@ -81,6 +92,9 @@ void mmap_spiral_hash_test() {
     }
 
     destroy_board(b);
+    printf("\n");
+    remove("/tmp/reversi.debug/bits/p0.bin");
+    remove("/tmp/reversi.debug/bits/p1.bin");
 }
 
 void mmap_bin_test() {
