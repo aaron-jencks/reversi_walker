@@ -164,11 +164,6 @@ void* walker_processor_pre_stacked(void* args) {
         while(search_stack->pointer) {
             board sb = pop_back_pal(search_stack), bc;
 
-            #ifdef debug
-                __uint128_t hash = board_spiral_hash(sb);
-                printf("Board hashed to %lu %lu\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
-            #endif
-
             if(heirarchy_insert(cache, board_spiral_hash(sb))) {
 
                 #ifdef debug
@@ -292,7 +287,6 @@ void* walker_processor_pre_stacked(void* args) {
                 *explored += 1;
                 pthread_mutex_unlock(explored_lock);
             }
-
             else {
                 #ifdef debug
                     __uint128_t hash = board_spiral_hash(sb);

@@ -51,6 +51,10 @@ void mmap_spiral_hash_test() {
 
     printf("Finished setting up\n");
 
+    board_put(b, 1, 1, 1);
+    board_put(b, 2, 2, 1);
+
+    append_pal(boards, b);
     append_ddal(keys, board_spiral_hash(b));
     heirarchy_insert(h, board_spiral_hash(b));
 
@@ -65,30 +69,33 @@ void mmap_spiral_hash_test() {
             if(board_get(b, r, c) < 2) {
                 board_put(bb, r, c, board_get(b, r, c) + 1);
                 finished = 0;
+
+                __uint128_t hash = board_spiral_hash(bb);
+                if(!heirarchy_insert(h, hash)) {
+                    for(size_t k = 0; k < keys->pointer; k++) {
+                        if(keys->data[k] == hash) {
+                            printf("Identical hashes for boards:\n");
+                            display_board(bb);
+                            printf("matches:\n");
+                            display_board(boards->data[k]);
+                            printf("with hash %lu %lu and id %lu matches hash %lu %lu from board id %lu\n",
+                            ((uint64_t*)(&hash))[1], ((uint64_t*)(&hash))[0], keys->pointer, 
+                            ((uint64_t*)(&keys->data[k]))[1], ((uint64_t*)(&keys->data[k]))[0], k);
+                        }
+                        assert(keys->data[k] != hash);
+                    }
+                }
+                append_ddal(keys, hash);
+                append_pal(boards, bb);
+
+                b = bb;
                 break;
             }
-            else board_put(bb, r, c, 0);
-        }
-
-        __uint128_t hash = board_spiral_hash(bb);
-        if(!heirarchy_insert(h, hash)) {
-            for(size_t k = 0; k < keys->pointer; k++) {
-                if(keys->data[k] == hash) {
-                    printf("Identical hashes for boards:\n");
-                    display_board(bb);
-                    printf("matches:\n");
-                    display_board(boards->data[k]);
-                    printf("with hash %lu %lu and id %lu matches hash %lu %lu from board id %lu\n",
-                    ((uint64_t*)(&hash))[1], ((uint64_t*)(&hash))[0], keys->pointer, 
-                    ((uint64_t*)(&keys->data[k]))[1], ((uint64_t*)(&keys->data[k]))[0], k);
-                }
-                assert(keys->data[k] != hash);
+            else {
+                if((r == 1 || r == 2) && (c == 1 || c == 2)) board_put(bb, r, c, 1); // Don't let the center become zero, or you'll have a bad time.
+                else board_put(bb, r, c, 0);
             }
         }
-        append_ddal(keys, hash);
-        append_pal(boards, bb);
-
-        b = bb;
     }
 
     destroy_board(b);
