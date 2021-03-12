@@ -49,9 +49,21 @@ __uint128_t board_spiral_hash(void* brd) {
         board b = (board)brd;
 
         __uint128_t result = 0;
-
         uint8_t r = b->height >> 1, c = b->width >> 1, spiral_dimension, iter, v, delta_dimension;
-        for(uint8_t cb = 0; cb < (b->width >> 1); cb++) {
+
+        result += b->player << 4;
+
+        result += ((board_get(b, r, c) - 1) << 3) + 
+            ((board_get(b, r - 1, c) - 1) << 2) + 
+            ((board_get(b, r - 1, c - 1) - 1) << 1) + 
+            (board_get(b, r, c - 1) - 1);  // will never be zero
+        result = result << 2;
+
+        r++;
+        c++;
+
+        // uint8_t r = b->height >> 1, c = b->width >> 1, spiral_dimension, iter, v, delta_dimension;
+        for(uint8_t cb = 1; cb < (b->width >> 1); cb++) {
             spiral_dimension = 2 * (cb + 1);
             delta_dimension = spiral_dimension - 1;
 

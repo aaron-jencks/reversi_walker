@@ -45,9 +45,32 @@ pthread_mutex_t shutdown_lock;
 
 void display_board(board b) {
     if(b) {
+        printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
         for(uint8_t r = 0; r < b->height; r++) {
             for(uint8_t c = 0; c < b->width; c++) {
                 printf("%c", board_get(b, r, c) + '0');
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
+}
+
+void display_moves(board b, ptr_arraylist coords) {
+    if(b) {
+        printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
+        for(uint8_t r = 0; r < b->height; r++) {
+            for(uint8_t c = 0; c < b->width; c++) {
+                uint8_t move = 0;
+                for(size_t cd = 0; cd < coords->pointer; cd++) {
+                    coord cord = (coord)coords->data[cd];
+                    if(r == cord->row && c == cord->column) {
+                        printf("x");
+                        move = 1;
+                        break;
+                    }
+                }
+                if(!move) printf("%c", board_get(b, r, c) + '0');
             }
             printf("\n");
         }
@@ -188,7 +211,7 @@ int main() {
         err(4, "Initialization of counter mutex failed\n");
 
     #pragma region Round nprocs to the correct number
-    board b = create_board(1, 6, 6);
+    board b = create_board(1, 4, 4);
     
     // Setup the queue
     ptr_arraylist search_queue = create_ptr_arraylist(procs + 1);
@@ -197,6 +220,11 @@ int main() {
 
     // Account for reflections and symmetry by using 1 of the 4 possible starting moves
     find_next_boards(b, coord_buff, coord_cache);
+
+    #ifdef debug
+        display_board(b);
+        printf("Found %lu moves\n", coord_buff->pointer);
+    #endif
 
     for(char im = 0; im < coord_buff->pointer; im++) {
         coord m = (coord)coord_buff->data[im];
@@ -214,6 +242,11 @@ int main() {
     while(search_queue->pointer < procs) {
         b = (board)pop_front_pal(search_queue);
         find_next_boards(b, coord_buff, coord_cache);
+
+        #ifdef debug
+            display_moves(b, coord_buff);
+            // printf("Found %lu moves\n", coord_buff->pointer);
+        #endif
 
         for(char im = 0; im < coord_buff->pointer; im++) {
             coord m = (coord)coord_buff->data[im];
@@ -403,9 +436,9 @@ int main() {
     uint64_t previous_board_count = 0, fps = 0;
     double disk_avail, disk_used, disk_perc;
 
-    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f\n", 5);
+    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f,%lu\n", 8);
     struct stat sbuff;
-    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", "fixed_hash_load_factor", "hash_load_factor");
+    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", "fixed_hash_load_factor", "hash_load_factor", "collisions");
 
     while(1) {
         if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
@@ -446,7 +479,7 @@ int main() {
         }
 
         if((current - log_timer) / 60) {
-            append_data(csv, run_time, fps, count, explored_count, disk_perc, fdict_load_factor(cache->fixed_cache), hdict_load_factor(cache->rehashing_cache));
+            append_data(csv, run_time, fps, count, explored_count, disk_perc, fdict_load_factor(cache->fixed_cache), hdict_load_factor(cache->rehashing_cache), cache->collision_count);
             log_timer = time(0);
         }
 

@@ -11,13 +11,24 @@ if __name__ == '__main__':
     load_factor = []
     with open(input('Which file would you like to open? ')) as fp:
         data = csv.reader(fp, delimiter=',')
+        placeholder = 0
+        previous = 0
         for i, t in enumerate(data):
             if i > 0:
                 r, f, _, _, u, l = t
-                runtime.append(int(r))
-                fps.append(int(f))
-                disk.append(float(u))
-                load_factor.append(float(l))
+                r = int(r)
+                f = int(f)
+                u = float(u)
+                l = float(l)
+                if r <= previous:
+                    placeholder = previous
+                r += placeholder
+                if f < 10000000:
+                    runtime.append(r)
+                    fps.append(f)
+                    disk.append(u)
+                    load_factor.append(l)
+                previous = r
 
     fig, axs = plt.subplots(3, 1, sharex=True)
 
