@@ -6,7 +6,7 @@
 #include "dict_def.h"
 
 typedef struct _fdict_t {
-    Arraylist<dict_usage_pair_t>* bins;
+    Arraylist<dict_usage_pair_t>** bins;
     size_t bin_count;
     size_t max_element_count;
     size_t size;

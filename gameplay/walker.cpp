@@ -21,7 +21,7 @@ void display_board_w(board b) {
     }
 }
 
-void display_moves_w(board b, ptr_arraylist coords) {
+void display_moves_w(board b, Arraylist<void*>* coords) {
     if(b) {
         printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
         for(uint8_t r = 0; r < b->height; r++) {
@@ -63,7 +63,7 @@ void find_next_boards(board b, Arraylist<void*>* edges, Arraylist<void*>* coord_
     for(uint8_t i = 0; i < b->height; i++) {
         for(uint8_t j = 0; j < b->width; j++) {
             if(board_is_legal_move(b, i, j)) {
-                coord c = (coord)coord_cache->pop_back();
+                coord c = ((coord_cache->pointer) ? (coord)coord_cache->pop_back() : create_coord(i, j));
                 c->column = j;
                 c->row = i;
                 edges->append(c);
