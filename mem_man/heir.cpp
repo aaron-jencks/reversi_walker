@@ -1,5 +1,6 @@
 #include "heir.hpp"
 #include "../utils/tarraylist.hpp"
+#include "../utils/dictionary/dict_def.h"
 
 #include <err.h>
 #include <unistd.h>
@@ -11,9 +12,6 @@
 
 #define INITIAL_CACHE_SIZE 34359738368
 #define INITIAL_PAGE_SIZE 5368709120
-#define INITIAL_BIN_COUNT 1000000
-#define SMALL_INITIAL_BIN_COUNT 10
-#define FLUSH_COUNT 500000
 
 pthread_mutex_t heirarchy_lock;
 
@@ -50,6 +48,8 @@ heirarchy create_heirarchy(char* file_directory) {
 
     h->fixed_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT, FLUSH_COUNT);
     h->rehashing_cache = create_rehashing_dictionary();
+
+    h->collision_count = 0;
 
     return h;
 }

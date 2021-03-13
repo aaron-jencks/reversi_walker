@@ -2,6 +2,7 @@
 #include "../utils/ll.h"
 #include "../utils/tarraylist.hpp"
 #include "../hashing/hash_functions.h"
+#include "./reversi_defs.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -156,7 +157,7 @@ void* walker_processor_pre_stacked(void* args) {
         Arraylist<void*>* search_stack = starting_stack;
         Arraylist<void*>* board_cache = new Arraylist<void*>(1000), *coord_cache = new Arraylist<void*>(1000), *coord_buff = new Arraylist<void*>(65);
         for(size_t bc = 0; bc < 1000; bc++) {
-            board_cache->append(create_board(1, 5, 5));
+            board_cache->append(create_board(1, BOARD_HEIGHT, BOARD_WIDTH));
             coord_cache->append(create_coord(0, 0));
         }
 
@@ -170,9 +171,9 @@ void* walker_processor_pre_stacked(void* args) {
             //     display_board(sb);
             // #endif
 
-            find_next_boards(sb, coord_buff, coord_cache);
+            // find_next_boards(sb, coord_buff, coord_cache);
 
-            if(heirarchy_insert(cache, board_spiral_hash(sb))) {
+            // if(heirarchy_insert(cache, board_spiral_hash(sb))) {
 
                 find_next_boards(sb, coord_buff, coord_cache);
 
@@ -266,9 +267,9 @@ void* walker_processor_pre_stacked(void* args) {
                         //     #endif
                         // }
 
-                        // if(heirarchy_insert(cache, board_spiral_hash(sb))) {
+                        if(heirarchy_insert(cache, board_spiral_hash(sb))) {
 
-                            printf("Found a new board to count\n");
+                            // printf("Found a new board to count\n");
                             while(pthread_mutex_trylock(counter_lock)) sched_yield();
                             *counter += 1;
                             // *explored += count;
@@ -279,25 +280,25 @@ void* walker_processor_pre_stacked(void* args) {
                             // pthread_mutex_unlock(explored_lock);
 
                             // count = 0;
-                        // }
-                        // else {
-                        //     while(pthread_mutex_trylock(repeated_lock)) sched_yield();
-                        //     *repeated += 1;
-                        //     pthread_mutex_unlock(repeated_lock);
-                        // }
+                        }
+                        else {
+                            while(pthread_mutex_trylock(repeated_lock)) sched_yield();
+                            *repeated += 1;
+                            pthread_mutex_unlock(repeated_lock);
+                        }
                     }
                 }
 
                 while(pthread_mutex_trylock(explored_lock)) sched_yield();
                 *explored += 1;
                 pthread_mutex_unlock(explored_lock);
-            }
-            else {
-                #ifdef debug
-                    __uint128_t hash = board_spiral_hash(sb);
-                    printf("Board hashed to %lu %lu <-- REPEAT\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
-                #endif
-            }
+            // }
+            // else {
+            //     #ifdef debug
+            //         __uint128_t hash = board_spiral_hash(sb);
+            //         printf("Board hashed to %lu %lu <-- REPEAT\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
+            //     #endif
+            // }
             board_cache->append(sb);
 
             if(SAVING_FLAG) {

@@ -12,3 +12,6 @@ typedef struct _coord_str {
  * 
  */
 typedef coord_str* coord;
+
+#define BOARD_WIDTH 6
+#define BOARD_HEIGHT 6

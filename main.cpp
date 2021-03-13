@@ -21,6 +21,7 @@
 #include "./utils/fileio.hpp"
 #include "./utils/path_util.h"
 #include "./utils/csv.h"
+#include "./gameplay/reversi_defs.h"
 
 // TODO you can use the previous two board states to predict the next set of valid moves.
 
@@ -28,10 +29,6 @@
  * 
  * use 'ulimit -c unlimited' to make core dump
  * 
- * TODO add ability to make checkpoints to save progress
- *  - Interpret Ctrl+C interrupt signal and cause a save
- * 
- * [DONE] make a way to swap out memory from disk when it's not used.
  * 
  */
 
@@ -209,7 +206,8 @@ int main() {
         err(4, "Initialization of counter mutex failed\n");
 
     #pragma region Round nprocs to the correct number
-    board b = create_board(1, 4, 4);
+    printf("Searching for at least %u boards\n", procs);
+    board b = create_board(1, BOARD_HEIGHT, BOARD_WIDTH);
     
     // Setup the queue
     Arraylist<void*>* search_queue = new Arraylist<void*>(procs + 1);
@@ -238,6 +236,8 @@ int main() {
 
     // Perform the BFS
     while(search_queue->pointer < procs) {
+        printf("\rCurrent board status: %lu/%u", search_queue->pointer, procs);
+
         b = (board)search_queue->pop_front();
         find_next_boards(b, coord_buff, coord_cache);
 
@@ -263,7 +263,7 @@ int main() {
     procs = search_queue->pointer;
     while(coord_cache->pointer) free(coord_cache->pop_back());
 
-    printf("Rounded nprocs to %d threads\n", procs);
+    printf("\nRounded nprocs to %d threads\n", procs);
     #pragma endregion
 
     Arraylist<void*>* threads;

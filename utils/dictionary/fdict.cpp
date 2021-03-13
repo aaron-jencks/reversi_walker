@@ -1,6 +1,7 @@
 #include "fdict.hpp"
 #include "../heapsort.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
 
@@ -73,17 +74,23 @@ void fdict_put(fdict d, __uint128_t k, uint8_t* value) {
             d->size = 0;
         }
         else {
+            printf("Flushing dictionary\n");
             dict_element_t* elements = fdict_get_all(d);
+            // printf("Sorting dictionary\n");
             heapsort_dict(elements, d->size);
+            heapsort_dict_removal_order(elements, d->flush_count);
+            // printf("Removing elements from dictionary\n");
             for(size_t e = 0; e < d->flush_count; e++) {
+                // printf("\r%lu/%lu", e + 1, d->flush_count);
                 d->bins[elements[e].bin]->pop(elements[e].element);
                 
-                for(size_t et = e; et < d->flush_count; et++) 
-                    if(elements[et].bin == elements[e].bin && elements[et].element > elements[e].element) 
-                        elements[et].element--;
+                // for(size_t et = e; et < d->flush_count; et++) 
+                //     if(elements[et].bin == elements[e].bin && elements[et].element > elements[e].element) 
+                //         elements[et].element--;
             }
             free(elements);
             d->size -= d->flush_count;
+            // printf("\nFlushing complete\n");
         }
     }
 
