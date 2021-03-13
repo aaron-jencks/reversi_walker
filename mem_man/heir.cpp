@@ -176,12 +176,15 @@ uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key) {
 
         if(!dict_resp) {
             fdict_put(h->temp_board_cache, key, NULL);
+            pthread_mutex_unlock(&heirarchy_cache_lock);
+            return 1;
         }
 
         // h->csem->signal_write_finish();
         pthread_mutex_unlock(&heirarchy_cache_lock);
-        return 1;
     }
+
+    h->collision_count++;
     return 0;
 }
 
