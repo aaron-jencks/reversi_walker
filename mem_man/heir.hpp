@@ -15,6 +15,7 @@ typedef struct __heirarchy_str {
     mmap_man final_level;
     fdict fixed_cache;
     hdict rehashing_cache;
+    fdict temp_board_cache;
     // size_t num_bits_per_level;
     size_t num_bits_per_final_level;
     // size_t num_levels;
@@ -30,6 +31,7 @@ heirarchy create_heirarchy(char* file_directory);
 void destroy_heirarchy(heirarchy h);
 
 uint8_t heirarchy_insert(heirarchy h, __uint128_t key);
+uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key);
 
 void to_file_heir(FILE* fp, heirarchy h);
 

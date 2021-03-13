@@ -434,9 +434,10 @@ int main() {
     uint64_t previous_board_count = 0, fps = 0;
     double disk_avail, disk_used, disk_perc;
 
-    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f,%lu\n", 8);
+    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f,%.4f,%lu\n", 9);
     struct stat sbuff;
-    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", "fixed_hash_load_factor", "hash_load_factor", "collisions");
+    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", 
+        "fixed_hash_load_factor", "hash_load_factor", "cache_load_factor", "collisions");
 
     while(1) {
         if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
@@ -477,7 +478,11 @@ int main() {
         }
 
         if((current - log_timer) / 60) {
-            append_data(csv, run_time, fps, count, explored_count, disk_perc, fdict_load_factor(cache->fixed_cache), hdict_load_factor(cache->rehashing_cache), cache->collision_count);
+            append_data(csv, run_time, fps, count, explored_count, disk_perc, 
+                fdict_load_factor(cache->fixed_cache), 
+                hdict_load_factor(cache->rehashing_cache), 
+                fdict_load_factor(cache->temp_board_cache),
+                cache->collision_count);
             log_timer = time(0);
         }
 
@@ -490,8 +495,8 @@ int main() {
             printf("\r");
         #endif
         
-            printf("Found %'lu final board states. Explored %'lu boards @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d Disk usage: %.2f%% %s", 
-                count, explored_count, fps,
+            printf("Found %'lu final board states. Explored %'lu boards with %'lu collisions @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d Disk usage: %.2f%% %s", 
+                count, explored_count, cache->collision_count, fps,
                 run_days, run_hours, run_minutes, run_seconds,
                 cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                 disk_perc,

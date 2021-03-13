@@ -49,6 +49,8 @@ heirarchy create_heirarchy(char* file_directory) {
     h->fixed_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT, FLUSH_COUNT);
     h->rehashing_cache = create_rehashing_dictionary();
 
+    h->temp_board_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT, FLUSH_COUNT);
+
     h->collision_count = 0;
 
     return h;
@@ -104,6 +106,63 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
         // #ifdef heirdebug
         //     printf("%lu %lu is already in the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
         // #endif
+
+        h->collision_count++;
+
+        pthread_mutex_unlock(&heirarchy_lock);
+
+        return 0;
+    }
+
+    // #ifdef heirdebug
+    //     printf("%lu %lu inserted into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
+    // #endif
+
+    dict_resp[bits] |= ph;
+
+    pthread_mutex_unlock(&heirarchy_lock);
+
+    return 1;
+}
+
+uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key) {
+    // #ifdef heirdebug
+    //     printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
+    // #endif
+
+    while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+
+    __uint128_t lower_key = key >> h->num_bits_per_final_level;
+    uint8_t* dict_resp = fdict_get(h->temp_board_cache, lower_key);
+
+    if(!dict_resp) {
+        dict_resp = mmap_allocate_bin(h->final_level);
+        fdict_put(h->temp_board_cache, lower_key, dict_resp);
+    }
+
+    // Extract the bit from the last level
+    // 00111
+
+    __uint128_t key_ph = key & ((((__uint128_t)1) << h->num_bits_per_final_level) - 1);
+    size_t bits = (size_t)((key_ph >> 3) + sizeof(__uint128_t));
+    uint8_t bit = key_ph & 7;
+
+    #ifdef heirdebug
+        printf("Key Stats: %lu %lu %lu %u\n", ((uint64_t*)&lower_key)[0], ((uint64_t*)&lower_key)[1], bits, bit);
+        printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
+    #endif
+
+    // Insert the new bit if it's not already in the array
+    // printf("Bit value: %lu\n", bits);
+    uint8_t byte = dict_resp[bits];
+    uint8_t ph = 1 << bit;
+
+    if(byte & ph) {
+        // #ifdef heirdebug
+        //     printf("%lu %lu is already in the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
+        // #endif
+
+        h->collision_count++;
 
         pthread_mutex_unlock(&heirarchy_lock);
 
