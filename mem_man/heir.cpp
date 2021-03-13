@@ -164,8 +164,7 @@ uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key) {
 
     // h->csem->signal_read();
 
-    __uint128_t lower_key = key >> h->num_bits_per_final_level;
-    uint8_t* dict_resp = fdict_get(h->temp_board_cache, lower_key);
+    uint8_t dict_resp = fdict_exists(h->temp_board_cache, key);
 
     // h->csem->signal_read_finish();
 
@@ -173,68 +172,17 @@ uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key) {
         // h->csem->signal_write();
         while(pthread_mutex_trylock(&heirarchy_cache_lock)) sched_yield();
 
-        dict_resp = fdict_get(h->temp_board_cache, lower_key); // Check one more time just in case.
+        dict_resp = fdict_exists(h->temp_board_cache, key); // Check one more time just in case.
 
         if(!dict_resp) {
-            dict_resp = mmap_allocate_bin(h->final_level);
-            fdict_put(h->temp_board_cache, lower_key, dict_resp);
+            fdict_put(h->temp_board_cache, key, NULL);
         }
 
         // h->csem->signal_write_finish();
         pthread_mutex_unlock(&heirarchy_cache_lock);
+        return 1;
     }
-
-    // Extract the bit from the last level
-    // 00111
-
-    __uint128_t key_ph = key & ((((__uint128_t)1) << h->num_bits_per_final_level) - 1);
-    size_t bits = (size_t)((key_ph >> 3) + sizeof(__uint128_t));
-    uint8_t bit = key_ph & 7;
-
-    #ifdef heirdebug
-        printf("Key Stats: %lu %lu %lu %u\n", ((uint64_t*)&lower_key)[0], ((uint64_t*)&lower_key)[1], bits, bit);
-        printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
-    #endif
-
-    // h->csem->signal_read();
-
-    // Insert the new bit if it's not already in the array
-    // printf("Bit value: %lu\n", bits);
-    uint8_t byte = dict_resp[bits];
-    uint8_t ph = 1 << bit;
-
-    if(byte & ph) {
-        // #ifdef heirdebug
-        //     printf("%lu %lu is already in the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
-        // #endif
-
-        h->collision_count++;
-
-        // pthread_mutex_unlock(&heirarchy_lock);
-
-        // h->csem->signal_read_finish();
-
-        return 0;
-    }
-    else {
-        // h->csem->signal_read_finish();
-        // h->csem->signal_write();
-
-        while(pthread_mutex_trylock(&heirarchy_cache_lock)) sched_yield();
-
-        byte = dict_resp[bits];
-        if(!(byte & ph)) {
-            dict_resp[bits] |= ph;
-            // h->csem->signal_write_finish();
-            pthread_mutex_unlock(&heirarchy_cache_lock);
-            return 1;
-        }
-        else {
-            // h->csem->signal_write_finish();
-            pthread_mutex_unlock(&heirarchy_cache_lock);
-            return 0;
-        }
-    }
+    return 0;
 }
 
 void to_file_heir(FILE* fp, heirarchy h) {

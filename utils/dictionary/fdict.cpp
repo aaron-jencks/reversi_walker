@@ -67,6 +67,17 @@ uint8_t* fdict_get(fdict d, __uint128_t k) {
     return 0;
 }
 
+uint8_t fdict_exists(fdict d, __uint128_t k) {
+    size_t bin = k % d->bin_count;
+    for(size_t e = 0; e < d->bins[bin]->pointer; e++) {
+        if(k == d->bins[bin]->data[e].pair.key) {
+            d->bins[bin]->data[e].usage++;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void fdict_put(fdict d, __uint128_t k, uint8_t* value) {
     if(d->size++ >= d->max_element_count) {
         if(d->size <= d->flush_count) {

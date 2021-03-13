@@ -22,6 +22,7 @@ void fdict_flush(fdict d);
 dict_element_t* fdict_get_all(fdict d);
 
 uint8_t* fdict_get(fdict d, __uint128_t k);
+uint8_t fdict_exists(fdict d, __uint128_t k);
 void fdict_put(fdict d, __uint128_t k, uint8_t* value);
 
 double fdict_load_factor(fdict d);
