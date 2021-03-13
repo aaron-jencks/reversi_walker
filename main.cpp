@@ -17,9 +17,7 @@
 #include "./hashing/hash_functions.h"
 #include "./mem_man/heir.hpp"
 #include "./gameplay/walker.hpp"
-#include "./utils/ll.h"
 #include "./utils/tarraylist.hpp"
-#include "./gameplay/valid_moves.h"
 #include "./utils/fileio.hpp"
 #include "./utils/path_util.h"
 #include "./utils/csv.h"
@@ -56,7 +54,7 @@ void display_board(board b) {
     }
 }
 
-void display_moves(board b, ptr_arraylist coords) {
+void display_moves(board b, Arraylist<void*>* coords) {
     if(b) {
         printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
         for(uint8_t r = 0; r < b->height; r++) {
@@ -214,9 +212,9 @@ int main() {
     board b = create_board(1, 4, 4);
     
     // Setup the queue
-    ptr_arraylist search_queue = create_ptr_arraylist(procs + 1);
-    ptr_arraylist coord_buff = create_ptr_arraylist(65), coord_cache = create_ptr_arraylist(1000);
-    for(size_t c = 0; c < 1000; c++) append_pal(coord_cache, create_coord(0, 0));
+    Arraylist<void*>* search_queue = new Arraylist<void*>(procs + 1);
+    Arraylist<void*>* coord_buff = new Arraylist<void*>(65), *coord_cache = new Arraylist<void*>(1000);
+    for(size_t c = 0; c < 1000; c++) coord_cache->append(create_coord(0, 0));
 
     // Account for reflections and symmetry by using 1 of the 4 possible starting moves
     find_next_boards(b, coord_buff, coord_cache);
@@ -231,8 +229,8 @@ int main() {
         uint16_t sm = coord_to_short(m);
         board cb = clone_board(b);
         board_place_piece(cb, m->row, m->column);
-        append_pal(search_queue, cb);
-        append_pal(coord_cache, m);
+        search_queue->append(cb);
+        coord_cache->append(m);
         break;
     }
 
@@ -240,7 +238,7 @@ int main() {
 
     // Perform the BFS
     while(search_queue->pointer < procs) {
-        b = (board)pop_front_pal(search_queue);
+        b = (board)search_queue->pop_front();
         find_next_boards(b, coord_buff, coord_cache);
 
         #ifdef debug
@@ -253,7 +251,7 @@ int main() {
             uint16_t sm = coord_to_short(m);
             board cb = clone_board(b);
             board_place_piece(cb, m->row, m->column);
-            append_pal(search_queue, cb);
+            search_queue->append(cb);
             free(m);
         }
 
@@ -263,12 +261,12 @@ int main() {
     }
 
     procs = search_queue->pointer;
-    while(coord_cache->pointer) free(pop_back_pal(coord_cache));
+    while(coord_cache->pointer) free(coord_cache->pop_back());
 
     printf("Rounded nprocs to %d threads\n", procs);
     #pragma endregion
 
-    ptr_arraylist threads;
+    Arraylist<void*>* threads;
 
     #pragma region determine if loading checkpoint
 
@@ -317,42 +315,42 @@ int main() {
         free(*restore_filename);
 
         // De-allocate the stuff we did to round procs, because we don't need it now.
-        while(search_queue->pointer) destroy_board((board)pop_front_pal(search_queue));
-        destroy_ptr_arraylist(search_queue);
+        while(search_queue->pointer) destroy_board((board)search_queue->pop_front());
+        delete search_queue;
 
         // Begin restore
         count = pf->found_counter;
         explored_count = pf->explored_counter;
 
-        ptr_arraylist stacks = pf->processor_stacks;
+        Arraylist<void*>* stacks = pf->processor_stacks;
         if(procs != pf->num_processors) {
             printf("Redistributing workload to match core count\n");
             // Redistribute workload
-            ptr_arraylist all_current_boards = create_ptr_arraylist(procs * 1000), important_boards = create_ptr_arraylist(pf->num_processors + 1);
-            for(ptr_arraylist* p = (ptr_arraylist*)pf->processor_stacks->data; *p; p++) {
+            Arraylist<void*>* all_current_boards = new Arraylist<void*>(procs * 1000), *important_boards = new Arraylist<void*>(pf->num_processors + 1);
+            for(Arraylist<void*>** p = (Arraylist<void*>**)pf->processor_stacks->data; *p; p++) {
                 for(uint64_t pb = 0; pb < (*p)->pointer; pb++) {
                     board b = (board)(*p)->data[pb];
                     // printf("Collected\n"); display_board(b);
-                    append_pal((pb) ? all_current_boards : important_boards, b);
+                    ((pb) ? all_current_boards : important_boards)->append(b);
                 }
-                destroy_ptr_arraylist(*p);
+                delete *p;
             }
 
-            while(stacks->pointer) pop_back_pal(stacks);
+            while(stacks->pointer) stacks->pop_back();
 
             // printf("Distributing %lu boards\n", all_current_boards->pointer + important_boards->pointer);
             
-            for(uint64_t p = 0; p < procs; p++) append_pal(stacks, create_ptr_arraylist(10000));
+            for(uint64_t p = 0; p < procs; p++) stacks->append(new Arraylist<void*>(10000));
 
             uint64_t p_ptr = 0;
 
             while(important_boards->pointer) {
-                append_pal((ptr_arraylist)stacks->data[p_ptr++], pop_back_pal(important_boards));
+                ((Arraylist<void*>*)stacks->data[p_ptr++])->append(important_boards->pop_back());
                 if(p_ptr == procs) p_ptr = 0;
             }
 
             while(all_current_boards->pointer) {
-                append_pal((ptr_arraylist)stacks->data[p_ptr++], pop_back_pal(all_current_boards));
+                ((Arraylist<void*>*)stacks->data[p_ptr++])->append(all_current_boards->pop_back());
                 if(p_ptr == procs) p_ptr = 0;
             }
         }
@@ -360,7 +358,7 @@ int main() {
         // Create threads
 
         // Distribute the initial states to a set of new pthreads.
-        threads = create_ptr_arraylist(procs + 1);
+        threads = new Arraylist<void*>(procs + 1);
 
         for(uint64_t t = 0; t < procs; t++) {
             pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
@@ -368,8 +366,8 @@ int main() {
 
             #ifdef filedebug
                 printf("%p %s with %lu elements\n", stacks->data[t], 
-                                                    (((ptr_arraylist)(stacks->data[t]))) ? "Valid" : "Not Valid",
-                                                    ((ptr_arraylist)(stacks->data[t]))->pointer);
+                                                    (((Arraylist<void*>*)(stacks->data[t]))) ? "Valid" : "Not Valid",
+                                                    ((Arraylist<void*>*)(stacks->data[t]))->pointer);
             #endif
 
             processor_args args = create_processor_args(t, (board)stacks->data[t], pf->cache, 
@@ -381,7 +379,7 @@ int main() {
 
             // walker_processor(args);
             pthread_create(thread_id, 0, walker_processor_pre_stacked, (void*)args);
-            append_pal(threads, thread_id);
+            threads->append(thread_id);
         }
 
         cache = pf->cache;
@@ -397,7 +395,7 @@ int main() {
         checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
 
         // Distribute the initial states to a set of new pthreads.
-        threads = create_ptr_arraylist(procs + 1);
+        threads = new Arraylist<void*>(procs + 1);
 
         for(uint64_t t = 0; t < procs; t++) {
             pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
@@ -412,7 +410,7 @@ int main() {
 
             // walker_processor(args);
             pthread_create(thread_id, 0, walker_processor, (void*)args);
-            append_pal(threads, thread_id);
+            threads->append(thread_id);
         }
     }
 

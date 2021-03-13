@@ -22,6 +22,10 @@ typedef struct _linkedlist_str {
  */
 typedef linkedlist_str* linkedlist;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Create a ll object
  * 
@@ -76,3 +80,7 @@ void* pop_back_ll(linkedlist ll);
  * @return void** 
  */
 void** ll_to_arr(linkedlist ll);
+
+#ifdef __cplusplus
+}
+#endif

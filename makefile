@@ -1,7 +1,7 @@
 cc=gcc
 pp=g++
 # cflags=$(cflags)
-objects=reversi.o ll.o arraylist.o hashtable.o lookup.o valid_moves.o mempage.o mmap_man.o hash_functions.o path_util.o saving_algorithms.o heapsort.o csv.o dmempage.o 
+objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o 
 cpp_objects=tarraylist.o fdict.o hdict.o heir.o fileio.o walker.o 
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
@@ -11,14 +11,14 @@ export CHECKPOINT_PATH
 
 all: main;
 
-main: main.o $(objects)
-	$(cc) $(cflags) -o $@ $< $(objects) -pthread
+main: main.o $(objects) $(cpp_objects)
+	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) -pthread
 
 gmain: gmain.cu $(cuda_objects)
 	nvcc -arch=sm_61 $(cflags) -o $@ $< $(cuda_objects) -lpthread
 
 tester: tester.o $(objects) $(test_objects)
-	$(cc) $(cflags) -o $@ $< $(objects) $(test_objects) -pthread
+	$(cc) $(cflags) -o $@ $< $(objects) $(cpp_objects) $(test_objects) -pthread
 
 main.o: main.cpp $(objects) $(cpp_objects)
 	$(pp) $(cflags) -o $@ -c $<
@@ -29,10 +29,10 @@ tester.o: tester.c $(objects) $(test_objects)
 reversi.o: ./gameplay/reversi.c ./gameplay/reversi.h
 	$(cc) $(cflags) -o $@ -c $<
 
-valid_moves.o: ./gameplay/valid_moves.c ./gameplay/valid_moves.h walker.o arraylist.o
+valid_moves.o: ./gameplay/valid_moves.c ./gameplay/valid_moves.h walker.o tarraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
-cache.o: ./hashing/cache.c ./hashing/cache.h arraylist.o
+cache.o: ./hashing/cache.c ./hashing/cache.h tarraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
 lookup.o: ./hashing/lookup3.c ./hashing/lookup3.h
@@ -47,13 +47,10 @@ heir.o: ./mem_man/heir.cpp ./mem_man/heir.hpp hash_functions.o reversi.o mmap_ma
 heir_swapper.o: ./mem_man/heir_swapper.c ./mem_man/heir_swapper.h mmap_man.o heapsort.o hashtable.o 
 	$(cc) $(cflags) -o $@ -c $<
 
-hashtable.o: ./hashing/hashtable.c ./hashing/hashtable.h mempage.o arraylist.o
+hashtable.o: ./hashing/hashtable.c ./hashing/hashtable.h mempage.o tarraylist.o
 	$(cc) $(cflags) -o $@ -c $<
 
 hash_functions.o: ./hashing/hash_functions.c ./hashing/hash_functions.h reversi.o lookup.o
-	$(cc) $(cflags) -o $@ -c $<
-
-arraylist.o: ./utils/arraylist.c ./utils/arraylist.h
 	$(cc) $(cflags) -o $@ -c $<
 
 mmap_man.o: ./mem_man/mmap_man.c ./mem_man/mmap_man.h path_util.o
@@ -62,16 +59,13 @@ mmap_man.o: ./mem_man/mmap_man.c ./mem_man/mmap_man.h path_util.o
 mempage.o: ./mem_man/mempage.c ./mem_man/mempage.h path_util.o
 	$(cc) $(cflags) -o $@ -c $<
 
-walker.o: ./gameplay/walker.cpp ./gameplay/walker.hpp reversi.o ll.o arraylist.o heir.o 
+walker.o: ./gameplay/walker.cpp ./gameplay/walker.hpp reversi.o tarraylist.o heir.o 
 	$(pp) $(cflags) -o $@ -c $<
 
-fileio.o: ./utils/fileio.cpp ./utils/fileio.hpp walker.o tarraylist.o hashtable.o  path_util.o saving_algorithms.o heir.o 
+fileio.o: ./utils/fileio.cpp ./utils/fileio.hpp walker.o tarraylist.o path_util.o heir.o 
 	$(pp) $(cflags) -o $@ -c $<
 
 path_util.o: ./utils/path_util.c ./utils/path_util.h
-	$(cc) $(cflags) -o $@ -c $<
-
-saving_algorithms.o: ./utils/saving_algorithms.c ./utils/saving_algorithms.h
 	$(cc) $(cflags) -o $@ -c $<
 
 heapsort.o: ./utils/heapsort.c ./utils/heapsort.h 
@@ -97,7 +91,7 @@ tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp
 capturecounts_test.o: tests/capturecounts_test.c tests/capturecounts_test.h reversi.o
 	$(cc) $(cflags) -o $@ -c $<
 
-legal_moves_test.o: tests/legal_moves_test.c tests/legal_moves_test.h reversi.o walker.o arraylist.o 
+legal_moves_test.o: tests/legal_moves_test.c tests/legal_moves_test.h reversi.o walker.o tarraylist.o 
 	$(cc) $(cflags) -o $@ -c $<
 
 board_placement_test.o: tests/board_placement.c tests/board_placement.h reversi.o

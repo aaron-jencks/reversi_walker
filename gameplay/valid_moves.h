@@ -4,6 +4,10 @@
 #include "reversi.h"
 #include "reversi_defs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Sets the corresponding bit to 1 in the given board int
  * 
@@ -52,3 +56,7 @@ uint64_t find_valid_positions_from_coord(uint64_t bi, board b, uint8_t row, uint
  * @return coord** Returns a zero-terminated list of coordinates that are in this board, or 0 if there are none
  */
 coord* retrieve_all_valid_positions(uint64_t b);
+
+#ifdef __cplusplus
+}
+#endif

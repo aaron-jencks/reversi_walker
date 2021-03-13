@@ -71,7 +71,7 @@ void min_heapify_dict(dict_element_t* arr, size_t n, size_t i) {
         else smallest = i;
         if(r < n && arr[r].pair.usage < arr[i].pair.usage) smallest = r;
         if(smallest != i) {
-            swap_heap_elements(arr, i, smallest);
+            swap_heap_elements_dict(arr, i, smallest);
             i = smallest;
         }
         else break;
@@ -79,14 +79,14 @@ void min_heapify_dict(dict_element_t* arr, size_t n, size_t i) {
 }
 
 void build_min_heap_dict(dict_element_t* arr, size_t n) {
-    for(size_t i = (n >> 1) - 1; i > 0; i--) min_heapify(arr, n, i);
-    min_heapify(arr, n, 0);
+    for(size_t i = (n >> 1) - 1; i > 0; i--) min_heapify_dict(arr, n, i);
+    min_heapify_dict(arr, n, 0);
 }
 
 void heapsort_dict(dict_element_t* arr, size_t n) {
-    build_min_heap(arr, n);
+    build_min_heap_dict(arr, n);
     for(size_t i = n - 1; i > 0; i--) {
-        swap_heap_elements(arr, i, 0);
-        min_heapify(arr, i, 0);
+        swap_heap_elements_dict(arr, i, 0);
+        min_heapify_dict(arr, i, 0);
     }
 }

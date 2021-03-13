@@ -5,13 +5,13 @@
 #include <stdio.h>
 
 board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
-    board b = calloc(1, sizeof(board_str));
+    board b = (board)calloc(1, sizeof(board_str));
     if(!b) err(1, "Memory Error while allocating the board\n");
     b->player = starting_player;
     b->height = height;
     b->width = width;
 
-    b->board = calloc((height * width) >> 2, sizeof(uint8_t));
+    b->board = (uint8_t*)calloc((height * width) >> 2, sizeof(uint8_t));
     if(!b->board) err(1, "Memory Error while allocating board's board array\n");
 
     /* <1 byte> 
@@ -51,13 +51,13 @@ board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
 }
 
 board create_board_unhash_8(uint8_t starting_player, __uint128_t key) {
-    board b = calloc(1, sizeof(board_str));
+    board b = (board)calloc(1, sizeof(board_str));
     if(!b) err(1, "Memory Error while allocating the board\n");
     b->player = starting_player;
     b->height = 8;
     b->width = 8;
 
-    b->board = calloc(32, sizeof(uint8_t));
+    b->board = (uint8_t*)calloc(32, sizeof(uint8_t));
     if(!b->board) err(1, "Memory Error while allocating board's board array\n");
 
     uint8_t r = 0, c = 0;
@@ -74,13 +74,13 @@ board create_board_unhash_8(uint8_t starting_player, __uint128_t key) {
 }
 
 board create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
-    board b = calloc(1, sizeof(board_str));
+    board b = (board)calloc(1, sizeof(board_str));
     if(!b) err(1, "Memory Error while allocating the board\n");
     b->player = starting_player;
     b->height = 6;
     b->width = 6;
 
-    b->board = calloc(18, sizeof(uint8_t));
+    b->board = (uint8_t*)calloc(18, sizeof(uint8_t));
     if(!b->board) err(1, "Memory Error while allocating board's board array\n");
 
     uint8_t r = 5, c = 5;
@@ -105,10 +105,10 @@ board create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
  * @return othelloboard 
  */
 board clone_board(board b) {
-    board bc = malloc(sizeof(board_str));
-    bc->board = calloc((b->height * b->width) >> 2, sizeof(uint8_t));
-
+    board bc = (board)malloc(sizeof(board_str));
     if(!bc) err(1, "Memory Error Occured while allocating a board.");
+
+    bc->board = (uint8_t*)calloc((b->height * b->width) >> 2, sizeof(uint8_t));
     if(!bc->board) err(1, "Memory Error Occured while allocating a board.");
 
     clone_into_board(b, bc);

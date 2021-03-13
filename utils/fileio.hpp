@@ -6,7 +6,7 @@
 
 #include "../hashing/hashtable.h"
 #include "../mem_man/heir.hpp"
-#include "arraylist.h"
+#include "tarraylist.hpp"
 
 void clear_file_cache();
 
@@ -35,7 +35,7 @@ typedef struct __processed_file_str {
     uint64_t explored_counter;
     uint64_t num_processors;
     heirarchy cache;
-    ptr_arraylist processor_stacks;
+    Arraylist<void*>* processor_stacks;
 } processed_file_str;
 
 /**

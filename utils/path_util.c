@@ -16,7 +16,7 @@
  */
 char* find_temp_filename(const char* filename) {
     // Setup the checkpoint saving system
-    char temp_str[] = "/tmp/reversi.XXXXXX", *final_result = calloc(35, sizeof(char));
+    char temp_str[] = "/tmp/reversi.XXXXXX", *final_result = (char*)calloc(35, sizeof(char));
     char* dir_ptr = mkdtemp(temp_str);
     strncat(final_result, dir_ptr, 20);
     final_result[19] = '/';
@@ -39,17 +39,17 @@ char* find_temp_directory() {
         struct passwd *p = getpwuid(getuid());  // Check for NULL!
         if(!p) err(1, "Memory Error while getting username for page swap\n");
 
-        temp_str = malloc(sizeof(char) * strlen(p->pw_name) + 27);
+        temp_str = (char*)malloc(sizeof(char) * strlen(p->pw_name) + 27);
         if(!temp_str) err(1, "Memory Error while allocating temporary directory for swap\n");
         snprintf(temp_str, strlen(p->pw_name) + 27, "/home/%s/Temp/reversi.XXXXXX", p->pw_name);
     }
     else {
-        temp_str = malloc(sizeof(char) * (strlen(getenv("TEMP_DIR")) + 16));
+        temp_str = (char*)malloc(sizeof(char) * (strlen(getenv("TEMP_DIR")) + 16));
         if(!temp_str) err(1, "Memory Error while allocating temporary directory for swap\n");
         snprintf(temp_str, strlen(getenv("TEMP_DIR")) + 16, "%s/reversi.XXXXXX", getenv("TEMP_DIR"));
     }
 
-    char* dir_ptr = mkdtemp(temp_str), *result = malloc(sizeof(char) * (strlen(dir_ptr) + 1));
+    char* dir_ptr = mkdtemp(temp_str), *result = (char*)malloc(sizeof(char) * (strlen(dir_ptr) + 1));
     memcpy(result, dir_ptr, strlen(dir_ptr) + 1);
 
     #ifdef checkpointdebug
@@ -62,8 +62,8 @@ char* find_temp_directory() {
 }
 
 char* find_abs_path(size_t page_index, const char* swap_directory) {
-    char *filename = malloc(sizeof(char) * 16), 
-         *abs_path = malloc(sizeof(char) * (17 + strlen(swap_directory)));
+    char *filename = (char*)malloc(sizeof(char) * 16), 
+         *abs_path = (char*)malloc(sizeof(char) * (17 + strlen(swap_directory)));
     if(!filename) err(1, "Memory Error while allocating filename for swap page\n");
     filename[15] = 0;
     snprintf(filename, 15, "p%lu.bin", page_index);

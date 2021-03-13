@@ -8,7 +8,7 @@
 #pragma region dmempage
 
 dmempage create_dmempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
-    dmempage mp = malloc(sizeof(dmempage_str));
+    dmempage mp = (dmempage)malloc(sizeof(dmempage_str));
     if(!mp) err(1, "Memory Error while allocating memory page manager\n");
 
     __uint128_t pages = (num_bins / page_max) + 1;
@@ -18,10 +18,10 @@ dmempage create_dmempage(size_t page_max, __uint128_t num_bins, size_t bin_size)
     #endif
 
     // mp->pages = create_ll();
-    mp->pages = malloc(sizeof(dict_pair_t**) * pages);
+    mp->pages = (dict_pair_t***)malloc(sizeof(dict_pair_t**) * pages);
     if(!mp->pages) err(1, "Memory error while allocating book for dmempage\n");
 
-    mp->bin_counts = malloc(sizeof(size_t*) * pages);
+    mp->bin_counts = (size_t**)malloc(sizeof(size_t*) * pages);
     if(!mp->bin_counts) err(1, "Memory error while allocating book for dmempage\n");
 
     mp->page_count = pages;
@@ -30,14 +30,14 @@ dmempage create_dmempage(size_t page_max, __uint128_t num_bins, size_t bin_size)
     mp->bin_size = bin_size;
 
     for(__uint128_t p = 0; p < pages; p++) {
-        dict_pair_t** bins = malloc(sizeof(dict_pair_t*) * page_max);
+        dict_pair_t** bins = (dict_pair_t**)malloc(sizeof(dict_pair_t*) * page_max);
         if(!(bins)) err(1, "Memory error while allocating array for dmempage page\n");
 
-        size_t* sizes = malloc(sizeof(size_t) * page_max);
+        size_t* sizes = (size_t*)malloc(sizeof(size_t) * page_max);
         if(!sizes) err(1, "Memory error while allocating array for dmempage page\n");
 
         for(size_t b = 0; b < page_max; b++) {
-            bins[b] = calloc(bin_size, sizeof(dict_pair_t));
+            bins[b] = (dict_pair_t*)calloc(bin_size, sizeof(dict_pair_t));
             if(!(bins[b])) err(1, "Memory error while allocating bin for dmempage\n");
 
             sizes[b] = mp->bin_size;
@@ -45,10 +45,6 @@ dmempage create_dmempage(size_t page_max, __uint128_t num_bins, size_t bin_size)
 
         mp->pages[p] = bins;
         mp->bin_counts[p] = sizes;
-
-        size_t page_index = p >> 3, bit = p % 8;
-        uint8_t ph = 1 << bit;
-        mp->page_present[page_index] |= ph;
     }
 
     return mp;
@@ -63,7 +59,6 @@ void destroy_dmempage(dmempage mp) {
         }
         free(mp->pages);
         free(mp->bin_counts);
-        free(mp->page_present);
         free(mp);
     }
 }
@@ -89,7 +84,7 @@ void dmempage_append_bin(dmempage mp, __uint128_t bin_index, dict_pair_t value) 
                 printf("Reallocating bin %lu %lu to %ld\n", ((uint64_t*)&bin_index)[1], ((uint64_t*)&bin_index)[0], bcount + 10);
             #endif
 
-            bin = realloc(bin, sizeof(dict_pair_t) * (bcount + 10));
+            bin = (dict_pair_t*)realloc(bin, sizeof(dict_pair_t) * (bcount + 10));
 
             for(size_t b = bcount; b < (bcount + 10); b++) bin[b].key = 0;
 
@@ -120,7 +115,7 @@ void dmempage_clear_all(dmempage mp) {
     for(size_t p = 0; p < mp->page_count; p++) {
         for(size_t b = 0; b < mp->count_per_page; b++) {
             free(mp->pages[p][b]);
-            mp->pages[p][b] = calloc(mp->bin_size, sizeof(dict_pair_t));
+            mp->pages[p][b] = (dict_pair_t*)calloc(mp->bin_size, sizeof(dict_pair_t));
             if(!(mp->pages[p][b])) err(1, "Memory error while allocating bin for dmempage\n");
             mp->bin_counts[p][b] = mp->bin_size;
         }
@@ -137,32 +132,27 @@ void dmempage_realloc(dmempage mp, __uint128_t bin_count) {
 
     if(diff) {
         // mp->pages = create_ll();
-        mp->pages = realloc(mp->pages, sizeof(dict_pair_t**) * pages);
+        mp->pages = (dict_pair_t***)realloc(mp->pages, sizeof(dict_pair_t**) * pages);
         if(!(mp->pages)) err(1, "Memory error while allocating book for dmempage\n");
 
-        mp->bin_counts = realloc(mp->bin_counts, sizeof(size_t**) * pages);
+        mp->bin_counts = (size_t**)realloc(mp->bin_counts, sizeof(size_t**) * pages);
         if(!mp->bin_counts) err(1, "Memory error while allocating book for dmempage\n");
 
         for(size_t p = mp->page_count; p < pages; p++) {
-            dict_pair_t** bins = malloc(sizeof(dict_pair_t*) * mp->count_per_page);
+            dict_pair_t** bins = (dict_pair_t**)malloc(sizeof(dict_pair_t*) * mp->count_per_page);
             if(!bins) err(1, "Memory error while allocating array for dmempage page\n");
 
-            size_t* sizes = malloc(sizeof(size_t) * mp->count_per_page);
+            size_t* sizes = (size_t*)malloc(sizeof(size_t) * mp->count_per_page);
             if(!sizes) err(1, "Memory error while allocating array for dmempage page\n");
 
             for(size_t b = 0; b < mp->count_per_page; b++) {
-                bins[b] = calloc(mp->bin_size, sizeof(dict_pair_t));
+                bins[b] = (dict_pair_t*)calloc(mp->bin_size, sizeof(dict_pair_t));
                 if(!bins[b]) err(1, "Memory error while allocating bin for dmempage\n");
                 sizes[b] = mp->bin_size;
             }
 
             mp->pages[p] = bins;
             mp->bin_counts[p] = sizes;
-
-            // Mark the page as not present in RAM
-            size_t byte = p >> 3, bit = p % 8;
-            uint8_t ph = 1 << bit;
-            mp->page_present[byte] |= ph;
         }
 
         mp->page_count = pages;
@@ -187,7 +177,7 @@ uint8_t* dmempage_get(dmempage mp, __uint128_t bin_index, __uint128_t key) {
 #pragma region dmempage_buff
 
 dmempage_buff create_dmempage_buff(__uint128_t num_elements, size_t page_size) {
-    dmempage_buff buff = malloc(sizeof(dmempage_buff_str));
+    dmempage_buff buff = (dmempage_buff)malloc(sizeof(dmempage_buff_str));
     if(!buff) err(1, "Memory error while allocating dmempage buffer\n");
 
     buff->count_per_page = page_size;
@@ -195,18 +185,12 @@ dmempage_buff create_dmempage_buff(__uint128_t num_elements, size_t page_size) {
 
     size_t num_pages = num_elements / page_size + 1;
 
-    buff->pages = malloc(sizeof(dict_pair_t*) * num_pages);
-    buff->page_present = calloc((num_pages >> 3) + 1, sizeof(uint8_t));
-    if(!buff->pages | !buff->page_present) err(1, "Memory error while allocating dmempage pages\n");
+    buff->pages = (dict_pair_t**)malloc(sizeof(dict_pair_t*) * num_pages);
+    if(!buff->pages) err(1, "Memory error while allocating dmempage pages\n");
 
     for(size_t p = 0; p < num_pages; p++) {
-        buff->pages[p] = calloc(page_size, sizeof(__uint128_t));
+        buff->pages[p] = (dict_pair_t*)calloc(page_size, sizeof(dict_pair_t));
         if(!buff->pages[p]) err(1, "Memory error while allocating dmempage page\n");
-
-        // Mark the page as present in memory
-        size_t page_index = p >> 3, byte_index = p % 8;
-        uint8_t ph = 1 << byte_index;
-        buff->page_present[page_index] |= ph;
     }
 
     return buff;

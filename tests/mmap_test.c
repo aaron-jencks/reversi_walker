@@ -1,9 +1,9 @@
-#include "../mem_man/heir.h"
+#include "../mem_man/heir.hpp"
 #include "../mem_man/mmap_man.h"
 #include "../hashing/hash_functions.h"
 #include "../gameplay/reversi.h"
 #include "mmap_test.h"
-#include "../utils/arraylist.h"
+#include "../utils/tarraylist.hpp"
 
 #include <stdio.h>
 #include <assert.h>

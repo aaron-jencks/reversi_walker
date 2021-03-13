@@ -7,10 +7,9 @@
 
 #pragma region hashtable dmempage
 
-typedef struct _dmempage_str {
+typedef struct {
     dict_pair_t*** pages;
     size_t** bin_counts;
-    uint8_t* page_present;
     size_t page_count;
     size_t count_per_page;
     __uint128_t num_bins;
@@ -19,13 +18,13 @@ typedef struct _dmempage_str {
 
 typedef dmempage_str* dmempage;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 dmempage create_dmempage(size_t page_max, __uint128_t bin_count, size_t bin_size);
 
 void destroy_dmempage(dmempage mp);
-
-uint8_t dmempage_page_exists(dmempage mp, size_t page_index);
-size_t dmempage_find_least_used_page(dmempage mp);
-size_t dmempage_find_total_size(dmempage mp);
 
 // __uint128_t dmempage_get(dmempage mp, __uint128_t key_index);
 
@@ -37,18 +36,25 @@ uint8_t* dmempage_get(dmempage mp, __uint128_t bin_index, __uint128_t key);
 void dmempage_clear_all(dmempage mp);
 void dmempage_realloc(dmempage mp, __uint128_t bin_count);
 
+#ifdef __cplusplus
+}
+#endif
+
 #pragma endregion
 #pragma region hashtable rehash buffer
 
-typedef struct _dmempage_buff_str {
+typedef struct {
     dict_pair_t** pages;
     size_t page_count;
     size_t count_per_page;
     __uint128_t num_element;
-    uint8_t* page_present;
 } dmempage_buff_str;
 
 typedef dmempage_buff_str* dmempage_buff;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 dmempage_buff create_dmempage_buff(__uint128_t num_elements, size_t page_size);
 void destroy_dmempage_buff(dmempage_buff buff);
@@ -57,3 +63,7 @@ void dmempage_buff_put(dmempage_buff buff, __uint128_t index, dict_pair_t value)
 dict_pair_t dmempage_buff_get(dmempage_buff buff, __uint128_t index);
 
 #pragma endregion
+
+#ifdef __cplusplus
+}
+#endif

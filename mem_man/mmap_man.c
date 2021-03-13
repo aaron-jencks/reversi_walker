@@ -32,9 +32,9 @@
 // }
 
 mmap_page create_mmap_page(const char* filename, size_t size) {
-    mmap_page page = malloc(sizeof(mmap_page_str));
+    mmap_page page = (mmap_page)malloc(sizeof(mmap_page_str));
     if(!page) err(1, "Memory error while allocating mmap for mmap manager\n");
-    page->filename = malloc(sizeof(char) * (strlen(filename) + 1));
+    page->filename = (char*)malloc(sizeof(char) * (strlen(filename) + 1));
     memcpy(page->filename, filename, sizeof(char) * (strlen(filename) + 1));
     page->filename[strlen(filename)] = 0;
 
@@ -57,9 +57,9 @@ mmap_page create_mmap_page(const char* filename, size_t size) {
 }
 
 mmap_page create_mmap_page_no_alloc(const char* filename, size_t size) {
-    mmap_page page = malloc(sizeof(mmap_page_str));
+    mmap_page page = (mmap_page)malloc(sizeof(mmap_page_str));
     if(!page) err(1, "Memory error while allocating mmap for mmap manager\n");
-    page->filename = malloc(sizeof(char) * (strlen(filename) + 1));
+    page->filename = (char*)malloc(sizeof(char) * (strlen(filename) + 1));
     memcpy(page->filename, filename, sizeof(char) * (strlen(filename) + 1));
     page->filename[strlen(filename)] = 0;
 
@@ -93,15 +93,15 @@ void destroy_mmap_page(mmap_page page, size_t size){
 }
 
 mmap_man create_mmap_man(size_t page_size, size_t bin_size, char* file_directory) {
-    mmap_man man = malloc(sizeof(mmap_man_str));
+    mmap_man man = (mmap_man)malloc(sizeof(mmap_man_str));
     if(!man) err(1, "Memory error while allocating mmap manager\n");
     man->num_pages = 1;
 
-    man->pages = malloc(sizeof(mmap_page) * man->num_pages);
+    man->pages = (mmap_page*)malloc(sizeof(mmap_page) * man->num_pages);
     if(!man->pages) err(1, "Memory error while allocating pages for mmap manager\n");
 
-    man->file_directory = malloc(sizeof(char) * (1 + strlen(file_directory)));
-    man->file_directory = memcpy(man->file_directory, file_directory, sizeof(char) * (strlen(file_directory) + 1));
+    man->file_directory = (char*)malloc(sizeof(char) * (1 + strlen(file_directory)));
+    man->file_directory = (char*)memcpy(man->file_directory, file_directory, sizeof(char) * (strlen(file_directory) + 1));
     man->file_directory[strlen(file_directory)] = 0;
 
     man->max_page_size = page_size;
@@ -186,10 +186,10 @@ mmap_man mmap_from_file(FILE* fp) {
     char* pfilename;
     fread(&flen, sizeof(size_t), 1, fp);
 
-    mmap_man man = malloc(sizeof(mmap_man_str));
+    mmap_man man = (mmap_man)malloc(sizeof(mmap_man_str));
     if(!man) err(1, "Memory error while allocating mmap man\n");
 
-    man->file_directory = malloc(sizeof(char) * flen);
+    man->file_directory = (char*)malloc(sizeof(char) * flen);
     if(!man->file_directory) err(1, "Memory error while allocating mmap man\n");
     fread(man->file_directory, sizeof(char), flen, fp);
     fread(&man->num_pages, sizeof(size_t), 1, fp);
@@ -198,13 +198,13 @@ mmap_man mmap_from_file(FILE* fp) {
 
     man->bins_per_page = man->max_page_size / man->elements_per_bin;
 
-    man->pages = malloc(sizeof(mmap_page) * man->num_pages);
+    man->pages = (mmap_page*)malloc(sizeof(mmap_page) * man->num_pages);
     if(!man->pages) err(1, "Memory error while allocating mmap man\n");
 
     for(size_t p = 0; p < man->num_pages; p++) {
         fread(&psize, sizeof(size_t), 1, fp);
         fread(&flen, sizeof(size_t), 1, fp);
-        pfilename = malloc(sizeof(char) * flen);
+        pfilename = (char*)malloc(sizeof(char) * flen);
         if(!pfilename) err(1, "Memory error while allocating bin for mmap man\n");
         fread(pfilename, sizeof(char), flen, fp);
 
@@ -219,7 +219,7 @@ mmap_man mmap_from_file(FILE* fp) {
 
 uint8_t* mmap_allocate_bin(mmap_man man) {
     if(man->pages[man->num_pages - 1]->size >= man->bins_per_page) {
-        man->pages = realloc(man->pages, sizeof(mmap_page) * ++man->num_pages);
+        man->pages = (mmap_page*)realloc(man->pages, sizeof(mmap_page) * ++man->num_pages);
 
         char* filename = find_abs_path(man->num_pages - 1, man->file_directory);
         man->pages[man->num_pages - 1] = create_mmap_page(filename, man->max_page_size);

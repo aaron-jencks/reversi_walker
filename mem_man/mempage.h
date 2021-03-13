@@ -22,6 +22,10 @@ typedef struct _mempage_str {
 
 typedef mempage_str* mempage;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 mempage create_mempage(size_t page_max, __uint128_t bin_count, size_t bin_size);
 
 void destroy_mempage(mempage mp);
@@ -39,6 +43,10 @@ uint8_t mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t valu
 uint8_t* mempage_get(mempage mp, __uint128_t bin_index, __uint128_t key);
 void mempage_clear_all(mempage mp);
 void mempage_realloc(mempage mp, __uint128_t bin_count);
+
+#ifdef __cplusplus
+}
+#endif
 
 #pragma endregion
 #pragma region hashtable rehash buffer
@@ -62,6 +70,10 @@ typedef struct _map_tuple_t {
 typedef mempage_buff_str* mempage_buff;
 typedef map_tuple_t* map_tuple;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 mempage_buff create_mempage_buff(__uint128_t num_elements, size_t page_size);
 void destroy_mempage_buff(mempage_buff buff);
 
@@ -71,6 +83,10 @@ size_t mempage_buff_find_total_size(mempage_buff buff);
 
 void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t k, void* value);
 map_tuple mempage_buff_get(mempage_buff buff, __uint128_t index);
+
+#ifdef __cplusplus
+}
+#endif
 
 #pragma endregion
 #pragma region mmap mempages
@@ -89,6 +105,10 @@ typedef struct _mmap_mempage_str {
 } mmap_mempage_str;
 
 typedef mmap_mempage_str* mmap_mempage;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief Create a mmap mempage object
@@ -109,6 +129,10 @@ uint8_t mmap_mempage_value_in_bin(mempage mp, __uint128_t bin_index, __uint128_t
 
 void mmap_mempage_realloc(mempage mp, __uint128_t bin_count);
 
+#ifdef __cplusplus
+}
+#endif
+
 #pragma endregion
 
 #pragma endregion
@@ -124,6 +148,10 @@ typedef struct __bit_mempage_str {
 } bit_mempage_str;
 
 typedef bit_mempage_str* bit_mempage;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 bit_mempage create_bit_mempage(__uint128_t num_bits, size_t page_size);
 void destroy_bit_mempage(bit_mempage mp);
@@ -173,3 +201,7 @@ void swap_mempage_buff_page(mempage_buff mp, size_t spage_index, size_t rpage_in
 void load_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap_directory);
 
 #pragma endregion
+
+#ifdef __cplusplus
+}
+#endif
