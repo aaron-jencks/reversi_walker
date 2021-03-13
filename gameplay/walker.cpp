@@ -70,6 +70,8 @@ void find_next_boards(board b, Arraylist<void*>* edges, Arraylist<void*>* coord_
             }
         }
     }
+
+    // printf("Found %lu moves\n", edges->pointer);
 }
 
 
@@ -170,37 +172,13 @@ void* walker_processor_pre_stacked(void* args) {
 
             find_next_boards(sb, coord_buff, coord_cache);
 
-            if(coord_buff->pointer) {
-                uint8_t move_count = 0;
-                // If the move is legal, then append it to the search stack
-                for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-                    coord mm = (coord)coord_buff->data[im];
-
-                    if(board_cache->pointer) bc = (board)board_cache->pop_back();
-                    else bc = create_board(1, sb->height, sb->width);
-
-                    clone_into_board(sb, bc);
-
-                    if(board_is_legal_move(bc, mm->row, mm->column)) {
-                        board_place_piece(bc, mm->row, mm->column);
-                        search_stack->append(bc);
-                        move_count++;
-                    }
-                    else {
-                        board_cache->append(bc);
-                    }
-
-                    coord_cache->append(mm);
-                }
-
-                #ifdef debug
-                    __uint128_t hash = board_spiral_hash(sb);
-                    printf("Board hashed to %lu %lu\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
-                #endif
+            if(heirarchy_insert(cache, board_spiral_hash(sb))) {
 
                 find_next_boards(sb, coord_buff, coord_cache);
 
                 #ifdef debug
+                    __uint128_t hash = board_spiral_hash(sb);
+                    printf("Board hashed to %lu %lu\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
                     display_moves_w(sb, coord_buff);
                 #endif
 
@@ -290,7 +268,7 @@ void* walker_processor_pre_stacked(void* args) {
 
                         // if(heirarchy_insert(cache, board_spiral_hash(sb))) {
 
-                            // printf("Found a new board to count\n");
+                            printf("Found a new board to count\n");
                             while(pthread_mutex_trylock(counter_lock)) sched_yield();
                             *counter += 1;
                             // *explored += count;
