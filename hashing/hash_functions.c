@@ -1,7 +1,10 @@
 #include "./hash_functions.h"
 
 // #include "./lookup3.h"
-#include "../gameplay/reversi.h"
+
+// TODO look into using memcpy here and just copy and paste the board into the int.
+
+#include <stddef.h>
 
 
 // __uint128_t board_hash(void* brd) {
@@ -98,4 +101,24 @@ __uint128_t board_spiral_hash(void* brd) {
     }
 
     return 0;
+}
+
+const size_t r6[] = {4, 4, 4, 3, 2, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5};
+const size_t c6[] = {2, 3, 4, 4, 4, 4, 3, 2, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0};
+
+__uint128_t board_fast_hash_6(board b) {
+    uint8_t rc = b->height >> 1, cc = b->width >> 1;
+
+    __uint128_t result = ((b->player << 4) + 
+        ((board_get(b, rc, cc) - 1) << 3) + 
+        ((board_get(b, rc - 1, cc) - 1) << 2) + 
+        ((board_get(b, rc - 1, cc - 1) - 1) << 1) + 
+        (board_get(b, rc, cc - 1) - 1)) << 2;
+
+    for(size_t bc = 0; bc < 32; bc++) {
+        result += board_get(b, r6[bc], c6[bc]);
+        if(bc < 31) result = result << 2;
+    }
+
+    return result;
 }

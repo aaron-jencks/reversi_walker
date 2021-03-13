@@ -202,7 +202,7 @@ int main() {
     // Initialize the locks
     if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || pthread_mutex_init(&repeated_lock, 0) || 
        pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0) || pthread_mutex_init(&shutdown_lock, 0) || 
-       pthread_mutex_init(&heirarchy_lock, 0) || pthread_mutex_init(&finished_lock, 0)) 
+       pthread_mutex_init(&heirarchy_lock, 0) || pthread_mutex_init(&finished_lock, 0) || pthread_mutex_init(&heirarchy_cache_lock, 0)) 
         err(4, "Initialization of counter mutex failed\n");
 
     #pragma region Round nprocs to the correct number
@@ -390,7 +390,7 @@ int main() {
         // #else
         //     cache = create_hashtable(1000000, &board_hash);
         // #endif
-        cache = create_heirarchy(temp_dir);
+        cache = create_heirarchy(temp_dir, procs);
 
         checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
 

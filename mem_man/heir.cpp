@@ -14,8 +14,10 @@
 #define INITIAL_PAGE_SIZE 5368709120
 
 pthread_mutex_t heirarchy_lock;
+pthread_mutex_t heirarchy_cache_lock;
 
-heirarchy create_heirarchy(char* file_directory) {
+
+heirarchy create_heirarchy(char* file_directory, size_t num_readers) {
     heirarchy h = (heirarchy)malloc(sizeof(heirarchy_str));
     if(!h) err(1, "Memory error while allocating heirarchical memory system\n");
 
@@ -53,6 +55,9 @@ heirarchy create_heirarchy(char* file_directory) {
 
     h->collision_count = 0;
 
+    h->sem = new MultiReadSemaphore(num_readers);
+    h->csem = new MultiReadSemaphore(num_readers);
+
     return h;
 }
 
@@ -61,6 +66,7 @@ void destroy_heirarchy(heirarchy h) {
         destroy_mmap_man(h->final_level);
         destroy_fixed_dictionary(h->fixed_cache);
         destroy_rehashing_dictionary(h->rehashing_cache);
+        delete h->sem;
         free(h);
     }
 }
@@ -70,19 +76,30 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     //     printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
     // #endif
 
-    while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+    // h->sem->signal_read();
 
     __uint128_t lower_key = key >> h->num_bits_per_final_level;
     uint8_t* dict_resp = fdict_get(h->fixed_cache, lower_key);
 
+    // h->sem->signal_read_finish();
+
     if(!dict_resp) {
-        if(!(dict_resp = hdict_get(h->rehashing_cache, lower_key))) {
-            // Allocate a new bin for it
-            uint8_t* new_bin = mmap_allocate_bin(h->final_level);
-            hdict_put(h->rehashing_cache, lower_key, new_bin);
-            dict_resp = new_bin;
+        // h->sem->signal_write();
+        while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+        dict_resp = fdict_get(h->fixed_cache, lower_key);  // check one more time, just in case.
+
+        if(!dict_resp) {
+            if(!(dict_resp = hdict_get(h->rehashing_cache, lower_key))) {
+                // Allocate a new bin for it
+                uint8_t* new_bin = mmap_allocate_bin(h->final_level);
+                hdict_put(h->rehashing_cache, lower_key, new_bin);
+                dict_resp = new_bin;
+            }
+            fdict_put(h->fixed_cache, lower_key, dict_resp);
         }
-        fdict_put(h->fixed_cache, lower_key, dict_resp);
+
+        // h->sem->signal_write_finish();
+        pthread_mutex_unlock(&heirarchy_lock);
     }
 
     // Extract the bit from the last level
@@ -97,6 +114,8 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
         printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
     #endif
 
+    // h->sem->signal_read();
+
     // Insert the new bit if it's not already in the array
     // printf("Bit value: %lu\n", bits);
     uint8_t byte = dict_resp[bits];
@@ -109,20 +128,31 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
 
         h->collision_count++;
 
-        pthread_mutex_unlock(&heirarchy_lock);
+        // pthread_mutex_unlock(&heirarchy_lock);
+        // h->sem->signal_read_finish();
 
         return 0;
     }
+    else {
+        // h->sem->signal_read_finish();
+        // h->sem->signal_write();
+        while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
 
-    // #ifdef heirdebug
-    //     printf("%lu %lu inserted into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
-    // #endif
+        // Check one more time just in case.
+        byte = dict_resp[bits];
 
-    dict_resp[bits] |= ph;
-
-    pthread_mutex_unlock(&heirarchy_lock);
-
-    return 1;
+        if(!(byte & ph)) {
+            dict_resp[bits] |= ph;
+            // h->sem->signal_write_finish();
+            pthread_mutex_unlock(&heirarchy_lock);
+            return 1;
+        }
+        else {
+            // h->sem->signal_write_finish();
+            pthread_mutex_unlock(&heirarchy_lock);
+            return 0;
+        }
+    }
 }
 
 uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key) {
@@ -130,14 +160,28 @@ uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key) {
     //     printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
     // #endif
 
-    while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+    // while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+
+    // h->csem->signal_read();
 
     __uint128_t lower_key = key >> h->num_bits_per_final_level;
     uint8_t* dict_resp = fdict_get(h->temp_board_cache, lower_key);
 
+    // h->csem->signal_read_finish();
+
     if(!dict_resp) {
-        dict_resp = mmap_allocate_bin(h->final_level);
-        fdict_put(h->temp_board_cache, lower_key, dict_resp);
+        // h->csem->signal_write();
+        while(pthread_mutex_trylock(&heirarchy_cache_lock)) sched_yield();
+
+        dict_resp = fdict_get(h->temp_board_cache, lower_key); // Check one more time just in case.
+
+        if(!dict_resp) {
+            dict_resp = mmap_allocate_bin(h->final_level);
+            fdict_put(h->temp_board_cache, lower_key, dict_resp);
+        }
+
+        // h->csem->signal_write_finish();
+        pthread_mutex_unlock(&heirarchy_cache_lock);
     }
 
     // Extract the bit from the last level
@@ -152,6 +196,8 @@ uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key) {
         printf("Bits for final level is %lu, byte index is %u\n", bits, bit);
     #endif
 
+    // h->csem->signal_read();
+
     // Insert the new bit if it's not already in the array
     // printf("Bit value: %lu\n", bits);
     uint8_t byte = dict_resp[bits];
@@ -164,20 +210,31 @@ uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key) {
 
         h->collision_count++;
 
-        pthread_mutex_unlock(&heirarchy_lock);
+        // pthread_mutex_unlock(&heirarchy_lock);
+
+        // h->csem->signal_read_finish();
 
         return 0;
     }
+    else {
+        // h->csem->signal_read_finish();
+        // h->csem->signal_write();
 
-    // #ifdef heirdebug
-    //     printf("%lu %lu inserted into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
-    // #endif
+        while(pthread_mutex_trylock(&heirarchy_cache_lock)) sched_yield();
 
-    dict_resp[bits] |= ph;
-
-    pthread_mutex_unlock(&heirarchy_lock);
-
-    return 1;
+        byte = dict_resp[bits];
+        if(!(byte & ph)) {
+            dict_resp[bits] |= ph;
+            // h->csem->signal_write_finish();
+            pthread_mutex_unlock(&heirarchy_cache_lock);
+            return 1;
+        }
+        else {
+            // h->csem->signal_write_finish();
+            pthread_mutex_unlock(&heirarchy_cache_lock);
+            return 0;
+        }
+    }
 }
 
 void to_file_heir(FILE* fp, heirarchy h) {

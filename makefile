@@ -2,7 +2,7 @@ cc=gcc
 pp=g++
 # cflags=$(cflags)
 objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o 
-cpp_objects=tarraylist.o fdict.o hdict.o heir.o fileio.o walker.o 
+cpp_objects=tarraylist.o fdict.o hdict.o heir.o fileio.o walker.o semaphore.o 
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
 
@@ -41,7 +41,7 @@ lookup.o: ./hashing/lookup3.c ./hashing/lookup3.h
 ll.o: ./utils/ll.c ./utils/ll.h
 	$(cc) $(cflags) -o $@ -c $<
 
-heir.o: ./mem_man/heir.cpp ./mem_man/heir.hpp hash_functions.o reversi.o mmap_man.o hdict.o fdict.o 
+heir.o: ./mem_man/heir.cpp ./mem_man/heir.hpp hash_functions.o reversi.o mmap_man.o hdict.o fdict.o semaphore.o 
 	$(pp) $(cflags) -o $@ -c $<
 
 heir_swapper.o: ./mem_man/heir_swapper.c ./mem_man/heir_swapper.h mmap_man.o heapsort.o hashtable.o 
@@ -84,6 +84,9 @@ hdict.o: ./utils/dictionary/hdict.cpp ./utils/dictionary/hdict.hpp dmempage.o
 	$(pp) $(cflags) -o $@ -c $<
 
 tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp
+	$(pp) $(cflags) -o $@ -c $<
+
+semaphore.o: ./utils/semaphore.cpp ./utils/semaphore.hpp
 	$(pp) $(cflags) -o $@ -c $<
 
 # Tests
