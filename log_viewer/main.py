@@ -2,44 +2,38 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
-# headers = "runtime", "fps", "found", "explored", "disk_usage", "hashtable_load_factor"
-
 if __name__ == '__main__':
-    runtime = []
-    fps = []
-    disk = []
-    load_factor = []
+    headers = []
+    rdata = []
+
     with open(input('Which file would you like to open? ')) as fp:
         data = csv.reader(fp, delimiter=',')
         placeholder = 0
         previous = 0
         for i, t in enumerate(data):
-            if i > 0:
-                r, f, _, _, u, l = t
-                r = int(r)
-                f = int(f)
-                u = float(u)
-                l = float(l)
-                if r <= previous:
-                    placeholder = previous
-                r += placeholder
-                if f < 10000000:
-                    runtime.append(r)
-                    fps.append(f)
-                    disk.append(u)
-                    load_factor.append(l)
-                previous = r
+            if i == 0:
+                headers = list(t)
+                for _ in range(len(t)):
+                    rdata.append([])
+            else:
+                for j, e in enumerate(t):
+                    e = float(e)
+                    if j == 0:
+                        if e <= previous:
+                            placeholder = previous
+                        e += placeholder
+                        previous = e
+                    if j == 1 and e >= 10000000:
+                        rdata[0].pop(len(rdata[0]) - 1)
+                        break
+                    rdata[j].append(e)
 
-    fig, axs = plt.subplots(3, 1, sharex=True)
+    fig, axs = plt.subplots(len(headers) - 1, 1, sharex=True)
 
-    axs[0].scatter(runtime, fps, 1)
-    axs[0].set_ylabel('FPS (boards/sec)')
+    for a, y in enumerate(rdata[1:]):
+        axs[a].scatter(rdata[0], y)
+        axs[a].set_ylabel(headers[a + 1])
 
-    axs[1].scatter(runtime, disk, 1)
-    axs[1].set_ylabel('Disk Usage (%)')
-
-    axs[2].scatter(runtime, load_factor, 1)
-    axs[2].set_ylabel('Hashtable Load Factor')
-    axs[2].set_xlabel('Runtime (sec)')
+    axs[len(headers) - 2].set_xlabel('Runtime (sec)')
 
     plt.show()

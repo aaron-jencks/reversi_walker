@@ -222,7 +222,7 @@ int main() {
         printf("Found %lu moves\n", coord_buff->pointer);
     #endif
 
-    for(char im = 0; im < coord_buff->pointer; im++) {
+    for(uint8_t im = 0; im < coord_buff->pointer; im++) {
         coord m = (coord)coord_buff->data[im];
         uint16_t sm = coord_to_short(m);
         board cb = clone_board(b);
@@ -246,7 +246,7 @@ int main() {
             // printf("Found %lu moves\n", coord_buff->pointer);
         #endif
 
-        for(char im = 0; im < coord_buff->pointer; im++) {
+        for(uint8_t im = 0; im < coord_buff->pointer; im++) {
             coord m = (coord)coord_buff->data[im];
             uint16_t sm = coord_to_short(m);
             board cb = clone_board(b);
