@@ -8,6 +8,10 @@
 extern "C" {
 #endif
 
+void min_heapify_int(size_t* arr, size_t n, size_t i);
+void build_min_heap_int(size_t* arr, size_t n);
+void heapsort_int(size_t* arr, size_t n);
+
 void min_heapify(size_t** arr, size_t n, size_t i);
 void build_min_heap(size_t** arr, size_t n);
 void heapsort(size_t** arr, size_t n);

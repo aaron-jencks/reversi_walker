@@ -48,10 +48,10 @@ heirarchy create_heirarchy(char* file_directory) {
     h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, bin_size, temp);
     free(temp);
 
-    h->fixed_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT, FLUSH_COUNT);
-    h->rehashing_cache = create_rehashing_dictionary();
+    h->fixed_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT * INITIAL_BIN_SIZE, FLUSH_COUNT, INITIAL_BIN_COUNT, INITIAL_BIN_SIZE);
+    h->rehashing_cache = create_rehashing_dictionary(INITIAL_BIN_COUNT, INITIAL_BIN_SIZE);
 
-    h->temp_board_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT, FLUSH_COUNT);
+    h->temp_board_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT * INITIAL_BIN_SIZE, FLUSH_COUNT, INITIAL_BIN_COUNT, INITIAL_BIN_SIZE);
 
     h->collision_count = 0;
 
@@ -63,7 +63,6 @@ void destroy_heirarchy(heirarchy h) {
         destroy_mmap_man(h->final_level);
         destroy_fixed_dictionary(h->fixed_cache);
         destroy_rehashing_dictionary(h->rehashing_cache);
-        delete h->sem;
         free(h);
     }
 }
@@ -220,8 +219,8 @@ heirarchy from_file_heir(FILE* fp) {
 
     h->final_level = mmap_from_file(fp);
 
-    h->fixed_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT, FLUSH_COUNT);
-    h->rehashing_cache = create_rehashing_dictionary();
+    h->fixed_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT * INITIAL_BIN_SIZE, FLUSH_COUNT, INITIAL_BIN_COUNT, INITIAL_BIN_SIZE);
+    h->rehashing_cache = create_rehashing_dictionary(INITIAL_BIN_COUNT, INITIAL_BIN_SIZE);
 
     printf("Loading previous bins... This might take awhile\n");
     size_t total = 0, current = 0;

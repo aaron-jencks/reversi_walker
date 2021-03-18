@@ -35,7 +35,6 @@ void lm_test_initial() {
     }
 
     destroy_board(b);
-    free(cs);
 
     for(coord* ct = acceptance; *ct; ct++) free(*ct);
 }

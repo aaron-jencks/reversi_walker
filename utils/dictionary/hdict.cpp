@@ -5,14 +5,14 @@
 #include <stdio.h>
 #include <err.h>
 
-hdict create_rehashing_dictionary() {
+hdict create_rehashing_dictionary(size_t bin_count, size_t initial_bin_size) {
     hdict d = (hdict)malloc(sizeof(hdict_t));
     if(!d) err(1, "Memory error while allocating rehashing dictionary\n");
 
-    d->bins = create_dmempage(BIN_PAGE_COUNT, INITIAL_BIN_COUNT, INITIAL_BIN_SIZE);
+    d->bins = create_dmempage(BIN_PAGE_COUNT, bin_count, initial_bin_size);
     if(!(d->bins)) err(1, "Memory error while allocating rehashing dictionary\n");
 
-    d->bin_count = INITIAL_BIN_COUNT;
+    d->bin_count = bin_count;
     d->size = 0;
 
     return d;
@@ -29,10 +29,16 @@ dmempage_buff hdict_get_all(hdict d) {
     dmempage_buff result = create_dmempage_buff(d->size, BIN_PAGE_COUNT);
 
     __uint128_t i = 0;
-    for(size_t p = 0; p < d->bins->page_count; p++) 
-        for(size_t b = 0; b < d->bins->count_per_page; b++) 
-            for(size_t e = 0; e < d->bins->bin_counts[p][b]; e++) 
+    uint8_t finished = 0;
+    for(size_t p = 0; p < d->bins->page_count && !finished; p++) 
+        for(size_t b = 0; b < d->bins->count_per_page && !finished; b++) 
+            for(size_t e = 0; e < d->bins->bin_counts[p][b] && !finished; e++) {
                 dmempage_buff_put(result, i++, d->bins->pages[p][b][e]);
+                if(i == d->size) {
+                    finished = 1;
+                    break;
+                }
+            }
 
     return result;
 }
@@ -48,11 +54,16 @@ void hdict_put(hdict d, __uint128_t k, uint8_t* value) {
     dmempage_append_bin(d->bins, bin, dict_pair_t{k, value});
     d->size++;
 
-    if(hdict_load_factor(d) > DICT_LOAD_LIMIT) {
+    if(hdict_load_factor(d) >= DICT_LOAD_LIMIT) {
         printf("Rehashing hashtable\n");
 
+        printf("Collecting data\n");
         dmempage_buff contents = hdict_get_all(d);
+
+        printf("Flushing mempage\n");
         dmempage_clear_all(d->bins);
+
+        printf("Reallocating mempage\n");
         dmempage_realloc(d->bins, d->bin_count << 1);
         d->bin_count = d->bin_count << 1;
         for(__uint128_t e = 0; e < contents->num_element; e++) {

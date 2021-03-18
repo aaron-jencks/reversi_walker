@@ -13,7 +13,7 @@ typedef struct _hdict_t {
 
 typedef hdict_t* hdict;
 
-hdict create_rehashing_dictionary();
+hdict create_rehashing_dictionary(size_t bin_count, size_t initial_bin_size);
 void destroy_rehashing_dictionary(hdict d);
 
 dmempage_buff hdict_get_all(hdict d);

@@ -8,6 +8,7 @@
 typedef struct _fdict_t {
     Arraylist<dict_usage_pair_t>** bins;
     size_t bin_count;
+    size_t bin_size;
     size_t max_element_count;
     size_t size;
     size_t flush_count;
@@ -15,7 +16,7 @@ typedef struct _fdict_t {
 
 typedef fdict_t* fdict;
 
-fdict create_fixed_size_dictionary(size_t max_element_count, size_t flush_count);
+fdict create_fixed_size_dictionary(size_t max_element_count, size_t flush_count, size_t bin_count, size_t initial_bin_size);
 void destroy_fixed_dictionary(fdict d);
 
 void fdict_flush(fdict d);

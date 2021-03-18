@@ -2,9 +2,9 @@ cc=gcc
 pp=g++
 cflags+=-O3 -Wall
 objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o 
-cpp_objects=tarraylist.o fdict.o hdict.o heir.o fileio.o walker.o semaphore.o 
+cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o 
 cuda_objects=
-test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o mmap_test.o dict_test.o 
+test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o mmap_test.o dict_test.o heapsort_test.o arraylist_test.o 
 
 CHECKPOINT_PATH="$(HOME)/reversi_checkpoint.bin"
 export CHECKPOINT_PATH
@@ -29,7 +29,7 @@ tester.o: tester.cpp $(objects) $(test_objects)
 reversi.o: ./gameplay/reversi.c ./gameplay/reversi.h
 	$(cc) $(cflags) -o $@ -c $<
 
-valid_moves.o: ./gameplay/valid_moves.c ./gameplay/valid_moves.h walker.o tarraylist.o
+valid_moves.o: ./gameplay/valid_moves.c ./gameplay/valid_moves.h walker.o tarraylist.o 
 	$(cc) $(cflags) -o $@ -c $<
 
 cache.o: ./hashing/cache.c ./hashing/cache.h tarraylist.o
@@ -47,7 +47,7 @@ heir.o: ./mem_man/heir.cpp ./mem_man/heir.hpp hash_functions.o reversi.o mmap_ma
 heir_swapper.o: ./mem_man/heir_swapper.c ./mem_man/heir_swapper.h mmap_man.o heapsort.o hashtable.o 
 	$(cc) $(cflags) -o $@ -c $<
 
-hashtable.o: ./hashing/hashtable.c ./hashing/hashtable.h mempage.o tarraylist.o
+hashtable.o: ./hashing/hashtable.c ./hashing/hashtable.h mempage.o utils/tarraylist.hpp
 	$(cc) $(cflags) -o $@ -c $<
 
 hash_functions.o: ./hashing/hash_functions.c ./hashing/hash_functions.h reversi.o lookup.o
@@ -77,13 +77,13 @@ csv.o: ./utils/csv.c ./utils/csv.h
 dmempage.o: ./utils/dictionary/dmempage.c ./utils/dictionary/dmempage.h ./utils/dictionary/dict_def.h 
 	$(cc) $(cflags) -o $@ -c $<
 
-fdict.o: ./utils/dictionary/fdict.cpp ./utils/dictionary/fdict.hpp ./utils/dictionary/dict_def.h heapsort.o tarraylist.o
+fdict.o: ./utils/dictionary/fdict.cpp ./utils/dictionary/fdict.hpp ./utils/dictionary/dict_def.h heapsort.o tarraylist.o 
 	$(pp) $(cflags) -o $@ -c $<
 
 hdict.o: ./utils/dictionary/hdict.cpp ./utils/dictionary/hdict.hpp dmempage.o 
 	$(pp) $(cflags) -o $@ -c $<
 
-tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp
+tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp;
 	$(pp) $(cflags) -o $@ -c $<
 
 semaphore.o: ./utils/semaphore.cpp ./utils/semaphore.hpp
@@ -110,6 +110,12 @@ mmap_test.o: tests/mmap_test.cpp tests/mmap_test.hpp heir.o reversi.o hash_funct
 	$(pp) $(cflags) -o $@ -c $<
 
 dict_test.o: tests/dict_test.cpp tests/dict_test.hpp utils/dictionary/dict_def.h fdict.o hdict.o
+	$(pp) $(cflags) -o $@ -c $<
+
+heapsort_test.o: tests/heapsort_test.c tests/heapsort_test.h heapsort.o
+	$(cc) $(cflags) -o $@ -c $<
+
+arraylist_test.o: tests/arraylist_test.cpp tests/arraylist_test.hpp tarraylist.o 
 	$(pp) $(cflags) -o $@ -c $<
 
 .PHONY : clean

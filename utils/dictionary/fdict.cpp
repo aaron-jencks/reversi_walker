@@ -4,19 +4,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <assert.h>
 
-fdict create_fixed_size_dictionary(size_t max_element_count, size_t flush_count) {
+fdict create_fixed_size_dictionary(size_t max_element_count, size_t flush_count, size_t bin_count, size_t initial_bin_size) {
     fdict d = (fdict)malloc(sizeof(fdict_t));
     if(!d) err(1, "Memory error while allocating fixed dictionary\n");
 
-    d->bins = (Arraylist<dict_usage_pair_t>**)malloc(sizeof(Arraylist<dict_usage_pair_t>*) * INITIAL_BIN_COUNT);
+    d->bins = (Arraylist<dict_usage_pair_t>**)malloc(sizeof(Arraylist<dict_usage_pair_t>*) * bin_count);
     if(!(d->bins)) err(1, "Memory error while allocating fixed dictionary\n");
 
-    for(size_t b = 0; b < INITIAL_BIN_COUNT; b++) {
-        d->bins[b] = new Arraylist<dict_usage_pair_t>(INITIAL_BIN_SIZE);
+    for(size_t b = 0; b < bin_count; b++) {
+        d->bins[b] = new Arraylist<dict_usage_pair_t>(initial_bin_size);
     }
 
-    d->bin_count = INITIAL_BIN_COUNT;
+    d->bin_count = bin_count;
+    d->bin_size = initial_bin_size;
     d->max_element_count = max_element_count;
     d->flush_count = flush_count;
     d->size = 0;
@@ -35,8 +37,8 @@ void destroy_fixed_dictionary(fdict d) {
 }
 
 void fdict_flush(fdict d) {
-    for(size_t b = 0; b < INITIAL_BIN_COUNT; b++) {
-        d->bins[b]->realloc(INITIAL_BIN_SIZE);
+    for(size_t b = 0; b < d->bin_count; b++) {
+        d->bins[b]->realloc(d->bin_size);
         d->bins[b]->pointer = 0;
     }
 }
@@ -47,11 +49,15 @@ dict_element_t* fdict_get_all(fdict d) {
     size_t i = 0;
     for(size_t b = 0; b < d->bin_count; b++) {
         for(size_t e = 0; e < d->bins[b]->pointer; e++) {
+            printf("\rFound %lu elements", i);
             result[i].pair = d->bins[b]->data[e];
             result[i].bin = b;
-            result[i].element = e;
+            result[i++].element = e;
         }
     }
+
+    printf("\nFound %lu elements in the dictionary of size %lu\n", i, d->size);
+    assert(i == d->size);
 
     return result;
 }
@@ -79,16 +85,16 @@ uint8_t fdict_exists(fdict d, __uint128_t k) {
 }
 
 void fdict_put(fdict d, __uint128_t k, uint8_t* value) {
-    if(d->size++ >= d->max_element_count) {
+    if(d->size >= d->max_element_count) {
         if(d->size <= d->flush_count) {
             fdict_flush(d);
             d->size = 0;
         }
         else {
-            printf("Flushing dictionary\n");
+            printf("Flushing dictionary of %lu elements from %lu\n", d->flush_count, d->size);
             dict_element_t* elements = fdict_get_all(d);
             // printf("Sorting dictionary\n");
-            heapsort_dict(elements, d->size);
+            heapsort_dict(elements, d->size - 1);
             heapsort_dict_removal_order(elements, d->flush_count);
             // printf("Removing elements from dictionary\n");
             for(size_t e = 0; e < d->flush_count; e++) {

@@ -74,11 +74,7 @@ void dmempage_append_bin(dmempage mp, __uint128_t bin_index, dict_pair_t value) 
     
     dict_pair_t* bin = l[page_index];
     for(size_t iter = 0;; iter++) {
-        if(!bin[iter].key) {
-            bin[iter] = value;
-            break;
-        }
-        else if(iter == bcount) {
+        if(iter == bcount) {
             // reallocate the bin
             #ifdef dmempagedebug
                 printf("Reallocating bin %lu %lu to %ld\n", ((uint64_t*)&bin_index)[1], ((uint64_t*)&bin_index)[0], bcount + 10);
@@ -93,6 +89,10 @@ void dmempage_append_bin(dmempage mp, __uint128_t bin_index, dict_pair_t value) 
             l[page_index] = bin;
             mp->bin_counts[page][page_index] = bcount;
 
+            bin[iter] = value;
+            break;
+        }
+        else if(!bin[iter].key) {
             bin[iter] = value;
             break;
         }
