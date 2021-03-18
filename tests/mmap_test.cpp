@@ -2,7 +2,7 @@
 #include "../mem_man/mmap_man.h"
 #include "../hashing/hash_functions.h"
 #include "../gameplay/reversi.h"
-#include "mmap_test.h"
+#include "mmap_test.hpp"
 #include "../utils/tarraylist.hpp"
 
 #include <stdio.h>
@@ -43,8 +43,8 @@ void mmap_test_readback() {
 void mmap_spiral_hash_test() {
     printf("Testing hash function uniqueness\n");
     heirarchy h = create_heirarchy("/tmp/reversi.debug");
-    uint128_arraylist keys = create_uint128_arraylist(10000000);
-    ptr_arraylist boards = create_ptr_arraylist(10000000);
+    Arraylist<__uint128_t> keys(10000000);
+    Arraylist<board> boards(10000000);
     board b = create_board(1, 4, 4), bb;
     uint8_t finished = 0;
     size_t iteration = 0;
@@ -54,8 +54,8 @@ void mmap_spiral_hash_test() {
     board_put(b, 1, 1, 1);
     board_put(b, 2, 2, 1);
 
-    append_pal(boards, b);
-    append_ddal(keys, board_spiral_hash(b));
+    boards.append(b);
+    keys.append(board_spiral_hash(b));
     heirarchy_insert(h, board_spiral_hash(b));
 
     while(!finished) {
@@ -72,21 +72,21 @@ void mmap_spiral_hash_test() {
 
                 __uint128_t hash = board_spiral_hash(bb);
                 if(!heirarchy_insert(h, hash)) {
-                    for(size_t k = 0; k < keys->pointer; k++) {
-                        if(keys->data[k] == hash) {
+                    for(size_t k = 0; k < keys.pointer; k++) {
+                        if(keys.data[k] == hash) {
                             printf("Identical hashes for boards:\n");
                             display_board(bb);
                             printf("matches:\n");
-                            display_board(boards->data[k]);
+                            display_board(boards.data[k]);
                             printf("with hash %lu %lu and id %lu matches hash %lu %lu from board id %lu\n",
-                            ((uint64_t*)(&hash))[1], ((uint64_t*)(&hash))[0], keys->pointer, 
-                            ((uint64_t*)(&keys->data[k]))[1], ((uint64_t*)(&keys->data[k]))[0], k);
+                            ((uint64_t*)(&hash))[1], ((uint64_t*)(&hash))[0], keys.pointer, 
+                            ((uint64_t*)(&keys.data[k]))[1], ((uint64_t*)(&keys.data[k]))[0], k);
                         }
-                        assert(keys->data[k] != hash);
+                        assert(keys.data[k] != hash);
                     }
                 }
-                append_ddal(keys, hash);
-                append_pal(boards, bb);
+                keys.append(hash);
+                boards.append(bb);
 
                 b = bb;
                 break;

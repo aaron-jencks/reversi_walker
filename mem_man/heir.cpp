@@ -17,7 +17,7 @@ pthread_mutex_t heirarchy_lock;
 pthread_mutex_t heirarchy_cache_lock;
 
 
-heirarchy create_heirarchy(char* file_directory, size_t num_readers) {
+heirarchy create_heirarchy(char* file_directory) {
     heirarchy h = (heirarchy)malloc(sizeof(heirarchy_str));
     if(!h) err(1, "Memory error while allocating heirarchical memory system\n");
 
@@ -54,9 +54,6 @@ heirarchy create_heirarchy(char* file_directory, size_t num_readers) {
     h->temp_board_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT, FLUSH_COUNT);
 
     h->collision_count = 0;
-
-    h->sem = new MultiReadSemaphore(num_readers);
-    h->csem = new MultiReadSemaphore(num_readers);
 
     return h;
 }

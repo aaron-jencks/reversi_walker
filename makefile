@@ -4,7 +4,7 @@ cflags+=-O3 -Wall
 objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o 
 cpp_objects=tarraylist.o fdict.o hdict.o heir.o fileio.o walker.o semaphore.o 
 cuda_objects=
-test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o
+test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o dict_test.o 
 
 CHECKPOINT_PATH="$(HOME)/reversi_checkpoint.bin"
 export CHECKPOINT_PATH
@@ -18,13 +18,13 @@ gmain: gmain.cu $(cuda_objects)
 	nvcc -arch=sm_61 $(cflags) -o $@ $< $(cuda_objects) -lpthread
 
 tester: tester.o $(objects) $(test_objects)
-	$(cc) $(cflags) -o $@ $< $(objects) $(cpp_objects) $(test_objects) -pthread
+	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) $(test_objects) -pthread
 
 main.o: main.cpp $(objects) $(cpp_objects)
 	$(pp) $(cflags) -o $@ -c $<
 
-tester.o: tester.c $(objects) $(test_objects)
-	$(cc) -g $(cflags) -o $@ -c $<
+tester.o: tester.cpp $(objects) $(test_objects)
+	$(pp) -g $(cflags) -o $@ -c $<
 
 reversi.o: ./gameplay/reversi.c ./gameplay/reversi.h
 	$(cc) $(cflags) -o $@ -c $<
@@ -94,8 +94,8 @@ semaphore.o: ./utils/semaphore.cpp ./utils/semaphore.hpp
 capturecounts_test.o: tests/capturecounts_test.c tests/capturecounts_test.h reversi.o
 	$(cc) $(cflags) -o $@ -c $<
 
-legal_moves_test.o: tests/legal_moves_test.c tests/legal_moves_test.h reversi.o walker.o tarraylist.o 
-	$(cc) $(cflags) -o $@ -c $<
+legal_moves_test.o: tests/legal_moves_test.cpp tests/legal_moves_test.hpp reversi.o walker.o tarraylist.o 
+	$(pp) $(cflags) -o $@ -c $<
 
 board_placement_test.o: tests/board_placement.c tests/board_placement.h reversi.o
 	$(cc) $(cflags) -o $@ -c $<
@@ -106,8 +106,11 @@ mempage_test.o: tests/mempage_test.c tests/mempage_test.h mempage.o
 fileio_test.o: tests/fileio_test.c tests/fileio_test.h hashtable.o fileio.o
 	$(cc) $(cflags) -o $@ -c $<
 
-mmap_test.o: tests/mmap_test.c tests/mmap_test.h heir.o reversi.o hash_functions.o 
-	$(cc) $(cflags) -o $@ -c $<
+mmap_test.o: tests/mmap_test.cpp tests/mmap_test.hpp heir.o reversi.o hash_functions.o 
+	$(pp) $(cflags) -o $@ -c $<
+
+dict_test.o: tests/dict_test.cpp tests/dict_test.hpp utils/dictionary/dict_def.h fdict.o hdict.o
+	$(pp) $(cflags) -o $@ -c $<
 
 .PHONY : clean
 clean:
