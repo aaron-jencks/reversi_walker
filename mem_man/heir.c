@@ -82,15 +82,21 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     //     printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
     // #endif
 
-    while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+    // while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
 
     __uint128_t lower_key = key >> h->num_bits_per_final_level;
     uint8_t* dict_resp = bin_dict_get(h->bin_map, lower_key);
 
     if(!dict_resp) {
         // Allocate a new bin for it
-        uint8_t* new_bin = mmap_allocate_bin(h->final_level);
-        dict_resp = bin_dict_put(h->bin_map, lower_key, new_bin);
+        while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+        uint8_t* dict_resp = bin_dict_get(h->bin_map, lower_key);
+        if(!dict_resp) {
+            uint8_t* new_bin = mmap_allocate_bin(h->final_level);
+            bin_dict_put(h->bin_map, lower_key, new_bin);
+            dict_resp = new_bin;
+        }
+        pthread_mutex_unlock(&heirarchy_lock);
     }
 
 
@@ -165,8 +171,6 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
         // #endif
         h->collision_count++;
 
-        pthread_mutex_unlock(&heirarchy_lock);
-
         return 0;
     }
 
@@ -174,11 +178,23 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     //     printf("%lu %lu inserted into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
     // #endif
 
-    dict_resp[bits] |= ph;
+    while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+    byte = dict_resp[bits];
 
-    pthread_mutex_unlock(&heirarchy_lock);
+    if(!(byte & ph)) {
+        dict_resp[bits] |= ph;
 
-    return 1;
+        pthread_mutex_unlock(&heirarchy_lock);
+
+        return 1;
+    }
+    else {
+        h->collision_count++;
+
+        pthread_mutex_unlock(&heirarchy_lock);
+
+        return 0;
+    }
 }
 
 void to_file_heir(FILE* fp, heirarchy h) {
