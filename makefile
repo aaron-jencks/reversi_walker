@@ -4,7 +4,7 @@ cflags+=-O3 -Wall
 objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o 
 cpp_objects=tarraylist.o fdict.o hdict.o heir.o fileio.o walker.o semaphore.o 
 cuda_objects=
-test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o fileio_test.o mmap_test.o dict_test.o 
+test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o mmap_test.o dict_test.o 
 
 CHECKPOINT_PATH="$(HOME)/reversi_checkpoint.bin"
 export CHECKPOINT_PATH
@@ -17,7 +17,7 @@ main: main.o $(objects) $(cpp_objects)
 gmain: gmain.cu $(cuda_objects)
 	nvcc -arch=sm_61 $(cflags) -o $@ $< $(cuda_objects) -lpthread
 
-tester: tester.o $(objects) $(test_objects)
+tester: tester.o $(objects) $(cpp_objects) $(test_objects)
 	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) $(test_objects) -pthread
 
 main.o: main.cpp $(objects) $(cpp_objects)
@@ -103,7 +103,7 @@ board_placement_test.o: tests/board_placement.c tests/board_placement.h reversi.
 mempage_test.o: tests/mempage_test.c tests/mempage_test.h mempage.o
 	$(cc) $(cflags) -o $@ -c $<
 
-fileio_test.o: tests/fileio_test.c tests/fileio_test.h hashtable.o fileio.o
+fileio_test.o: tests/fileio_test.c tests/fileio_test.h fileio.o
 	$(cc) $(cflags) -o $@ -c $<
 
 mmap_test.o: tests/mmap_test.cpp tests/mmap_test.hpp heir.o reversi.o hash_functions.o 
@@ -117,6 +117,6 @@ clean:
 	rm main main.o $(objects) gmain $(cuda_objects) tester tester.o $(test_objects) $(cpp_objects)
 
 .PHONY : tests
-tests: tester $(objects) $(test_objects)
+tests: tester $(objects) $(cpp_objects) $(test_objects)
 	./tester
 	rm tester tester.o $(objects) $(test_objects)

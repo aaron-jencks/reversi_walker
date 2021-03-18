@@ -21,13 +21,13 @@ void mp_test_clear() {
     dmempage_clear_all(mp);
 
     for(size_t p = 0; p < mp->page_count; p++) {
-        __uint128_t** page = mp->pages[p];
+        dict_pair_t** page = mp->pages[p];
         for(size_t b = 0; b < mp->count_per_page; b++) {
-            __uint128_t* bin = page[b];
+            dict_pair_t* bin = page[b];
             size_t bcount = mp->bin_counts[p][b];
 
             for(size_t be = 0; be < bcount; be++) {
-                assert(!bin[be]);
+                assert(!bin[be].key);
                 break;
             }
         }
@@ -48,20 +48,20 @@ void mp_test_realloc() {
     __uint128_t offset = 0;
     uint64_t previous = 0, current = 0;
     for(size_t p = 0; p < mp->page_count; p++) {
-        __uint128_t** page = mp->pages[p];
+        dict_pair_t** page = mp->pages[p];
         for(size_t b = 0; b < mp->count_per_page; b++) {
-            __uint128_t* bin = page[b];
+            dict_pair_t* bin = page[b];
             size_t bcount = mp->bin_counts[p][b];
 
             for(size_t be = 0; be < bcount; be++) {
-                if(!bin[be]) break;
+                if(!bin[be].key) break;
 
-                current = bin[be];
+                current = bin[be].key;
 
-                printf("\nRetrieving %lu %lu into index %lu %lu", ((uint64_t*)&bin[be])[1], ((uint64_t*)&bin[be])[0], ((uint64_t*)&offset)[1], ((uint64_t*)&offset)[0]);
+                printf("\nRetrieving %lu %lu into index %lu %lu", ((uint64_t*)&bin[be].key)[1], ((uint64_t*)&bin[be].key)[0], ((uint64_t*)&offset)[1], ((uint64_t*)&offset)[0]);
                 fflush(stdout);
                 
-                dmempage_buff_put(buff, offset++, (dict_pair_t){bin[be], 0});
+                dmempage_buff_put(buff, offset++, bin[be]);
                 previous = current;
             }
         }

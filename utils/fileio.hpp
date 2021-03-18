@@ -4,11 +4,18 @@
 #include <pthread.h>
 #include <stdint.h>
 
-#include "../hashing/hashtable.h"
-#include "../mem_man/heir.hpp"
 #include "tarraylist.hpp"
+#include "../mem_man/heir.hpp"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void clear_file_cache();
+
+#ifdef __cplusplus
+}
+#endif
 
 #pragma region checkpoint saving and restoring
 
@@ -72,6 +79,10 @@ typedef processed_file_str* processed_file;
 #pragma endregion
 #pragma region version 2
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Called by the main thread to cause the system to save itself to a checkpoint file
  * 
@@ -93,6 +104,10 @@ void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* 
  * @return processed_file Returns a processed file containing all of the arguments required to restore progress, must be free'd by the user.
  */
 processed_file restore_progress_v2(char* filename);
+
+#ifdef __cplusplus
+}
+#endif
 
 #pragma endregion
 #pragma endregion

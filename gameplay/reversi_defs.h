@@ -13,5 +13,20 @@ typedef struct _coord_str {
  */
 typedef coord_str* coord;
 
+typedef struct _board_str {
+    uint8_t player;
+    uint8_t width;
+    uint8_t height;
+    uint8_t* board;
+} board_str;
+
+typedef board_str* board;
+
+typedef struct _capture_count_str {
+    uint8_t* counts;
+} capture_count_str;
+
+typedef capture_count_str* capture_count;
+
 #define BOARD_WIDTH 6
 #define BOARD_HEIGHT 6

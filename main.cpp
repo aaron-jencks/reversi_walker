@@ -390,7 +390,7 @@ int main() {
         // #else
         //     cache = create_hashtable(1000000, &board_hash);
         // #endif
-        cache = create_heirarchy(temp_dir, procs);
+        cache = create_heirarchy(temp_dir);
 
         checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
 
