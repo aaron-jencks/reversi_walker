@@ -211,7 +211,7 @@ int main() {
         err(4, "Initialization of counter mutex failed\n");
 
     #pragma region Round nprocs to the correct number
-    board b = create_board(1, 4, 4);
+    board b = create_board(1, 6, 6);
     
     // Setup the queue
     ptr_arraylist search_queue = create_ptr_arraylist(procs + 1);
@@ -226,7 +226,7 @@ int main() {
         printf("Found %lu moves\n", coord_buff->pointer);
     #endif
 
-    for(char im = 0; im < coord_buff->pointer; im++) {
+    for(uint8_t im = 0; im < coord_buff->pointer; im++) {
         coord m = coord_buff->data[im];
         uint16_t sm = coord_to_short(m);
         board cb = clone_board(b);
@@ -248,7 +248,7 @@ int main() {
             // printf("Found %lu moves\n", coord_buff->pointer);
         #endif
 
-        for(char im = 0; im < coord_buff->pointer; im++) {
+        for(uint8_t im = 0; im < coord_buff->pointer; im++) {
             coord m = coord_buff->data[im];
             uint16_t sm = coord_to_short(m);
             board cb = clone_board(b);
@@ -492,8 +492,8 @@ int main() {
             printf("\r");
         #endif
         
-            printf("Found %'lu final board states. Explored %'lu boards @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d Disk usage: %.2f%% %s", 
-                count, explored_count, fps,
+            printf("Found %'lu final board states. Explored %'lu boards with %'lu collisions @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d Disk usage: %.2f%% %s", 
+                count, explored_count, cache->collision_count, fps,
                 run_days, run_hours, run_minutes, run_seconds,
                 cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                 disk_perc,

@@ -154,7 +154,7 @@ void* walker_processor_pre_stacked(void* args) {
         ptr_arraylist search_stack = starting_stack;
         ptr_arraylist board_cache = create_ptr_arraylist(1000), coord_cache = create_ptr_arraylist(1000), coord_buff = create_ptr_arraylist(65);
         for(size_t bc = 0; bc < 1000; bc++) {
-            append_pal(board_cache, create_board(1, 5, 5));
+            append_pal(board_cache, create_board(1, 6, 6));
             append_pal(coord_cache, create_coord(0, 0));
         }
 
@@ -164,7 +164,7 @@ void* walker_processor_pre_stacked(void* args) {
         while(search_stack->pointer) {
             board sb = pop_back_pal(search_stack), bc;
 
-            if(heirarchy_insert(cache, board_spiral_hash(sb))) {
+            // if(heirarchy_insert(cache, board_spiral_hash(sb))) {
 
                 #ifdef debug
                     __uint128_t hash = board_spiral_hash(sb);
@@ -261,7 +261,7 @@ void* walker_processor_pre_stacked(void* args) {
                         //     #endif
                         // }
 
-                        // if(heirarchy_insert(cache, board_spiral_hash(sb))) {
+                        if(heirarchy_insert(cache, board_spiral_hash(sb))) {
 
                             // printf("Found a new board to count\n");
                             while(pthread_mutex_trylock(counter_lock)) sched_yield();
@@ -274,7 +274,7 @@ void* walker_processor_pre_stacked(void* args) {
                             // pthread_mutex_unlock(explored_lock);
 
                             // count = 0;
-                        // }
+                        }
                         // else {
                         //     while(pthread_mutex_trylock(repeated_lock)) sched_yield();
                         //     *repeated += 1;
@@ -286,13 +286,13 @@ void* walker_processor_pre_stacked(void* args) {
                 while(pthread_mutex_trylock(explored_lock)) sched_yield();
                 *explored += 1;
                 pthread_mutex_unlock(explored_lock);
-            }
-            else {
-                #ifdef debug
-                    __uint128_t hash = board_spiral_hash(sb);
-                    printf("Board hashed to %lu %lu <-- REPEAT\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
-                #endif
-            }
+            // }
+            // else {
+            //     #ifdef debug
+            //         __uint128_t hash = board_spiral_hash(sb);
+            //         printf("Board hashed to %lu %lu <-- REPEAT\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
+            //     #endif
+            // }
             append_pal(board_cache, sb);
 
             if(SAVING_FLAG) {

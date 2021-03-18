@@ -163,7 +163,7 @@ uint8_t board_get(board b, uint8_t row, uint8_t column) {
     if(b) {
         uint8_t total_bit = (row * (b->width << 1)) + (column << 1), 
                 byte = total_bit >> 3, 
-                bit = total_bit % 8;
+                bit = total_bit & 7;
 
         // (b'11' >> bit & board_value) >> (6 - bit)
         return ((192 >> bit) & b->board[byte]) >> (6 - bit);
@@ -175,7 +175,7 @@ void board_put(board b, uint8_t row, uint8_t column, uint8_t player) {
     if(b) {
         uint8_t total_bit = (row * (b->width << 1)) + (column << 1), 
                 byte = total_bit >> 3, 
-                bit = total_bit % 8, 
+                bit = total_bit & 7, 
                 bph = 192 >> bit;
 
         // Reset the value of the bits to 0

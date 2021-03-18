@@ -42,7 +42,7 @@ mmap_page create_mmap_page(const char* filename, size_t size) {
         printf("Creating mmap_page at %s\n", page->filename);
     #endif
 
-    page->fd = open(filename, O_RDWR | O_CREAT);
+    page->fd = open(filename, O_RDWR | O_CREAT, 0600);
     fchmod(page->fd, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH);
     posix_fallocate(page->fd, 0, size);
 
@@ -67,7 +67,7 @@ mmap_page create_mmap_page_no_alloc(const char* filename, size_t size) {
         printf("Creating mmap_page at %s\n", page->filename);
     #endif
 
-    page->fd = open(filename, O_RDWR | O_CREAT);
+    page->fd = open(filename, O_RDWR | O_CREAT, 0600);
     fchmod(page->fd, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH);
 
     printf("Remapping file %s\n", filename);
