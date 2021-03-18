@@ -90,7 +90,7 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     if(!dict_resp) {
         // Allocate a new bin for it
         while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
-        uint8_t* dict_resp = bin_dict_get(h->bin_map, lower_key);
+        dict_resp = bin_dict_get(h->bin_map, lower_key);
         if(!dict_resp) {
             uint8_t* new_bin = mmap_allocate_bin(h->final_level);
             bin_dict_put(h->bin_map, lower_key, new_bin);
@@ -179,6 +179,7 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
     // #endif
 
     while(pthread_mutex_trylock(&heirarchy_lock)) sched_yield();
+
     byte = dict_resp[bits];
 
     if(!(byte & ph)) {
