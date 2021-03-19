@@ -67,7 +67,8 @@ template <typename T> class Arraylist {
 		T pop_front() {
 			if(size) {
 				T d = data[0];
-				for(size_t e = 1; e < pointer; e++) data[e - 1] = data[e];
+				for(size_t e = 0; e < pointer; e++) data[e] = data[e + 1];
+				pointer--;
 				return d;
 			}
 			return (T)NULL;

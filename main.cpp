@@ -252,7 +252,7 @@ int main() {
             board cb = clone_board(b);
             board_place_piece(cb, m->row, m->column);
             search_queue->append(cb);
-            free(m);
+            coord_cache->append(m);
         }
 
         explored_count++;

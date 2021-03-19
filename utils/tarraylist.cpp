@@ -41,7 +41,7 @@ template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop_back() {
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop_front() {
 	if(size) {
 		dict_usage_pair_t d = data[0];
-		for(size_t e = 1; e < pointer; e++) data[e - 1] = data[e];
+		for(size_t e = 0; e < pointer; e++) data[e] = data[e + 1];
 		pointer--;
 		return d;
 	}
