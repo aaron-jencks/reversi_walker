@@ -173,7 +173,11 @@ void* walker_processor_pre_stacked(void* args) {
 
             // find_next_boards(sb, coord_buff, coord_cache);
 
+            #ifdef incore_cache
+
             if(heirarchy_insert_cache(cache, board_fast_hash_6(sb))) {
+
+            #endif
 
                 find_next_boards(sb, coord_buff, coord_cache);
 
@@ -292,6 +296,9 @@ void* walker_processor_pre_stacked(void* args) {
                 while(pthread_mutex_trylock(explored_lock)) sched_yield();
                 *explored += 1;
                 pthread_mutex_unlock(explored_lock);
+
+            #ifdef incore_cache
+
             }
             else {
                 #ifdef debug
@@ -299,6 +306,9 @@ void* walker_processor_pre_stacked(void* args) {
                     printf("Board hashed to %lu %lu <-- REPEAT\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
                 #endif
             }
+
+            #endif
+            
             board_cache->append(sb);
 
             if(SAVING_FLAG) {
