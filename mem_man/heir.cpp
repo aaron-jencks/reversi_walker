@@ -51,7 +51,7 @@ heirarchy create_heirarchy(char* file_directory) {
     h->fixed_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT * INITIAL_BIN_SIZE, FLUSH_COUNT, INITIAL_BIN_COUNT, INITIAL_BIN_SIZE);
     h->rehashing_cache = create_rehashing_dictionary(INITIAL_BIN_COUNT, INITIAL_BIN_SIZE);
 
-    h->temp_board_cache = create_fixed_size_dictionary(INITIAL_BIN_COUNT * INITIAL_BIN_SIZE, FLUSH_COUNT, INITIAL_BIN_COUNT, INITIAL_BIN_SIZE);
+    h->temp_board_cache = create_fixed_size_dictionary(186000000, 124000000, 3200000, 60);
 
     h->collision_count = 0;
 

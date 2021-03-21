@@ -49,7 +49,7 @@ dict_element_t* fdict_get_all(fdict d) {
     size_t i = 0;
     for(size_t b = 0; b < d->bin_count; b++) {
         for(size_t e = 0; e < d->bins[b]->pointer; e++) {
-            printf("\rFound %lu elements", i);
+            // printf("\rFound %lu elements", i);
             result[i].pair = d->bins[b]->data[e];
             result[i].bin = b;
             result[i++].element = e;
@@ -93,21 +93,20 @@ void fdict_put(fdict d, __uint128_t k, uint8_t* value) {
         else {
             printf("Flushing dictionary of %lu elements from %lu\n", d->flush_count, d->size);
             dict_element_t* elements = fdict_get_all(d);
-            // printf("Sorting dictionary\n");
+            printf("Sorting dictionary\n");
             heapsort_dict(elements, d->size - 1);
             heapsort_dict_removal_order(elements, d->flush_count);
-            // printf("Removing elements from dictionary\n");
+            printf("Removing elements from dictionary\n");
             for(size_t e = 0; e < d->flush_count; e++) {
                 // printf("\r%lu/%lu", e + 1, d->flush_count);
                 d->bins[elements[e].bin]->pop(elements[e].element);
-                
                 // for(size_t et = e; et < d->flush_count; et++) 
                 //     if(elements[et].bin == elements[e].bin && elements[et].element > elements[e].element) 
                 //         elements[et].element--;
             }
             free(elements);
             d->size -= d->flush_count;
-            // printf("\nFlushing complete\n");
+            printf("\nFlushing complete\n");
         }
     }
 
