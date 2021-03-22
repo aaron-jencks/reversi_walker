@@ -1,6 +1,6 @@
 cc=gcc
 pp=g++
-cflags+=-Dincore_cache -O3 -Wall
+cflags+=-O3 -Wall
 objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o 
 cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o 
 cuda_objects=
