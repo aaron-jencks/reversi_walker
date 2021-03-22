@@ -1,55 +1,40 @@
 #include <stdio.h>
-#include <math.h>
 
-
-__device__ void somethingElse() {
-    printf("Hello, this is the gpu\n");
-}
-
-
-__global__ void add(int n, float* x, float* y) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-    // somethingElse();
-    for(int i = index; i < n; i += stride) y[i] = x[i] + y[i];
-}
+#include "./cuda/walker.cuh"
+#include "./gameplay/reversi.h"
+#include "./cuda/reversi.cuh"
+#include "./gameplay/reversi_defs.h"
 
 
 int main() {
-    int N = 1<<20;
-    float *x, *y, *host_x, *host_y;
-    int blockSize = 512;
-    int numBlocks = (N + blockSize - 1) / blockSize;
+    board_str *test, *result;
+    size_t pitch = 65;
 
-    // Allocate Unified Memory – accessible from CPU or GPU
-    cudaMallocManaged(&x, N*sizeof(float));
-    cudaMallocManaged(&y, N*sizeof(float));
-    host_x = (float*)malloc(sizeof(float) * N);
-    host_y = (float*)malloc(sizeof(float) * N);
+    cudaMallocManaged(&test, sizeof(board_str) * 1000000);
+    cudaMallocManaged(&result, sizeof(board_str) * 65000000);
 
-    // initialize x and y arrays on the host
-    for (int i = 0; i < N; i++) {
-        host_x[i] = 1.0f;
-        host_y[i] = 2.0f;
+    board template_board = create_board_cuda(1, 8, 8);
+    for(size_t i = 0; i < 1000000; i++) { clone_into_board(&test[i], template_board); }
+    destroy_board_cuda(template_board);
+
+    compute_mass_next_cuda<<<16, 1024>>>(test, result, 1000000, pitch);
+    cudaDeviceSynchronize();
+    printf("Cuda Error %d should be %d\n", cudaPeekAtLastError(), cudaSuccess);
+
+    printf("Finished processing\n");
+
+    size_t count = 0;
+    for(size_t bs = 0; bs < 1000000; bs++) {
+        board_str* row = (board_str*)((char*)result + bs * pitch);
+
+        for(size_t b = 0; b < 64; b++) {
+            if(row[b].height) count++;
+            else break;
+        }
     }
 
-    memcpy(x, host_x, sizeof(float) * N);
-    memcpy(y, host_y, sizeof(float) * N);
+    cudaFree(test);
+    cudaFree(result);
 
-    // Run kernel on 1M elements on the GPU
-    add<<<numBlocks, blockSize>>>(N, x, y);
-
-    // Wait for GPU to finish before accessing on host
-    cudaDeviceSynchronize();
-
-    // Check for errors (all values should be 3.0f)
-    float maxError = 0.0f;
-    for (int i = 0; i < N; i++)
-        maxError = fmax(maxError, fabs(y[i]-3.0f));
-
-    printf("Max error: %f\n", maxError);
-
-    // Free memory
-    cudaFree(x);
-    cudaFree(y);
+    printf("Finished computation with %lu boards found\n", count);
 }

@@ -1,9 +1,11 @@
 cc=gcc
 pp=g++
+cuda_cc=nvcc
 cflags+=-O3 -Wall
+cuda_flags+=-arch=sm_61
 objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o 
 cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o 
-cuda_objects=
+cuda_objects=reversi_cuda.o walker_cuda.o 
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o mmap_test.o dict_test.o heapsort_test.o arraylist_test.o 
 
 CHECKPOINT_PATH="$(HOME)/reversi_checkpoint.bin"
@@ -14,8 +16,8 @@ all: main;
 main: main.o $(objects) $(cpp_objects)
 	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) -pthread
 
-gmain: gmain.cu $(cuda_objects)
-	nvcc -arch=sm_61 $(cppflags) -o $@ $< $(cuda_objects) -lpthread
+gmain: gmain.cu $(cuda_objects) $(objects) $(cpp_objects)
+	$(cuda_cc) $(cuda_flags) -o $@ $< $(cuda_objects) $(objects) $(cpp_objects) -lpthread
 
 tester: tester.o $(objects) $(cpp_objects) $(test_objects)
 	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) $(test_objects) -pthread
@@ -88,6 +90,17 @@ tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp;
 
 semaphore.o: ./utils/semaphore.cpp ./utils/semaphore.hpp
 	$(pp) $(cflags) -o $@ -c $<
+
+# Cuda
+
+reversi_cuda.o : ./cuda/reversi.cu ./cuda/reversi.cuh ./gameplay/reversi_defs.h reversi.o 
+	$(cuda_cc) $(cuda_flags) -o $@ -dc $<
+
+tarraylist_cuda.o : ./cuda/tarraylist.cu ./cuda/tarraylist.cuh ./gameplay/reversi_defs.h
+	$(cuda_cc) $(cuda_flags) -o $@ -dc $<
+
+walker_cuda.o : ./cuda/walker.cu ./cuda/walker.cuh ./gameplay/reversi_defs.h reversi_cuda.o reversi.o 
+	$(cuda_cc) $(cuda_flags) -o $@ -dc $< 
 
 # Tests
 
