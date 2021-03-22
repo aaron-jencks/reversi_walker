@@ -25,6 +25,9 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
     mp->pages = malloc(sizeof(__uint128_t**) * pages);
     if(!mp->pages) err(1, "Memory error while allocating book for mempage\n");
 
+    mp->ptr_pages = malloc(sizeof(uint8_t***) * pages);
+    if(!mp->ptr_pages) err(1, "Memory error while allocating book for mempage\n");
+
     mp->access_counts = calloc(pages, sizeof(size_t));
     if(!mp->access_counts) err(1, "Memory error while allocating book for mempage\n");
 
@@ -44,19 +47,22 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
 
     for(__uint128_t p = 0; p < pages; p++) {
         __uint128_t** bins = malloc(sizeof(__uint128_t*) * page_max);
-        if(!bins) err(1, "Memory error while allocating array for mempage page\n");
+        uint8_t*** pbins = malloc(sizeof(uint8_t**) * page_max);
+        if(!(bins && pbins)) err(1, "Memory error while allocating array for mempage page\n");
 
         size_t* sizes = malloc(sizeof(size_t) * page_max);
         if(!sizes) err(1, "Memory error while allocating array for mempage page\n");
 
         for(size_t b = 0; b < page_max; b++) {
             bins[b] = calloc(bin_size, sizeof(__uint128_t));
-            if(!bins[b]) err(1, "Memory error while allocating bin for mempage\n");
+            pbins[b] = malloc(sizeof(uint8_t*) * bin_size);
+            if(!(bins[b] && pbins[b])) err(1, "Memory error while allocating bin for mempage\n");
 
             sizes[b] = mp->bin_size;
         }
 
         mp->pages[p] = bins;
+        mp->ptr_pages[p] = pbins;
         mp->bin_counts[p] = sizes;
 
         size_t page_index = p >> 3, bit = p % 8;
@@ -83,8 +89,10 @@ void destroy_mempage(mempage mp) {
             for(size_t b = 0; b < mp->count_per_page; b++) free(mp->pages[p][b]);
             free(mp->pages[p]);
             free(mp->bin_counts[p]);
+            free(mp->ptr_pages[p]);
         }
         free(mp->pages);
+        free(mp->ptr_pages);
         free(mp->access_counts);
         free(mp->bin_counts);
         free(mp->page_present);
@@ -164,7 +172,7 @@ size_t mempage_find_total_size(mempage mp) {
     return result + sizeof(mempage_str);
 }
 
-void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
+void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t key, void* value) {
     if(bin_index >= mp->num_bins) err(4, "Index %lu %lu out of bounds in mempage of size %lu %lu\n", 
                                       ((uint64_t*)&bin_index)[1], ((uint64_t*)&bin_index)[0], 
                                       ((uint64_t*)&mp->num_bins)[1], ((uint64_t*)&mp->num_bins)[0]);
@@ -172,11 +180,11 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
 
     // printf("Calculated page and bin %ld\n", clock());
 
-    if(!mempage_page_exists(mp, page)) {
-        size_t lpage = mempage_find_least_used_page(mp);
-        if(mempage_page_exists(mp, lpage)) swap_mempage_page(mp, lpage, page, mp->swap_directory);
-        else load_mempage_page(mp, page, mp->swap_directory);
-    }
+    // if(!mempage_page_exists(mp, page)) {
+    //     size_t lpage = mempage_find_least_used_page(mp);
+    //     if(mempage_page_exists(mp, lpage)) swap_mempage_page(mp, lpage, page, mp->swap_directory);
+    //     else load_mempage_page(mp, page, mp->swap_directory);
+    // }
 
     // printf("Checked page existence %ld\n", clock());
 
@@ -187,12 +195,15 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
     #endif
 
     __uint128_t** l = mp->pages[page];
+    uint8_t*** lp = mp->ptr_pages[page];
     size_t bcount = mp->bin_counts[page][page_index];
     
     __uint128_t* bin = l[page_index];
+    uint8_t** pbin = lp[page_index];
     for(size_t iter = 0;; iter++) {
         if(!bin[iter]) {
-            bin[iter] = value;
+            bin[iter] = key;
+            pbin[iter] = value;
             break;
         }
         else if(iter == bcount) {
@@ -202,39 +213,45 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t value) {
             #endif
 
             bin = realloc(bin, sizeof(__uint128_t) * (bcount + 10));
+            pbin = realloc(pbin, sizeof(uint8_t*) * (bcount + 10));
 
-            for(size_t b = bcount; b < (bcount + 10); b++) bin[b] = 0;
+            for(size_t b = bcount; b < (bcount + 10); b++) {
+                bin[b] = 0;
+                pbin[b] = 0;
+            }
 
             bcount += 10;
 
             l[page_index] = bin;
+            lp[page_index] = pbin;
             mp->bin_counts[page][page_index] = bcount;
 
-            bin[iter] = value;
+            bin[iter] = key;
+            pbin[iter] = value;
             break;
         }
     }
 
     // printf("Inserted element %ld\n", clock());
 
-    if(++mp->save_interv_counter == CHECK_SWAP_INTERV) {
-        if(mempage_find_total_size(mp) > MEMORY_THRESHOLD) {
-            #ifdef mempagedebug
-                printf("The cache is too big, attempting to swap\n");
-            #endif
+    // if(++mp->save_interv_counter == CHECK_SWAP_INTERV) {
+    //     if(mempage_find_total_size(mp) > MEMORY_THRESHOLD) {
+    //         #ifdef mempagedebug
+    //             printf("The cache is too big, attempting to swap\n");
+    //         #endif
 
-            size_t pindex = mempage_find_least_used_page(mp);
+    //         size_t pindex = mempage_find_least_used_page(mp);
 
-            if(mempage_page_exists(mp, pindex)) {
-                #ifdef mempagedebug
-                    printf("Cache size: %ld/%ld: Saving page %ld to file\n", mempage_find_total_size(mp), MEMORY_THRESHOLD, pindex);
-                #endif
+    //         if(mempage_page_exists(mp, pindex)) {
+    //             #ifdef mempagedebug
+    //                 printf("Cache size: %ld/%ld: Saving page %ld to file\n", mempage_find_total_size(mp), MEMORY_THRESHOLD, pindex);
+    //             #endif
 
-                save_mempage_page(mp, pindex, mp->swap_directory);
-            }
-        }
-        mp->save_interv_counter = 0;
-    }
+    //             save_mempage_page(mp, pindex, mp->swap_directory);
+    //         }
+    //     }
+    //     mp->save_interv_counter = 0;
+    // }
 
     // printf("Checked for swap %ld\n", clock());
 }
@@ -280,8 +297,10 @@ void mempage_clear_all(mempage mp) {
         
         for(size_t b = 0; b < mp->count_per_page; b++) {
             free(mp->pages[p][b]);
+            free(mp->ptr_pages[p][b]);
             mp->pages[p][b] = calloc(mp->bin_size, sizeof(__uint128_t));
-            if(!mp->pages[p][b]) err(1, "Memory error while allocating bin for mempage\n");
+            mp->ptr_pages[p][b] = malloc(mp->bin_size * sizeof(uint8_t*));
+            if(!(mp->pages[p][b] && mp->ptr_pages[p][b])) err(1, "Memory error while allocating bin for mempage\n");
             mp->bin_counts[p][b] = mp->bin_size;
         }
     }
@@ -298,7 +317,8 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
     if(diff) {
         // mp->pages = create_ll();
         mp->pages = realloc(mp->pages, sizeof(__uint128_t**) * pages);
-        if(!mp->pages) err(1, "Memory error while allocating book for mempage\n");
+        mp->ptr_pages = realloc(mp->ptr_pages, sizeof(uint8_t***) * pages);
+        if(!(mp->pages && mp->ptr_pages)) err(1, "Memory error while allocating book for mempage\n");
 
         mp->access_counts = realloc(mp->access_counts, pages * sizeof(size_t));
         if(!mp->access_counts) err(1, "Memory error while allocating book for mempage\n");
@@ -331,15 +351,15 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
             uint8_t ph = 1 << bit;
             mp->page_present[byte] |= ph;
 
-            if(mempage_find_total_size(mp) > MEMORY_THRESHOLD) {
-                size_t pindex = mempage_find_least_used_page(mp);
+            // if(mempage_find_total_size(mp) > MEMORY_THRESHOLD) {
+            //     size_t pindex = mempage_find_least_used_page(mp);
 
-                #ifdef mempagedebug
-                    printf("Cache size: %ld/%ld: Saving page %ld to file\n", mempage_find_total_size(mp), MEMORY_THRESHOLD, pindex);
-                #endif
+            //     #ifdef mempagedebug
+            //         printf("Cache size: %ld/%ld: Saving page %ld to file\n", mempage_find_total_size(mp), MEMORY_THRESHOLD, pindex);
+            //     #endif
 
-                save_mempage_page(mp, pindex, mp->swap_directory);
-            }
+            //     save_mempage_page(mp, pindex, mp->swap_directory);
+            // }
         }
 
         mp->page_count = pages;
@@ -348,6 +368,28 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
     mp->num_bins = bin_count;
 }
 
+uint8_t* mempage_get(mempage mp, __uint128_t bin_index, __uint128_t key) {
+    if(bin_index >= mp->num_bins) err(4, "Index out of bounds in mempage\n");
+    uint32_t page = bin_index / mp->count_per_page, page_index = bin_index % mp->count_per_page;
+
+    if(!mempage_page_exists(mp, page)) {
+        size_t lpage = mempage_find_least_used_page(mp);
+        swap_mempage_page(mp, lpage, page, mp->swap_directory);
+    }
+
+    mp->access_counts[page]++;
+
+    #ifdef mempagedebug
+        // printf("Memory page has been accessed %ld times\n", mp->access_counts[page]);
+    #endif
+
+    __uint128_t** l = mp->pages[page];
+    size_t bcount = mp->bin_counts[page][page_index];
+    
+    __uint128_t* bin = l[page_index];
+    for(size_t b = 0; b < bcount; b++) if(bin[b] == key) return mp->ptr_pages[page][page_index][b];
+    return 0;
+}
 #pragma endregion
 #pragma region mempage_buff
 
@@ -425,44 +467,51 @@ void destroy_mempage_buff(mempage_buff buff) {
     free(buff);
 }
 
-void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t value) {
+void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t k, void* value) {
     if(index >= buff->num_element) err(4, "Index %lu %lu is out of bounds in mempage buffer\n", ((uint64_t*)&index)[1], ((uint64_t*)&index)[0]);
     uint32_t page = index / buff->count_per_page, page_index = index % buff->count_per_page;
 
-    if(!mempage_buff_page_exists(buff, page)) {
-        size_t lpage = mempage_buff_find_least_used_page(buff);
-        if(mempage_buff_page_exists(buff, lpage)) swap_mempage_buff_page(buff, lpage, page, buff->swap_directory);
-        else load_mempage_buff_page(buff, page, buff->swap_directory);
-    }
+    // if(!mempage_buff_page_exists(buff, page)) {
+    //     size_t lpage = mempage_buff_find_least_used_page(buff);
+    //     if(mempage_buff_page_exists(buff, lpage)) swap_mempage_buff_page(buff, lpage, page, buff->swap_directory);
+    //     else load_mempage_buff_page(buff, page, buff->swap_directory);
+    // }
 
     __uint128_t* l = buff->pages[page];
-    l[page_index] = value;
+    l[page_index] = k;
+    buff->ptr_pages[page][page_index] = value;
 
-    if(++buff->save_interv_counter == CHECK_SWAP_INTERV) {
-        if(mempage_buff_find_total_size(buff) > MEMORY_THRESHOLD) {
-            size_t pindex = mempage_buff_find_least_used_page(buff);
+    // if(++buff->save_interv_counter == CHECK_SWAP_INTERV) {
+    //     if(mempage_buff_find_total_size(buff) > MEMORY_THRESHOLD) {
+    //         size_t pindex = mempage_buff_find_least_used_page(buff);
 
-            #ifdef mempagedebug
-                printf("Saving page %ld to file\n", pindex);
-            #endif
+    //         #ifdef mempagedebug
+    //             printf("Saving page %ld to file\n", pindex);
+    //         #endif
 
-            save_mempage_buff_page(buff, pindex, buff->swap_directory);
-        }
-        buff->save_interv_counter = 0;
-    }
+    //         save_mempage_buff_page(buff, pindex, buff->swap_directory);
+    //     }
+    //     buff->save_interv_counter = 0;
+    // }
 }
 
-__uint128_t mempage_buff_get(mempage_buff buff, __uint128_t index) {
+map_tuple mempage_buff_get(mempage_buff buff, __uint128_t index) {
     if(index >= buff->num_element) err(4, "Index %lu %lu is out of bounds in mempage buffer\n", ((uint64_t*)&index)[1], ((uint64_t*)&index)[0]);
     uint32_t page = index / buff->count_per_page, page_index = index % buff->count_per_page;
 
-    if(!mempage_buff_page_exists(buff, page)) {
-        size_t lpage = mempage_buff_find_least_used_page(buff);
-        if(mempage_buff_page_exists(buff, lpage)) swap_mempage_buff_page(buff, lpage, page, buff->swap_directory);
-        else load_mempage_buff_page(buff, page, buff->swap_directory);
-    }
+    // if(!mempage_buff_page_exists(buff, page)) {
+    //     size_t lpage = mempage_buff_find_least_used_page(buff);
+    //     if(mempage_buff_page_exists(buff, lpage)) swap_mempage_buff_page(buff, lpage, page, buff->swap_directory);
+    //     else load_mempage_buff_page(buff, page, buff->swap_directory);
+    // }
 
-    return buff->pages[page][page_index];
+    map_tuple tup = malloc(sizeof(map_tuple_t));
+    if(!tup) err(1, "Memory error while allocating map tuple\n");
+
+    tup->k = buff->pages[page][page_index];
+    tup->ptr = buff->ptr_pages[page][page_index];
+
+    return tup;
 }
 
 #pragma endregion

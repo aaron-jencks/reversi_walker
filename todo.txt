@@ -1,0 +1,5 @@
+1. experiment comparing collision slopes of no buffered-hash with buffered-hash and with/without in-core cache.
+
+2. experiment to see if the buffered hash table improves fps
+
+Jim Lathrop

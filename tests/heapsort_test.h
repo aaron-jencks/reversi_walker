@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-void board_placement_test();
+void heapsort_test();
 
 #ifdef __cplusplus
 }

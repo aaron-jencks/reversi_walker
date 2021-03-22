@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "../hashing/hashtable.h"
+
 typedef struct __bin_dict_t {
     __uint128_t** keys;
     size_t* indices;
@@ -16,6 +18,7 @@ typedef struct __bin_dict_t {
     size_t element_size;
     size_t loaded_count;
     size_t element_count;
+    hashtable cache;
 } bin_dict_t;
 
 typedef bin_dict_t* bin_dict;

@@ -15,14 +15,13 @@
 
 #include "./gameplay/reversi.h"
 #include "./hashing/hash_functions.h"
-#include "./mem_man/heir.h"
-#include "./gameplay/walker.h"
-#include "./utils/ll.h"
-#include "./utils/arraylist.h"
-#include "./gameplay/valid_moves.h"
-#include "./utils/fileio.h"
+#include "./mem_man/heir.hpp"
+#include "./gameplay/walker.hpp"
+#include "./utils/tarraylist.hpp"
+#include "./utils/fileio.hpp"
 #include "./utils/path_util.h"
 #include "./utils/csv.h"
+#include "./gameplay/reversi_defs.h"
 
 // TODO you can use the previous two board states to predict the next set of valid moves.
 
@@ -30,10 +29,6 @@
  * 
  * use 'ulimit -c unlimited' to make core dump
  * 
- * TODO add ability to make checkpoints to save progress
- *  - Interpret Ctrl+C interrupt signal and cause a save
- * 
- * [DONE] make a way to swap out memory from disk when it's not used.
  * 
  */
 
@@ -56,7 +51,7 @@ void display_board(board b) {
     }
 }
 
-void display_moves(board b, ptr_arraylist coords) {
+void display_moves(board b, Arraylist<void*>* coords) {
     if(b) {
         printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
         for(uint8_t r = 0; r < b->height; r++) {
@@ -146,10 +141,10 @@ int main() {
 
     setlocale(LC_NUMERIC, "");
 
-    char* temp_dir = (getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/tmp";
+    char* temp_dir = (char*)((getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/tmp");
 
     #ifndef reusefiles
-        char* temp_result = malloc(sizeof(char) * (strlen(temp_dir) + 16));
+        char* temp_result = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 16));
         snprintf(temp_result, strlen(temp_dir) + 16, "%s/reversi.XXXXXX", temp_dir);
         temp_dir = mkdtemp(temp_result);
     #endif
@@ -157,12 +152,12 @@ int main() {
     char* checkpoint_filename, *csv_filename;
 
     if(!getenv("CHECKPOINT_PATH")) {
-        checkpoint_filename = malloc(sizeof(char) * (strlen(temp_dir) + 16));
+        checkpoint_filename = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 16));
         snprintf(checkpoint_filename, strlen(temp_dir) + 16, "%s/checkpoint.bin", temp_dir);
     }
     else checkpoint_filename = getenv("CHECKPOINT_PATH");
 
-    csv_filename = malloc(sizeof(char) * (strlen(temp_dir) + 9));
+    csv_filename = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 9));
     if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
     snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
 
@@ -200,23 +195,24 @@ int main() {
     pthread_mutex_t counter_lock, explored_lock, file_lock, repeated_lock, finished_lock;
 
     // Setup the checkpoint saving system
-    FILE** checkpoint_file = malloc(sizeof(FILE*));
+    FILE** checkpoint_file = (FILE**)malloc(sizeof(FILE*));
     if(!checkpoint_file) err(1, "Memory error while allocating checkpoint file pointer\n");
     uint64_t saving_counter;
 
     // Initialize the locks
     if(pthread_mutex_init(&counter_lock, 0) || pthread_mutex_init(&explored_lock, 0) || pthread_mutex_init(&repeated_lock, 0) || 
        pthread_mutex_init(&file_lock, 0) || pthread_mutex_init(&saving_lock, 0) || pthread_mutex_init(&shutdown_lock, 0) || 
-       pthread_mutex_init(&heirarchy_lock, 0) || pthread_mutex_init(&finished_lock, 0)) 
+       pthread_mutex_init(&heirarchy_lock, 0) || pthread_mutex_init(&finished_lock, 0) || pthread_mutex_init(&heirarchy_cache_lock, 0)) 
         err(4, "Initialization of counter mutex failed\n");
 
     #pragma region Round nprocs to the correct number
-    board b = create_board(1, 6, 6);
+    printf("Searching for at least %u boards\n", procs);
+    board b = create_board(1, BOARD_HEIGHT, BOARD_WIDTH);
     
     // Setup the queue
-    ptr_arraylist search_queue = create_ptr_arraylist(procs + 1);
-    ptr_arraylist coord_buff = create_ptr_arraylist(65), coord_cache = create_ptr_arraylist(1000);
-    for(size_t c = 0; c < 1000; c++) append_pal(coord_cache, create_coord(0, 0));
+    Arraylist<void*>* search_queue = new Arraylist<void*>(procs + 1);
+    Arraylist<void*>* coord_buff = new Arraylist<void*>(65), *coord_cache = new Arraylist<void*>(1000);
+    for(size_t c = 0; c < 1000; c++) coord_cache->append(create_coord(0, 0));
 
     // Account for reflections and symmetry by using 1 of the 4 possible starting moves
     find_next_boards(b, coord_buff, coord_cache);
@@ -227,12 +223,12 @@ int main() {
     #endif
 
     for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-        coord m = coord_buff->data[im];
+        coord m = (coord)coord_buff->data[im];
         uint16_t sm = coord_to_short(m);
         board cb = clone_board(b);
         board_place_piece(cb, m->row, m->column);
-        append_pal(search_queue, cb);
-        append_pal(coord_cache, m);
+        search_queue->append(cb);
+        coord_cache->append(m);
         break;
     }
 
@@ -240,7 +236,9 @@ int main() {
 
     // Perform the BFS
     while(search_queue->pointer < procs) {
-        b = pop_front_pal(search_queue);
+        printf("\rCurrent board status: %lu/%u", search_queue->pointer, procs);
+
+        b = (board)search_queue->pop_front();
         find_next_boards(b, coord_buff, coord_cache);
 
         #ifdef debug
@@ -249,12 +247,12 @@ int main() {
         #endif
 
         for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-            coord m = coord_buff->data[im];
+            coord m = (coord)coord_buff->data[im];
             uint16_t sm = coord_to_short(m);
             board cb = clone_board(b);
             board_place_piece(cb, m->row, m->column);
-            append_pal(search_queue, cb);
-            free(m);
+            search_queue->append(cb);
+            coord_cache->append(m);
         }
 
         explored_count++;
@@ -263,17 +261,17 @@ int main() {
     }
 
     procs = search_queue->pointer;
-    while(coord_cache->pointer) free(pop_back_pal(coord_cache));
+    while(coord_cache->pointer) free(coord_cache->pop_back());
 
-    printf("Rounded nprocs to %d threads\n", procs);
+    printf("\nRounded nprocs to %d threads\n", procs);
     #pragma endregion
 
-    ptr_arraylist threads;
+    Arraylist<void*>* threads;
 
     #pragma region determine if loading checkpoint
 
     if(d == 'y') {
-        char** restore_filename = malloc(sizeof(char*));
+        char** restore_filename = (char**)malloc(sizeof(char*));
         printf("Please enter a file to restore from: ");
         scanf("%ms", restore_filename);
         getc(stdin);    // Read the extra \n character
@@ -289,11 +287,11 @@ int main() {
                     break;
                 }
                 else if(d == 'y' || d == 'Y') {
-                    checkpoint_filename = malloc(sizeof(char) * strlen(*restore_filename));
+                    checkpoint_filename = (char*)malloc(sizeof(char) * strlen(*restore_filename));
                     strcpy(checkpoint_filename, *restore_filename);
-                    csv_filename = malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
+                    csv_filename = (char*)malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
                     if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
-                    temp_dir = malloc(sizeof(char) * strlen(checkpoint_filename));
+                    temp_dir = (char*)malloc(sizeof(char) * strlen(checkpoint_filename));
                     if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
                     strcpy(temp_dir, checkpoint_filename);
                     temp_dir = dirname(temp_dir);
@@ -317,42 +315,42 @@ int main() {
         free(*restore_filename);
 
         // De-allocate the stuff we did to round procs, because we don't need it now.
-        while(search_queue->pointer) destroy_board(pop_front_pal(search_queue));
-        destroy_ptr_arraylist(search_queue);
+        while(search_queue->pointer) destroy_board((board)search_queue->pop_front());
+        delete search_queue;
 
         // Begin restore
         count = pf->found_counter;
         explored_count = pf->explored_counter;
 
-        ptr_arraylist stacks = pf->processor_stacks;
+        Arraylist<void*>* stacks = pf->processor_stacks;
         if(procs != pf->num_processors) {
             printf("Redistributing workload to match core count\n");
             // Redistribute workload
-            ptr_arraylist all_current_boards = create_ptr_arraylist(procs * 1000), important_boards = create_ptr_arraylist(pf->num_processors + 1);
-            for(ptr_arraylist* p = (ptr_arraylist*)pf->processor_stacks->data; *p; p++) {
+            Arraylist<void*>* all_current_boards = new Arraylist<void*>(procs * 1000), *important_boards = new Arraylist<void*>(pf->num_processors + 1);
+            for(Arraylist<void*>** p = (Arraylist<void*>**)pf->processor_stacks->data; *p; p++) {
                 for(uint64_t pb = 0; pb < (*p)->pointer; pb++) {
-                    board b = (*p)->data[pb];
+                    board b = (board)(*p)->data[pb];
                     // printf("Collected\n"); display_board(b);
-                    append_pal((pb) ? all_current_boards : important_boards, b);
+                    ((pb) ? all_current_boards : important_boards)->append(b);
                 }
-                destroy_ptr_arraylist(*p);
+                delete *p;
             }
 
-            while(stacks->pointer) pop_back_pal(stacks);
+            while(stacks->pointer) stacks->pop_back();
 
             // printf("Distributing %lu boards\n", all_current_boards->pointer + important_boards->pointer);
             
-            for(uint64_t p = 0; p < procs; p++) append_pal(stacks, create_ptr_arraylist(10000));
+            for(uint64_t p = 0; p < procs; p++) stacks->append(new Arraylist<void*>(10000));
 
             uint64_t p_ptr = 0;
 
             while(important_boards->pointer) {
-                append_pal(stacks->data[p_ptr++], pop_back_pal(important_boards));
+                ((Arraylist<void*>*)stacks->data[p_ptr++])->append(important_boards->pop_back());
                 if(p_ptr == procs) p_ptr = 0;
             }
 
             while(all_current_boards->pointer) {
-                append_pal(stacks->data[p_ptr++], pop_back_pal(all_current_boards));
+                ((Arraylist<void*>*)stacks->data[p_ptr++])->append(all_current_boards->pop_back());
                 if(p_ptr == procs) p_ptr = 0;
             }
         }
@@ -360,7 +358,7 @@ int main() {
         // Create threads
 
         // Distribute the initial states to a set of new pthreads.
-        threads = create_ptr_arraylist(procs + 1);
+        threads = new Arraylist<void*>(procs + 1);
 
         for(uint64_t t = 0; t < procs; t++) {
             pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
@@ -368,11 +366,11 @@ int main() {
 
             #ifdef filedebug
                 printf("%p %s with %lu elements\n", stacks->data[t], 
-                                                    (((ptr_arraylist)(stacks->data[t]))) ? "Valid" : "Not Valid",
-                                                    ((ptr_arraylist)(stacks->data[t]))->pointer);
+                                                    (((Arraylist<void*>*)(stacks->data[t]))) ? "Valid" : "Not Valid",
+                                                    ((Arraylist<void*>*)(stacks->data[t]))->pointer);
             #endif
 
-            processor_args args = create_processor_args(t, stacks->data[t], pf->cache, 
+            processor_args args = create_processor_args(t, (board)stacks->data[t], pf->cache, 
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
                                                         &repeated_count, &repeated_lock,
@@ -381,7 +379,7 @@ int main() {
 
             // walker_processor(args);
             pthread_create(thread_id, 0, walker_processor_pre_stacked, (void*)args);
-            append_pal(threads, thread_id);
+            threads->append(thread_id);
         }
 
         cache = pf->cache;
@@ -397,13 +395,13 @@ int main() {
         checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
 
         // Distribute the initial states to a set of new pthreads.
-        threads = create_ptr_arraylist(procs + 1);
+        threads = new Arraylist<void*>(procs + 1);
 
         for(uint64_t t = 0; t < procs; t++) {
             pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
             if(!thread_id) err(1, "Memory error while allocating thread id\n");
 
-            processor_args args = create_processor_args(t, search_queue->data[t], cache, 
+            processor_args args = create_processor_args(t, (board)search_queue->data[t], cache, 
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
                                                         &repeated_count, &repeated_lock,
@@ -412,7 +410,7 @@ int main() {
 
             // walker_processor(args);
             pthread_create(thread_id, 0, walker_processor, (void*)args);
-            append_pal(threads, thread_id);
+            threads->append(thread_id);
         }
     }
 
@@ -436,9 +434,10 @@ int main() {
     uint64_t previous_board_count = 0, fps = 0;
     double disk_avail, disk_used, disk_perc;
 
-    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%lu\n", 7);
+    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f,%.4f,%lu\n", 9);
     struct stat sbuff;
-    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", "hash_load_factor", "collisions");
+    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", 
+        "fixed_hash_load_factor", "hash_load_factor", "cache_load_factor", "collisions");
 
     while(1) {
         if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
@@ -479,7 +478,11 @@ int main() {
         }
 
         if((current - log_timer) / 60) {
-            append_data(csv, run_time, fps, count, explored_count, disk_perc, bin_dict_load_factor(cache->bin_map), cache->collision_count);
+            append_data(csv, run_time, fps, count, explored_count, disk_perc, 
+                fdict_load_factor(cache->fixed_cache), 
+                hdict_load_factor(cache->rehashing_cache), 
+                fdict_load_factor(cache->temp_board_cache),
+                cache->collision_count);
             log_timer = time(0);
         }
 

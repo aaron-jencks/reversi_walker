@@ -2,23 +2,13 @@
 
 #include "reversi.h"
 #include "../hashing/hashtable.h"
-#include "../utils/arraylist.h"
-#include "../mem_man/heir.h"
+#include "../utils/tarraylist.hpp"
+#include "../mem_man/heir.hpp"
+#include "reversi_defs.h"  
 
 #include <stdint.h>
 #include <stdio.h>
 #include <pthread.h>
-
-typedef struct _coord_str {
-    uint8_t row;
-    uint8_t column;
-} coord_str;
-
-/**
- * @brief Represents a coordinate on the reversi board
- * 
- */
-typedef coord_str* coord;
 
 typedef struct _processor_args_str {
     uint32_t identifier;
@@ -54,7 +44,7 @@ extern uint8_t SAVING_FLAG;
  * 
  */
 extern uint8_t WALKER_KILL_FLAG;
-pthread_mutex_t saving_lock;
+extern pthread_mutex_t saving_lock;
 
 /**
  * @brief Finds the next set of boards that can be reached from this one
@@ -62,17 +52,17 @@ pthread_mutex_t saving_lock;
  * @param b 
  * @return coord* Returns a zero-terminated array of coordinates that represent valid moves from this board
  */
-void find_next_boards(board b, ptr_arraylist coord_buff, ptr_arraylist coord_cache);
+void find_next_boards(board b, Arraylist<void*>* coord_buff, Arraylist<void*>* coord_cache);
 
-/**
- * @brief Finds the next set of boards that can be reached from this one,
- * but only checks the 8 cells surrounding coordinate c
- * 
- * @param b 
- * @param c 
- * @return coord* Returns a zero-terminated array of coordinates that represent valid moves from this board
- */
-coord* find_next_boards_from_coord(board b, coord c);
+// /**
+//  * @brief Finds the next set of boards that can be reached from this one,
+//  * but only checks the 8 cells surrounding coordinate c
+//  * 
+//  * @param b 
+//  * @param c 
+//  * @return coord* Returns a zero-terminated array of coordinates that represent valid moves from this board
+//  */
+// coord* find_next_boards_from_coord(board b, coord c);
 
 /**
  * @brief Finds the next set of boards that can be reached from this one,
@@ -132,4 +122,4 @@ void* walker_processor_pre_stacked(void* args);
  * @param fp 
  * @param search_stack 
  */
-void walker_to_file(FILE* fp, ptr_arraylist search_stack);
+void walker_to_file(FILE* fp, Arraylist<void*>* search_stack);

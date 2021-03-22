@@ -6,10 +6,10 @@
 #include <err.h>
 
 csv_cont create_csv_cont(const char* filename, const char* format_str, size_t num_columns) {
-    csv_cont c = malloc(sizeof(csv_cont_t));
+    csv_cont c = (csv_cont)malloc(sizeof(csv_cont_t));
     if(!c) err(1, "Memory error while allocating csv controller\n");
-    c->filename = malloc(sizeof(char) * (strlen(filename) + 1));
-    c->format_str = malloc(sizeof(char) * (strlen(format_str) + 1));
+    c->filename = (char*)malloc(sizeof(char) * (strlen(filename) + 1));
+    c->format_str = (char*)malloc(sizeof(char) * (strlen(format_str) + 1));
     if(!(c->filename || c->format_str)) err(1, "Memory error while allocating csv strings\n");
     memcpy(c->filename, filename, sizeof(char) * (strlen(filename) + 1));
     memcpy(c->format_str, format_str, sizeof(char) * (strlen(format_str) + 1));
@@ -31,7 +31,7 @@ void initialize_file(csv_cont cont, ...) {
 
     FILE* fp = fopen(cont->filename, "w+");
 
-    char* fstr = malloc(sizeof(char) * ((5 * cont->num_columns) + 1));
+    char* fstr = (char*)malloc(sizeof(char) * ((5 * cont->num_columns) + 1));
     if(!fstr) err(1, "Memory error while allocating header row for csv\n");
 
     for(size_t a = 0; a < (5 * cont->num_columns);) {

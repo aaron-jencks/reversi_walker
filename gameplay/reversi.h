@@ -2,20 +2,11 @@
 
 #include <stdint.h>
 
-typedef struct _board_str {
-    uint8_t player;
-    uint8_t width;
-    uint8_t height;
-    uint8_t* board;
-} board_str;
+#include "reversi_defs.h"
 
-typedef board_str* board;
-
-typedef struct _capture_count_str {
-    uint8_t* counts;
-} capture_count_str;
-
-typedef capture_count_str* capture_count;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief Create a board object
@@ -145,3 +136,7 @@ uint8_t capture_count_get_count(uint64_t c, uint8_t direction);
  * @param count The number of pieces captured, must be in the interval (0,6)
  */
 uint64_t capture_count_put_count(uint64_t c, uint8_t direction, uint8_t count);
+
+#ifdef __cplusplus
+}
+#endif

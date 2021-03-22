@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Generates a unique filename in the /tmp directory for checkpoint saving
  * 
@@ -25,3 +29,7 @@ char* find_temp_directory();
  * @return char* Returns a null terminated string that contains the absolute path of the generated temporary file. Must be free'd by the user
  */
 char* find_abs_path(size_t page_index, const char* directory);
+
+#ifdef __cplusplus
+}
+#endif

@@ -35,8 +35,16 @@ typedef struct __mmap_page_str {
 
 typedef mmap_page_str* mmap_page;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 mmap_page create_mmap_page(const char* filename, size_t size);
 void destroy_mmap_page(mmap_page page, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 typedef struct __mmap_man_str {
     mmap_page* pages;
@@ -48,6 +56,10 @@ typedef struct __mmap_man_str {
 } mmap_man_str;
 
 typedef mmap_man_str* mmap_man;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 mmap_man create_mmap_man(size_t page_size, size_t bin_size, char* file_directory);
 void destroy_mmap_man(mmap_man man);
@@ -92,3 +104,7 @@ uint8_t* mmap_allocate_bin(mmap_man man);
 
 void mmap_to_file(mmap_man man, FILE* fp);
 mmap_man mmap_from_file(FILE* fp);
+
+#ifdef __cplusplus
+}
+#endif

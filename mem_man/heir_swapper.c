@@ -9,6 +9,7 @@
 #define MAX_LOAD_COUNT 51000000
 #define SMALL_LOAD_COUNT 5
 
+
 bin_dict create_bin_dict(size_t num_bins, size_t bin_size, size_t element_size) {
     bin_dict d = malloc(sizeof(bin_dict_t));
     if(!d) err(1, "Memory error while allocating bin_dict\n");
@@ -19,14 +20,15 @@ bin_dict create_bin_dict(size_t num_bins, size_t bin_size, size_t element_size) 
     d->loaded_count = 0;
     d->element_count = 0;
     d->bins = malloc(sizeof(uint8_t**) * num_bins);
-    d->mappings = malloc(sizeof(uint8_t**) * num_bins);
+    // d->mappings = malloc(sizeof(uint8_t**) * num_bins);
     d->indices = calloc(num_bins, sizeof(size_t));
     d->keys = malloc(num_bins * sizeof(__uint128_t*));
     d->bin_sizes = calloc(num_bins, sizeof(size_t));
     d->usage_counters = malloc(num_bins * sizeof(size_t*));
     if(!(d->bins || d->indices || 
          d->keys || d->bin_sizes || 
-         d->mappings || d->usage_counters)) err(1, "Memory error while allocating bins for bin_dict\n");
+         d->usage_counters)) err(1, "Memory error while allocating bins for bin_dict\n");
+    d->cache = create_hashtable(1000000);
 
     return d;
 }
@@ -39,11 +41,11 @@ void destroy_bin_dict(bin_dict d) {
                 free(d->bins[b]);
                 free(d->keys[b]);
                 free(d->usage_counters[b]);
-                free(d->mappings[b]);
+                // free(d->mappings[b]);
             }
         }
         free(d->usage_counters);
-        free(d->mappings);
+        // free(d->mappings);
         free(d->bins);
         free(d->keys);
         free(d->bin_sizes);
@@ -79,14 +81,11 @@ size_t** find_n_swap_targets(bin_dict d, size_t n) {
     size_t arr_index = 0, b, e;
     for(size_t b = 0; b < d->bin_count; b++) {
         for(size_t e = 0; e < d->indices[b]; e++) {
-            if(d->bins[b][e] != d->mappings[b][e]) {
-                // printf("Found loaded entry at %lu %lu, %p != %p\n", b, e, d->bins[b][e], d->mappings[b][e]);
-                arr[arr_index] = malloc(sizeof(size_t) * 3);
-                if(!arr[arr_index]) err(1, "Memory error while allocating bin for swap targets\n");
-                arr[arr_index][0] = d->usage_counters[b][e];
-                arr[arr_index][1] = b;
-                arr[arr_index++][2] = e;
-            }
+            arr[arr_index] = malloc(sizeof(size_t) * 3);
+            if(!arr[arr_index]) err(1, "Memory error while allocating bin for swap targets\n");
+            arr[arr_index][0] = d->usage_counters[b][e];
+            arr[arr_index][1] = b;
+            arr[arr_index++][2] = e;
         }
     }
 
@@ -171,6 +170,9 @@ uint8_t* bin_dict_get(bin_dict d, __uint128_t k) {
             return d->bins[bin][e];
         }
     }
+    // TODO miss, check the cache
+    if(exists_hs(d->cache, k)) return get_hs(d->cache, k);
+    
     return 0;
 }
 
@@ -179,9 +181,9 @@ uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
     if(!d->indices[bin]) {
         d->keys[bin] = malloc(sizeof(__uint128_t) * d->bin_size);
         d->bins[bin] = malloc(sizeof(uint8_t*) * d->bin_size);
-        d->mappings[bin] = malloc(sizeof(uint8_t*) * d->bin_size);
+        // d->mappings[bin] = malloc(sizeof(uint8_t*) * d->bin_size);
         d->usage_counters[bin] = calloc(d->bin_size, sizeof(size_t));
-        if(!(d->keys[bin] || d->bins[bin] || d->mappings || 
+        if(!(d->keys[bin] || d->bins[bin] || // d->mappings || 
              d->usage_counters[bin])) err(1, "Memory error while allocating bin for bin_dict\n");
         d->bin_sizes[bin] = d->bin_size;
     }
@@ -189,10 +191,35 @@ uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
     // printf("Inserting new element into %lu %lu @ %p\n", bin, d->indices[bin], ptr);
 
     d->bins[bin][d->indices[bin]] = ptr;
-    d->mappings[bin][d->indices[bin]] = ptr;
+    // d->mappings[bin][d->indices[bin]] = ptr;
     d->keys[bin][d->indices[bin]] = k;
     d->usage_counters[bin][d->indices[bin]] = 1;
     d->element_count++;
+
+    if(bin_dict_load_factor(d) > 15) {
+        size_t** targets = find_n_swap_targets(d, 14 * d->bin_count);
+
+        for(size_t t = 0; t < 14 * d->bin_count; t++) {
+            size_t* target = targets[t];
+            size_t bt = target[1], et = target[2];
+            // printf("Swapping out %lu[%lu] for %lu[%lu]\n", bt, et, bin, e);
+            put_hs(d->cache, d->keys[bt][et], d->bins[bt][et]);
+            d->bins[bt][et] = 0;
+            free(targets[t]);
+        }
+
+        for(size_t b = 0; b < d->bin_count; b++) {
+            for(size_t e = 0; e < d->indices[b]; e++) {
+                if(!d->bins[b][e]) {
+                    for(size_t et = e; et < d->indices[b]; et++) {
+                        d->bins[b][et] = d->bins[b][et + 1];
+                        d->keys[b][et] = d->keys[b][et + 1];
+                        d->usage_counters[b][et] = d->usage_counters[b][et + 1];
+                    }
+                }
+            }
+        }
+    }
 
     // bin_dict_load_page(d, bin, d->indices[bin]);
 
@@ -202,7 +229,7 @@ uint8_t* bin_dict_put(bin_dict d, __uint128_t k, uint8_t* ptr) {
         // printf("Reallocating bin %lu\n", bin);
         d->bin_sizes[bin] += d->bin_size;
         d->bins[bin] = realloc(d->bins[bin], sizeof(uint8_t*) * d->bin_sizes[bin]);
-        d->mappings[bin] = realloc(d->mappings[bin], sizeof(uint8_t*) * d->bin_sizes[bin]);
+        // d->mappings[bin] = realloc(d->mappings[bin], sizeof(uint8_t*) * d->bin_sizes[bin]);
         d->keys[bin] = realloc(d->keys[bin], sizeof(__uint128_t) * d->bin_sizes[bin]);
         d->usage_counters[bin] = realloc(d->usage_counters[bin], sizeof(size_t) * d->bin_sizes[bin]);
         if(!(d->bins[bin] || d->keys[bin] ||
