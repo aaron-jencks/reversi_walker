@@ -15,7 +15,7 @@ main: main.o $(objects) $(cpp_objects)
 	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) -pthread
 
 gmain: gmain.cu $(cuda_objects)
-	nvcc -arch=sm_61 $(cflags) -o $@ $< $(cuda_objects) -lpthread
+	nvcc -arch=sm_61 $(cppflags) -o $@ $< $(cuda_objects) -lpthread
 
 tester: tester.o $(objects) $(cpp_objects) $(test_objects)
 	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) $(test_objects) -pthread
