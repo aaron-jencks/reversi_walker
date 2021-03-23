@@ -62,9 +62,9 @@
      cudaFree(b);
  }
 
-__device__ uint8_t board_get_cuda(board b, uint8_t row, uint8_t column) {
+ __host__ __device__ uint8_t board_get_cuda(board b, uint8_t row, uint8_t column) {
     if(b) {
-        printf("Fetching board square\n");
+        // printf("Fetching board square\n");
         uint8_t total_bit = (row * (b->width << 1)) + (column << 1), 
                 byte = total_bit >> 3, 
                 bit = total_bit % 8;
@@ -74,7 +74,7 @@ __device__ uint8_t board_get_cuda(board b, uint8_t row, uint8_t column) {
     return 3;
 }
 
-__device__ void board_put_cuda(board b, uint8_t row, uint8_t column, uint8_t player) {
+__host__ __device__ void board_put_cuda(board b, uint8_t row, uint8_t column, uint8_t player) {
     if(b) {
         uint8_t total_bit = (row * (b->width << 1)) + (column << 1), 
                 byte = total_bit >> 3, 
@@ -91,7 +91,7 @@ __host__ __device__ uint8_t board_is_legal_move_cuda(board b, uint8_t row, uint8
     if(b && row >= 0 && row < b->height && column >= 0 && column < b->width) {
         if(!board_get_cuda(b, row, column)) {
 
-            printf("Managed to check a board\n");
+            // printf("Managed to check a board\n");
 
             // Check each of the 8 directions going out from the requested coordinate
             // Keep track of how many captures we have

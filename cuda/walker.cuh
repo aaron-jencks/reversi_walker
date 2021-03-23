@@ -1,8 +1,6 @@
 #pragma once
 
-#include "reversi.cuh"
 #include "../gameplay/reversi_defs.h"
-#include "../utils/tarraylist.hpp"
 
 #include <stddef.h>
 

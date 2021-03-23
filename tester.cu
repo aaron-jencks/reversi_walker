@@ -3,19 +3,21 @@
 #include <stdint.h>
 
 #include "tests/capturecounts_test.h"
-#include "tests/legal_moves_test.hpp"
-#include "tests/board_placement.h"
+#include "tests/legal_moves_test.cuh"
+#include "tests/board_placement.cuh"
 #include "tests/mempage_test.h"
 #include "tests/mmap_test.hpp"
 #include "tests/dict_test.hpp"
 #include "tests/heapsort_test.h"
 #include "tests/arraylist_test.hpp"
 
-const uint64_t test_count = 11;
-void (*tests[11])() = {
+const uint64_t test_count = 13;
+void (*tests[13])() = {
     cc_test_directions,
     lm_test_initial,
+    lm_cuda_test,
     board_placement_test,
+    cuda_board_placement_test,
     heapsort_test,
     arr_insertion_test,
     arr_deletion_test,

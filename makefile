@@ -5,7 +5,7 @@ cflags+=-O3 -Wall
 cuda_flags+=-arch=sm_61
 objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o 
 cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o 
-cuda_objects=reversi_cuda.o walker_cuda.o 
+cuda_objects=walker_cuda.o 
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o mmap_test.o dict_test.o heapsort_test.o arraylist_test.o 
 
 CHECKPOINT_PATH="$(HOME)/reversi_checkpoint.bin"
@@ -20,13 +20,13 @@ gmain: gmain.cu $(cuda_objects) $(objects) $(cpp_objects)
 	$(cuda_cc) $(cuda_flags) -o $@ $< $(cuda_objects) $(objects) $(cpp_objects) -lpthread
 
 tester: tester.o $(objects) $(cpp_objects) $(test_objects)
-	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) $(test_objects) -pthread
+	$(cuda_cc) $(cuda_flags) -o $@ $< $(objects) $(cpp_objects) $(cuda_objects) $(test_objects) -lpthread
 
 main.o: main.cpp $(objects) $(cpp_objects)
 	$(pp) $(cflags) -o $@ -c $<
 
-tester.o: tester.cpp $(objects) $(test_objects)
-	$(pp) -g $(cflags) -o $@ -c $<
+tester.o: tester.cu $(objects) $(test_objects)
+	$(cuda_cc) -g $(cuda_flags) -o $@ -c $<
 
 reversi.o: ./gameplay/reversi.c ./gameplay/reversi.h
 	$(cc) $(cflags) -o $@ -c $<
@@ -99,7 +99,7 @@ reversi_cuda.o : ./cuda/reversi.cu ./cuda/reversi.cuh ./gameplay/reversi_defs.h 
 tarraylist_cuda.o : ./cuda/tarraylist.cu ./cuda/tarraylist.cuh ./gameplay/reversi_defs.h
 	$(cuda_cc) $(cuda_flags) -o $@ -dc $<
 
-walker_cuda.o : ./cuda/walker.cu ./cuda/walker.cuh ./gameplay/reversi_defs.h reversi_cuda.o reversi.o 
+walker_cuda.o : ./cuda/walker.cu ./cuda/walker.cuh ./gameplay/reversi_defs.h reversi.o 
 	$(cuda_cc) $(cuda_flags) -o $@ -dc $< 
 
 # Tests
@@ -107,11 +107,11 @@ walker_cuda.o : ./cuda/walker.cu ./cuda/walker.cuh ./gameplay/reversi_defs.h rev
 capturecounts_test.o: tests/capturecounts_test.c tests/capturecounts_test.h reversi.o
 	$(cc) $(cflags) -o $@ -c $<
 
-legal_moves_test.o: tests/legal_moves_test.cpp tests/legal_moves_test.hpp reversi.o walker.o tarraylist.o 
-	$(pp) $(cflags) -o $@ -c $<
+legal_moves_test.o: tests/legal_moves_test.cu tests/legal_moves_test.cuh reversi.o walker.o tarraylist.o reversi_cuda.o 
+	$(cuda_cc) $(cuda_flags) -o $@ -c $<
 
-board_placement_test.o: tests/board_placement.c tests/board_placement.h reversi.o
-	$(cc) $(cflags) -o $@ -c $<
+board_placement_test.o: tests/board_placement.cu tests/board_placement.cuh reversi.o reversi_cuda.o
+	$(cuda_cc) $(cuda_flags) -o $@ -c $<
 
 mempage_test.o: tests/mempage_test.c tests/mempage_test.h mempage.o
 	$(cc) $(cflags) -o $@ -c $<

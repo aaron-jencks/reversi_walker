@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "legal_moves_test.hpp"
+#include "legal_moves_test.cuh"
 #include "../gameplay/reversi.h"
+#include "../cuda/reversi.cuh"
 #include "../gameplay/walker.hpp"
 #include "../utils/tarraylist.hpp"
 
@@ -63,3 +64,24 @@ void lm_test_initial() {
 
 //     for(coord* ct = acceptance; *ct; ct++) free(*ct);
 // }
+
+__host__ void lm_cuda_test() {
+    board b = create_board(1, 8, 8);
+
+    coord acceptance[5] = {
+        create_coord(3, 2),
+        create_coord(2, 3),
+        create_coord(5, 4),
+        create_coord(4, 5),
+        0
+    };
+
+    for(coord* ct = acceptance; *ct; ct++) {
+        printf("Testing coordinate (%u, %u)\n", (*ct)->row, (*ct)->column);
+        assert(board_is_legal_move_cuda(b, (*ct)->row, (*ct)->column));
+    }
+
+    destroy_board(b);
+
+    for(coord* ct = acceptance; *ct; ct++) free(*ct);
+}
