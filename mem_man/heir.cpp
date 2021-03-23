@@ -44,7 +44,7 @@ heirarchy create_heirarchy(char* file_directory) {
     temp = (char*)memcpy(temp, file_directory, strlen(file_directory));
     memcpy(temp + strlen(file_directory), "/bits", 6);
     if(stat(temp, &st) == -1) mkdir(temp, 0700);
-    size_t bin_size = (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t) * (h->num_bits_per_final_level - 3);
+    size_t bin_size = (1 << (h->num_bits_per_final_level - 3)) + sizeof(__uint128_t);
     h->final_level = create_mmap_man(INITIAL_PAGE_SIZE, bin_size, temp);
     free(temp);
 
@@ -88,6 +88,11 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
             if(!(dict_resp = hdict_get(h->rehashing_cache, lower_key))) {
                 // Allocate a new bin for it
                 uint8_t* new_bin = mmap_allocate_bin(h->final_level);
+
+                // Insert the lower key into the bin at the beginning so that we can read it later.
+                for(size_t bi = 0; bi < sizeof(__uint128_t); bi++) new_bin[bi] = ((uint8_t*)&lower_key)[bi];
+                new_bin = new_bin + sizeof(__uint128_t);
+
                 hdict_put(h->rehashing_cache, lower_key, new_bin);
                 dict_resp = new_bin;
             }
@@ -198,7 +203,7 @@ void to_file_heir(FILE* fp, heirarchy h) {
         fwrite(&h->page_size, sizeof(h->page_size), 1, fp);
         mmap_to_file(h->final_level, fp);
 
-        printf("Heirarchy stats:\n\tBits: %lu\n\tSize: %lu\n", h->num_bits_per_final_level, h->page_size);
+        printf("Heirarchy stats:\n\tBits: %lu\n\tSize: %lu\n", h->num_bits_per_final_level, h->final_level->elements_per_bin);
     }
 }
 

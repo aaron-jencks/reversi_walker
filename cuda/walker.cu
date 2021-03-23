@@ -4,10 +4,27 @@
 #include <stdint.h>
 #include <err.h>
 
-#include "../gameplay/reversi_defs.h"
-#include "../gameplay/reversi.h"
-
 // Remember to turn unified memory profiling off before profiling!
+
+typedef struct _coord_str {
+    uint8_t row;
+    uint8_t column;
+} coord_str;
+
+/**
+ * @brief Represents a coordinate on the reversi board
+ * 
+ */
+typedef coord_str* coord;
+
+typedef struct _board_str {
+    uint8_t player;
+    uint8_t width;
+    uint8_t height;
+    uint8_t* board;
+} board_str;
+
+typedef board_str* board;
 
 #pragma region board
 
@@ -68,10 +85,10 @@ __host__ board create_board_cuda(uint8_t starting_player, uint8_t height, uint8_
      * +--+--+--+--+--+--+--+--+
      */
 
-    board_put(b, (height >> 1) - 1, (width >> 1) - 1, 2);
-    board_put(b, (height >> 1) - 1, width >> 1, 1);
-    board_put(b, height >> 1, (width >> 1) - 1, 1);
-    board_put(b, height >> 1, width >> 1, 2);
+    board_put_cuda(b, (height >> 1) - 1, (width >> 1) - 1, 2);
+    board_put_cuda(b, (height >> 1) - 1, width >> 1, 1);
+    board_put_cuda(b, height >> 1, (width >> 1) - 1, 1);
+    board_put_cuda(b, height >> 1, width >> 1, 2);
 
     return b;
  }
@@ -174,7 +191,7 @@ __host__ __device__ void clone_into_board_cuda(board src, board dest) {
 }
 
 __host__ __device__ void board_place_piece_cuda(board b, uint8_t row, uint8_t column) {
-    if(b && row >= 0 && row < b->height && column >= 0 && column < b->width) {
+    if(b && row < b->height && column < b->width) {
         board_put_cuda(b, row, column, b->player);
         int8_t cr, cc, bv;
         uint8_t count;
@@ -188,7 +205,7 @@ __host__ __device__ void board_place_piece_cuda(board b, uint8_t row, uint8_t co
                 cc = column + cd;
     
                 count = 0;
-                while(cr >= 0 && cr < b->height && cc >= 0 && cc < b->width) {
+                while(cr < b->height && cc < b->width) {
                     bv = board_get_cuda(b, cr, cc);
                     if(bv && bv != b->player) {
                         // There is a possible capture

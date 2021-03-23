@@ -88,7 +88,7 @@ __host__ __device__ void board_put_cuda(board b, uint8_t row, uint8_t column, ui
 }
 
 __host__ __device__ uint8_t board_is_legal_move_cuda(board b, uint8_t row, uint8_t column) {
-    if(b && row >= 0 && row < b->height && column >= 0 && column < b->width) {
+    if(b && row < b->height && column < b->width) {
         if(!board_get_cuda(b, row, column)) {
 
             // printf("Managed to check a board\n");
@@ -106,7 +106,7 @@ __host__ __device__ uint8_t board_is_legal_move_cuda(board b, uint8_t row, uint8
                     cc = column + cd;
 
                     count = 0;
-                    while(cr >= 0 && cr < b->height && cc >= 0 && cc < b->width) {
+                    while(cr < b->height && cc < b->width) {
                         bv = board_get_cuda(b, cr, cc);
                         if(bv && bv != b->player) {
                             // There is a possible capture
