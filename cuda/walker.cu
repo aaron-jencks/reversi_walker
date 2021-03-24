@@ -258,20 +258,21 @@ __global__ void compute_mass_next_cuda(board_str* boards, board_str* result, siz
     size_t index = blockIdx.x * blockDim.x + threadIdx.x;
     size_t stride = gridDim.x * blockDim.x;
 
-    printf("Stride is %lu, index is %lu\n", stride, index);
+    // printf("Stride is %lu, index is %lu\n", stride, index);
 
     size_t result_pointer = 0;
 
     for(int i = index; i < n; i += stride) {
-        board_str b, *row = (board_str*)(result + i * pitch);
-        clone_into_board_cuda(&b, &boards[i]);
+        board_str *row = (board_str*)(result + i * pitch);
+        // clone_into_board_cuda(&boards[i], &b);
+        b = boards[i];
 
         for(uint8_t r = 0; r < b.height; r++) {
             for(uint8_t c = 0; c < b.width; c++) {
                 if(board_is_legal_move_cuda(&b, r, c)) {
-                    printf("Found a legal move\n");
+                    // printf("Found a legal move\n");
                     board_place_piece_cuda(&b, r, c);
-                    clone_into_board_cuda(&row[result_pointer++], &b);
+                    clone_into_board_cuda(&b, &row[result_pointer++]);
                 }
             }
         }

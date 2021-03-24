@@ -232,21 +232,27 @@ __global__ void compute_mass_next_cuda(board_str* boards, board_str* result, siz
 
     size_t result_pointer = 0;
     board_str b;
-    b.board = (uint8_t*)malloc(sizeof(uint8_t) * (64 >> 2));
+    size_t count = 0;
+    // b.board = (uint8_t*)malloc(sizeof(uint8_t) * (64 >> 2));
 
     for(int i = index; i < n; i += stride) {
         board_str *row = (board_str*)(result + i * pitch);
-        clone_into_board_cuda(&boards[i], &b);
+        // clone_into_board_cuda(&boards[i], &b);
+        b = boards[i];
+        count = 0;
 
         for(uint8_t r = 0; r < b.height; r++) {
             for(uint8_t c = 0; c < b.width; c++) {
                 if(board_is_legal_move_cuda(&b, r, c)) {
-                    // printf("Found a legal move\n");
+                    printf("Found a legal move at (%u,%u)\n", r, c);
                     board_place_piece_cuda(&b, r, c);
                     clone_into_board_cuda(&b, &row[result_pointer++]);
+                    count++;
                 }
             }
         }
+
+        printf("Found %lu moves\n", count);
 
         row[result_pointer] = board_str {0, 0, 0, 0};
     }
@@ -275,6 +281,8 @@ int main() {
         cudaMallocManaged(&result[i].board, sizeof(uint8_t) * (64 >> 2));
         memset(result[i].board, 0, sizeof(uint8_t) * (64 >> 2));
         if(!result[i].board) err(1, "Memory Error while allocating board's board array\n");
+        result[i].height = 0;
+        result[i].width = 0;
     }
     destroy_board_cuda(template_board);
     printf("\n");
