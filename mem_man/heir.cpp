@@ -35,8 +35,8 @@ heirarchy create_heirarchy(char* file_directory) {
 
     // h->num_bits_per_level = --shifts;
     // h->num_levels = 128 / shifts;
-    shifts--;
-    h->num_bits_per_final_level = shifts + (128 % shifts); // To ensure that we use every bit
+    // shifts--;
+    h->num_bits_per_final_level = --shifts; // To ensure that we use every bit
 
     // Setup the bit directory
     struct stat st;
@@ -89,8 +89,7 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
                 // Allocate a new bin for it
                 uint8_t* new_bin = mmap_allocate_bin(h->final_level);
 
-                // Insert the lower key into the bin at the beginning so that we can read it later.
-                for(size_t bi = 0; bi < sizeof(__uint128_t); bi++) new_bin[bi] = ((uint8_t*)&lower_key)[bi];
+                ((__uint128_t*)new_bin)[0] = lower_key;
                 new_bin = new_bin + sizeof(__uint128_t);
 
                 hdict_put(h->rehashing_cache, lower_key, new_bin);
