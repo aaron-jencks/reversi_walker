@@ -20,6 +20,9 @@ gmain: gmain.cu $(cuda_objects)
 tester: tester.o $(objects) $(cpp_objects) $(test_objects)
 	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) $(test_objects) -pthread
 
+experimenter: experimenter.cpp
+	$(pp) $(cflags) -o $@ $< -pthread
+
 main.o: main.cpp $(objects) $(cpp_objects)
 	$(pp) $(cflags) -o $@ -c $<
 
@@ -120,7 +123,7 @@ arraylist_test.o: tests/arraylist_test.cpp tests/arraylist_test.hpp tarraylist.o
 
 .PHONY : clean
 clean:
-	rm main main.o $(objects) gmain $(cuda_objects) tester tester.o $(test_objects) $(cpp_objects)
+	rm main main.o $(objects) gmain $(cuda_objects) tester tester.o $(test_objects) $(cpp_objects) experimenter
 
 .PHONY : tests
 tests: tester $(objects) $(cpp_objects) $(test_objects)
