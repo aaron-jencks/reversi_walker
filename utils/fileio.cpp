@@ -196,14 +196,14 @@ void save_progress_v2(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* 
     SAVING_FLAG = 1;
     pthread_mutex_unlock(&saving_lock);
 
-    uint64_t temp_saving_counter = 0;
-    while(temp_saving_counter < num_processors) {
-        while(pthread_mutex_trylock(file_lock)) sched_yield();
-        printf("\r%0lu/%ld", *saving_counter, num_processors);
-        temp_saving_counter = *saving_counter;
-        pthread_mutex_unlock(file_lock);
-        sched_yield();
-    }
+    // uint64_t temp_saving_counter = 0;
+    // while(temp_saving_counter < 1) {
+    //     while(pthread_mutex_trylock(file_lock)) sched_yield();
+    //     printf("\r%0lu/%ld", *saving_counter, num_processors);
+    //     temp_saving_counter = *saving_counter;
+    //     pthread_mutex_unlock(file_lock);
+    //     sched_yield();
+    // }
 
     // Save the hashtable
     printf("\nSaving the hashtable\n");

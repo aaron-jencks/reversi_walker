@@ -22,6 +22,8 @@ typedef struct __heirarchy_str {
     // size_t num_levels;
     size_t page_size;
     size_t collision_count;
+    size_t highest_complete_level;
+    Arraylist<__uint128_t>** level_mappings;
     MultiReadSemaphore* sem;
     MultiReadSemaphore* csem;
 } heirarchy_str;
@@ -36,6 +38,8 @@ void destroy_heirarchy(heirarchy h);
 
 uint8_t heirarchy_insert(heirarchy h, __uint128_t key);
 uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key);
+
+void heirarchy_purge_level(heirarchy h, size_t level);
 
 void to_file_heir(FILE* fp, heirarchy h);
 

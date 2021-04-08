@@ -55,6 +55,11 @@ heirarchy create_heirarchy(char* file_directory) {
 
     h->collision_count = 0;
 
+    h->highest_complete_level = 0;
+    h->level_mappings = (Arraylist<__uint128_t>**)malloc(sizeof(Arraylist<__uint128_t>*) * 64);
+    if(!h->level_mappings) err(1, "Memory error while allocating level mappings for heirarchy\n");
+    for(size_t i = 0; i < 64; i++) h->level_mappings[i] = new Arraylist<__uint128_t>(1000);
+
     return h;
 }
 
@@ -63,11 +68,13 @@ void destroy_heirarchy(heirarchy h) {
         destroy_mmap_man(h->final_level);
         destroy_fixed_dictionary(h->fixed_cache);
         destroy_rehashing_dictionary(h->rehashing_cache);
+        for(size_t i = 0; i < 64; i++) delete h->level_mappings[i];
+        free(h->level_mappings);
         free(h);
     }
 }
 
-uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
+uint8_t heirarchy_insert(heirarchy h, __uint128_t key, size_t level) {
     // #ifdef heirdebug
     //     printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);
     // #endif
@@ -143,6 +150,7 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
 
         if(!(byte & ph)) {
             dict_resp[bits] |= ph;
+            h->level_mappings[level]->append(lower_key);
             // h->sem->signal_write_finish();
             pthread_mutex_unlock(&heirarchy_lock);
             return 1;
@@ -152,6 +160,12 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key) {
             pthread_mutex_unlock(&heirarchy_lock);
             return 0;
         }
+    }
+}
+
+void heirarchy_purge_level(heirarchy h, size_t level) {
+    for(size_t i = 0; i < h->level_mappings[level]->pointer; i++) {
+        
     }
 }
 

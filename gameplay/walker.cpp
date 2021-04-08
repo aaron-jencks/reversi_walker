@@ -476,6 +476,9 @@ void walker_to_file(FILE* fp, Arraylist<void*>* search_stack) {
 void* walker_task_scheduler(void* args) {
     processor_scheduler_args_t* pargs = (processor_scheduler_args_t*)args;
 
+    pthread_mutex_t level_lock;
+    if(pthread_mutex_init(&level_lock, 0)) err(4, "Failed to initialize level lock mutex\n");
+
     size_t level_counts[64];
     for(size_t l = 0; l < 64; l++) { level_counts[l] = 0; }
 
