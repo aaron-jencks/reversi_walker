@@ -97,3 +97,75 @@ template<> void Arraylist<dict_usage_pair_t>::insert(dict_usage_pair_t element, 
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop(size_t index);
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop_front();
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop_back();
+
+template <typename T> class RingBuffer {
+	public:
+		T* data;
+		size_t size;
+		size_t count;
+		size_t pop_pointer;
+		size_t push_pointer;
+
+		RingBuffer(size_t initial_size) {
+			data = (T*)malloc(sizeof(T) * initial_size);
+			if(!data) err(1, "Memory error while allocating arraylist\n");
+			size = initial_size;
+			pop_pointer = 0;
+			push_pointer = 0;
+			count = 0;
+		}
+
+		~RingBuffer() {
+			free(data);
+		}
+
+		void append(T element) {
+			if(count) {
+				if(count == size) {
+					// reallocate the array
+					size_t psize = size;
+					size = (size) ? size << 1 : 1;
+					data = (T*)std::realloc(data, size * sizeof(T));
+					if(!data) err(1, "Memory error while allocating arraylist\n");
+					if(push_pointer < psize) for(size_t e = psize - 1; e >= push_pointer; e--) { data[e + 1] = data[e]; }
+				}
+				else if(push_pointer >= size) {
+					push_pointer = 0;
+				}
+			}
+			data[push_pointer++] = element;
+			count++;
+		}
+
+		T pop_back() {
+			if(size && count) {
+				T d;
+
+				if(push_pointer) {
+					d = data[--push_pointer];
+				}
+				else {
+					push_pointer = size - 1;
+					d = data[push_pointer];
+				}
+
+				count--;
+
+				return d;
+			}
+			return (T)NULL;
+		}
+
+		T pop_front() {
+			if(size && count) {
+				T d = data[pop_pointer++];
+
+				if(pop_pointer >= size) pop_pointer = 0;
+
+				count--;
+
+				return d;
+			}
+			return (T)NULL;
+		}
+};
