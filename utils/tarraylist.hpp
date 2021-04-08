@@ -180,7 +180,7 @@ template <typename T> class LockedRingBuffer : public RingBuffer<T> {
 		}
 
 		~LockedRingBuffer() {
-			free(data);
+			free(RingBuffer<T>::data);
 		}
 
 		void append(T element) {
@@ -208,11 +208,11 @@ template <typename T> class LockedArraylist : public Arraylist<T> {
 	public:
 		pthread_mutex_t mutex;
 
-		LockedArraylist(size_t initial_size) : Arraylist(initial_size) {
+		LockedArraylist(size_t initial_size) : Arraylist<T>(initial_size) {
 			if(pthread_mutex_init(&mutex, 0)) err(4, "Failed to initialize mutex for locked arraylist\n");
 		}
 
-		~LockedArraylist() { free(data); }
+		~LockedArraylist() { free(Arraylist<T>::data); }
 
 		void append(T element) {
 			while(pthread_mutex_trylock(&mutex)) sched_yield();
@@ -249,14 +249,14 @@ template <typename T> class LockedArraylist : public Arraylist<T> {
 
 		T get(size_t index) {
 			while(pthread_mutex_trylock(&mutex)) sched_yield();
-			T result = data[index]
+			T result = Arraylist<T>::data[index];
 			pthread_mutex_unlock(&mutex);
 			return result;
 		}
 
 		void put(T element, size_t index) {
 			while(pthread_mutex_trylock(&mutex)) sched_yield();
-			data[index] = element;
+			Arraylist<T>::data[index] = element;
 			pthread_mutex_unlock(&mutex);
 		}
 
