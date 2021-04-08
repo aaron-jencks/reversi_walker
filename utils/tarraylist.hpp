@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <err.h>
+#include <pthread.h>
 
 template <typename T> class Arraylist {
 	public:
@@ -168,4 +169,101 @@ template <typename T> class RingBuffer {
 			}
 			return (T)NULL;
 		}
+};
+
+template <typename T> class LockedRingBuffer : public RingBuffer<T> {
+	public:
+		pthread_mutex_t mutex;
+
+		LockedRingBuffer(size_t initial_size) : RingBuffer<T>(initial_size) {
+			if(pthread_mutex_init(&mutex, 0)) err(4, "Failed to initialize mutex for locked arraylist\n");
+		}
+
+		~LockedRingBuffer() {
+			free(data);
+		}
+
+		void append(T element) {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			RingBuffer<T>::append(element);
+			pthread_mutex_unlock(&mutex);
+		}
+
+		T pop_back() {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			T result = RingBuffer<T>::pop_back();
+			pthread_mutex_unlock(&mutex);
+			return result;
+		}
+
+		T pop_front() {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			T result = RingBuffer<T>::pop_front();
+			pthread_mutex_unlock(&mutex);
+			return result;
+		}
+};
+
+template <typename T> class LockedArraylist : public Arraylist<T> {
+	public:
+		pthread_mutex_t mutex;
+
+		LockedArraylist(size_t initial_size) : Arraylist(initial_size) {
+			if(pthread_mutex_init(&mutex, 0)) err(4, "Failed to initialize mutex for locked arraylist\n");
+		}
+
+		~LockedArraylist() { free(data); }
+
+		void append(T element) {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			Arraylist<T>::append(element);
+			pthread_mutex_unlock(&mutex);
+		}
+
+		void insert(T element, size_t index) {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			Arraylist<T>::insert(element, index);
+			pthread_mutex_unlock(&mutex);
+		}
+
+		T pop_front() {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			T result = Arraylist<T>::pop_front();
+			pthread_mutex_unlock(&mutex);
+			return result;
+		}
+
+		T pop_back() {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			T result = Arraylist<T>::pop_back();
+			pthread_mutex_unlock(&mutex);
+			return result;
+		}
+
+		T pop(size_t element) {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			T result = Arraylist<T>::pop(element);
+			pthread_mutex_unlock(&mutex);
+			return result;
+		}
+
+		T get(size_t index) {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			T result = data[index]
+			pthread_mutex_unlock(&mutex);
+			return result;
+		}
+
+		void put(T element, size_t index) {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			data[index] = element;
+			pthread_mutex_unlock(&mutex);
+		}
+
+		void realloc(size_t new_size) {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			Arraylist<T>::realloc(new_size);
+			pthread_mutex_unlock(&mutex);
+		}
+
 };

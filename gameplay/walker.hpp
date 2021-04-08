@@ -12,8 +12,11 @@
 
 typedef struct _processor_args_str {
     uint32_t identifier;
-    board starting_board;
+    RingBuffer<board>* inputq;
+    RingBuffer<board>* outputq;
     heirarchy cache; 
+    Arraylist<board>* board_cache;
+    Arraylist<coord>* coord_cache;
     uint64_t* counter;
     pthread_mutex_t* counter_lock;
     uint64_t* explored_counter;
@@ -32,6 +35,27 @@ typedef struct _processor_args_str {
  * 
  */
 typedef processor_args_str* processor_args;
+
+/**
+ * @brief Represents a wrapper for passing arguments to the walker task scheduler
+ * 
+ */
+typedef struct _processor_scheduler_args_t {
+    size_t nprocs;
+    heirarchy cache;
+    RingBuffer<board>* inputq;
+    uint64_t* counter;
+    pthread_mutex_t* counter_lock;
+    uint64_t* explored_counter;
+    pthread_mutex_t* explored_lock;
+    uint64_t* repeated_counter;
+    pthread_mutex_t* repeated_lock;
+    uint64_t* saving_counter;
+    FILE** checkpoint_file;
+    pthread_mutex_t* file_lock;
+    size_t* finished_count;
+    pthread_mutex_t* finished_lock;
+} processor_scheduler_args_t;
 
 /**
  * @brief when set to > 0, will cause all walker_processor calls to save their work.
@@ -79,12 +103,20 @@ uint16_t coord_to_short(coord c);
 uint16_t coord_to_short_ints(uint8_t r, uint8_t c);
 coord short_to_coord(uint16_t s);
 
-processor_args create_processor_args(uint32_t identifier, board starting_board, heirarchy cache, 
+processor_args create_processor_args(uint32_t identifier, RingBuffer<board>* inputq, RingBuffer<board>* outputq, 
+                                     heirarchy cache, Arraylist<board>* board_cache, Arraylist<coord>* coord_cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                      uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
                                      uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock,
                                      size_t* finished_count, pthread_mutex_t* finished_lock);
+
+processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, RingBuffer<board>* inputq, size_t nprocs, 
+                                                            uint64_t* counter, pthread_mutex_t* counter_lock,
+                                                            uint64_t* explored_counter, pthread_mutex_t* explored_lock,
+                                                            uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
+                                                            uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock,
+                                                            size_t* finished_count, pthread_mutex_t* finished_lock);
 
 /**
  * @brief Used to launch child threads, accepts a board to start from and a pointer to the cache to use
@@ -114,7 +146,7 @@ void* walker_processor(void* args);
  * 
  * @return uint64_t Returns the number of boards that this thread counted.
  */
-void* walker_processor_pre_stacked(void* args);
+// void* walker_processor_pre_stacked(void* args);
 
 /**
  * @brief Writes a thread to file, saves the search stack
@@ -123,3 +155,14 @@ void* walker_processor_pre_stacked(void* args);
  * @param search_stack 
  */
 void walker_to_file(FILE* fp, Arraylist<void*>* search_stack);
+
+/**
+ * @brief Manages the thread launching as maintains knowledge of how many boards are left in each level that need to be processed
+ * Also manages clearing previous levels from the cache.
+ * 
+ * @param cache The existence cache to use
+ * @param inputq The queue of boards that need to be processed
+ * 
+ * @return void* 
+ */
+void* walker_task_scheduler(void* args);

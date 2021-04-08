@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/sysinfo.h>
 #include <err.h>
 
 #ifdef debug
@@ -129,32 +130,28 @@ coord* find_next_boards_from_coord_opposing_player(board b, coord c) {
     return result;
 }
 
+// void* walker_processor(void* args) {
+//     // Unpack the arguments
+//     processor_args pargs = (processor_args)args;
+//     if(pargs) {
+//         Arraylist<void*>* search_stack = new Arraylist<void*>(10000);
+//         return walker_processor_pre_stacked(pargs);
+//     }
+//     return (void*)1;
+// }
+
 void* walker_processor(void* args) {
     // Unpack the arguments
     processor_args pargs = (processor_args)args;
-    if(pargs && pargs->starting_board) {
-        Arraylist<void*>* search_stack = new Arraylist<void*>(10000);
-        search_stack->append(pargs->starting_board);
-        pargs->starting_board = (board)search_stack;
-        return walker_processor_pre_stacked(pargs);
-    }
-    return (void*)1;
-}
-
-void* walker_processor_pre_stacked(void* args) {
-    // Unpack the arguments
-    processor_args pargs = (processor_args)args;
-    Arraylist<void*>* starting_stack = (Arraylist<void*>*)pargs->starting_board;
     heirarchy cache = pargs->cache;
     uint64_t* counter = pargs->counter, *explored = pargs->explored_counter, *repeated = pargs->repeated_counter;
     pthread_mutex_t* counter_lock = pargs->counter_lock, *explored_lock = pargs->explored_lock, *repeated_lock = pargs->repeated_lock;
 
-    if(starting_stack && cache) {
+    if(cache) {
         printf("Processor %d has started\n", pargs->identifier);
 
         // Setup the stacks
         uint64_t count = 0;
-        Arraylist<void*>* search_stack = starting_stack;
         Arraylist<void*>* board_cache = new Arraylist<void*>(1000), *coord_cache = new Arraylist<void*>(1000), *coord_buff = new Arraylist<void*>(65);
         for(size_t bc = 0; bc < 1000; bc++) {
             board_cache->append(create_board(1, BOARD_HEIGHT, BOARD_WIDTH));
@@ -164,64 +161,29 @@ void* walker_processor_pre_stacked(void* args) {
         // printf("Starting walk...\n");
 
         uint64_t iter = 0, intercap = 0;
-        while(search_stack->pointer) {
-            board sb = (board)search_stack->pop_back(), bc;
+        while(!WALKER_KILL_FLAG) {
+            if(pargs->inputq->count) {
+                board sb = pargs->inputq->pop_front(), bc;
 
-            // #ifdef debug
-            //     display_board(sb);
-            // #endif
+                // #ifdef debug
+                //     display_board(sb);
+                // #endif
 
-            // find_next_boards(sb, coord_buff, coord_cache);
+                // find_next_boards(sb, coord_buff, coord_cache);
 
-            #ifdef incore_cache
+                #ifdef incore_cache
 
-            if(heirarchy_insert_cache(cache, board_fast_hash_6(sb))) {
+                if(heirarchy_insert_cache(cache, board_fast_hash_6(sb))) {
 
-            #endif
-
-                find_next_boards(sb, coord_buff, coord_cache);
-
-                #ifdef debug
-                    __uint128_t hash = board_spiral_hash(sb);
-                    printf("Board hashed to %lu %lu\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
-                    display_moves_w(sb, coord_buff);
                 #endif
 
-                if(coord_buff->pointer) {
-                    uint8_t move_count = 0;
-                    // If the move is legal, then append it to the search stack
-                    for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-                        coord mm = (coord)coord_buff->data[im];
-                        
-                        if(board_cache->pointer) bc = (board)board_cache->pop_back();
-                        else bc = create_board(1, sb->height, sb->width);
-
-                        clone_into_board(sb, bc);
-
-                        if(board_is_legal_move(bc, mm->row, mm->column)) {
-                            board_place_piece(bc, mm->row, mm->column);
-                            search_stack->append(bc);
-                            move_count++;
-                        }
-                        else {
-                            board_cache->append(bc);
-                        }
-
-                        coord_cache->append(mm);
-                    }
-
-                    #ifdef debug
-                        // printf("Found %u moves\n", move_count);
-                    #endif
-                }
-                else {
-                    // The opponenet has no moves, try the other player
-                    #ifdef debug
-                        printf("No moves for opponent, switching back to the current player\n");
-                    #endif
-                    sb->player = (sb->player == 1) ? 2 : 1;
-
                     find_next_boards(sb, coord_buff, coord_cache);
+
+                    #ifdef debug
+                        __uint128_t hash = board_spiral_hash(sb);
+                        printf("Board hashed to %lu %lu\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
+                        display_moves_w(sb, coord_buff);
+                    #endif
 
                     if(coord_buff->pointer) {
                         uint8_t move_count = 0;
@@ -236,7 +198,7 @@ void* walker_processor_pre_stacked(void* args) {
 
                             if(board_is_legal_move(bc, mm->row, mm->column)) {
                                 board_place_piece(bc, mm->row, mm->column);
-                                search_stack->append(bc);
+                                pargs->outputq->append(bc);
                                 move_count++;
                             }
                             else {
@@ -245,97 +207,132 @@ void* walker_processor_pre_stacked(void* args) {
 
                             coord_cache->append(mm);
                         }
+
+                        #ifdef debug
+                            // printf("Found %u moves\n", move_count);
+                        #endif
                     }
                     else {
                         // The opponenet has no moves, try the other player
                         #ifdef debug
-                            printf("No moves for anybody, game has ended.\n");
+                            printf("No moves for opponent, switching back to the current player\n");
                         #endif
+                        sb->player = (sb->player == 1) ? 2 : 1;
 
-                        // if(!exists_hs(cache, sb)) {
-                        //     put_hs(cache, sb);
-                        //     while(pthread_mutex_trylock(counter_lock)) sched_yield();
-                        //     *counter += 1;
-                        //     // *explored += count;
-                        //     pthread_mutex_unlock(counter_lock);
+                        find_next_boards(sb, coord_buff, coord_cache);
 
-                        //     // while(pthread_mutex_trylock(explored_lock)) sched_yield();
-                        //     // *explored += count;
-                        //     // pthread_mutex_unlock(explored_lock);
+                        if(coord_buff->pointer) {
+                            uint8_t move_count = 0;
+                            // If the move is legal, then append it to the search stack
+                            for(uint8_t im = 0; im < coord_buff->pointer; im++) {
+                                coord mm = (coord)coord_buff->data[im];
+                                
+                                if(board_cache->pointer) bc = (board)board_cache->pop_back();
+                                else bc = create_board(1, sb->height, sb->width);
 
-                        //     count = 0;
-                        // }
-                        // else {
-                        //     #ifdef debug
-                        //         printf("The given board is already counted\n");
-                        //     #endif
-                        // }
+                                clone_into_board(sb, bc);
 
-                        if(heirarchy_insert(cache, board_fast_hash_6(sb))) {
+                                if(board_is_legal_move(bc, mm->row, mm->column)) {
+                                    board_place_piece(bc, mm->row, mm->column);
+                                    pargs->outputq->append(bc);
+                                    move_count++;
+                                }
+                                else {
+                                    board_cache->append(bc);
+                                }
 
-                            // printf("Found a new board to count\n");
-                            while(pthread_mutex_trylock(counter_lock)) sched_yield();
-                            *counter += 1;
-                            // *explored += count;
-                            pthread_mutex_unlock(counter_lock);
-
-                            // while(pthread_mutex_trylock(explored_lock)) sched_yield();
-                            // *explored += count;
-                            // pthread_mutex_unlock(explored_lock);
-
-                            // count = 0;
+                                coord_cache->append(mm);
+                            }
                         }
                         else {
-                            while(pthread_mutex_trylock(repeated_lock)) sched_yield();
-                            *repeated += 1;
-                            pthread_mutex_unlock(repeated_lock);
+                            // The opponenet has no moves, try the other player
+                            #ifdef debug
+                                printf("No moves for anybody, game has ended.\n");
+                            #endif
+
+                            // if(!exists_hs(cache, sb)) {
+                            //     put_hs(cache, sb);
+                            //     while(pthread_mutex_trylock(counter_lock)) sched_yield();
+                            //     *counter += 1;
+                            //     // *explored += count;
+                            //     pthread_mutex_unlock(counter_lock);
+
+                            //     // while(pthread_mutex_trylock(explored_lock)) sched_yield();
+                            //     // *explored += count;
+                            //     // pthread_mutex_unlock(explored_lock);
+
+                            //     count = 0;
+                            // }
+                            // else {
+                            //     #ifdef debug
+                            //         printf("The given board is already counted\n");
+                            //     #endif
+                            // }
+
+                            if(heirarchy_insert(cache, board_fast_hash_6(sb))) {
+
+                                // printf("Found a new board to count\n");
+                                while(pthread_mutex_trylock(counter_lock)) sched_yield();
+                                *counter += 1;
+                                // *explored += count;
+                                pthread_mutex_unlock(counter_lock);
+
+                                // while(pthread_mutex_trylock(explored_lock)) sched_yield();
+                                // *explored += count;
+                                // pthread_mutex_unlock(explored_lock);
+
+                                // count = 0;
+                            }
+                            else {
+                                while(pthread_mutex_trylock(repeated_lock)) sched_yield();
+                                *repeated += 1;
+                                pthread_mutex_unlock(repeated_lock);
+                            }
                         }
                     }
+
+                    while(pthread_mutex_trylock(explored_lock)) sched_yield();
+                    *explored += 1;
+                    pthread_mutex_unlock(explored_lock);
+
+                #ifdef incore_cache
+
+                }
+                else {
+                    #ifdef debug
+                        __uint128_t hash = board_spiral_hash(sb);
+                        printf("Board hashed to %lu %lu <-- REPEAT\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
+                    #endif
                 }
 
-                while(pthread_mutex_trylock(explored_lock)) sched_yield();
-                *explored += 1;
-                pthread_mutex_unlock(explored_lock);
-
-            #ifdef incore_cache
-
-            }
-            else {
-                #ifdef debug
-                    __uint128_t hash = board_spiral_hash(sb);
-                    printf("Board hashed to %lu %lu <-- REPEAT\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
                 #endif
+                
+                board_cache->append(sb);
+
+                // if(SAVING_FLAG) {
+                //     while(pthread_mutex_trylock(pargs->file_lock)) sched_yield();
+
+                //     #ifdef debug
+                //         printf("Saving thread\n");
+                //     #endif
+
+                //     walker_to_file(*(pargs->checkpoint_file), pargs->inputq);
+                //     *(pargs->saving_counter) += 1;
+                //     pthread_mutex_unlock(pargs->file_lock);
+
+                //     #ifdef debug
+                //         printf("Finished saving thread\n");
+                //     #endif
+
+                //     uint8_t temp_saving_flag = SAVING_FLAG;
+                //     while(temp_saving_flag) {
+                //         while(pthread_mutex_trylock(&saving_lock)) sched_yield();
+                //         temp_saving_flag = SAVING_FLAG;
+                //         pthread_mutex_unlock(&saving_lock);
+                //         sched_yield();
+                //     }
+                // }
             }
-
-            #endif
-            
-            board_cache->append(sb);
-
-            if(SAVING_FLAG) {
-                while(pthread_mutex_trylock(pargs->file_lock)) sched_yield();
-
-                #ifdef debug
-                    printf("Saving thread\n");
-                #endif
-
-                walker_to_file(*(pargs->checkpoint_file), search_stack);
-                *(pargs->saving_counter) += 1;
-                pthread_mutex_unlock(pargs->file_lock);
-
-                #ifdef debug
-                    printf("Finished saving thread\n");
-                #endif
-
-                uint8_t temp_saving_flag = SAVING_FLAG;
-                while(temp_saving_flag) {
-                    while(pthread_mutex_trylock(&saving_lock)) sched_yield();
-                    temp_saving_flag = SAVING_FLAG;
-                    pthread_mutex_unlock(&saving_lock);
-                    sched_yield();
-                }
-            }
-
-            if(WALKER_KILL_FLAG) break;
         }
 
         printf("Processor %d has finished\n", pargs->identifier);
@@ -345,18 +342,7 @@ void* walker_processor_pre_stacked(void* args) {
         pthread_mutex_unlock(pargs->finished_lock);
 
         free(pargs);
-        while(search_stack->pointer) destroy_board((board)search_stack->pop_back());
-        delete search_stack;
-
-        while(board_cache->pointer) {
-            destroy_board((board)board_cache->pop_back());
-        }
-        delete board_cache;
-
-        while(coord_cache->pointer) {
-            free(coord_cache->pop_back());
-        }
-        delete coord_cache;
+        // while(pargs->inputq->count) destroy_board(pargs->inputq->pop_back());
 
         return 0;
     }
@@ -381,7 +367,8 @@ coord short_to_coord(uint16_t s) {
     return r;
 }
 
-processor_args create_processor_args(uint32_t identifier, board starting_board, heirarchy cache, 
+processor_args create_processor_args(uint32_t identifier, RingBuffer<board>* inputq, RingBuffer<board>* outputq, 
+                                     heirarchy cache, Arraylist<board>* board_cache, Arraylist<coord>* coord_cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                      uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
@@ -391,8 +378,38 @@ processor_args create_processor_args(uint32_t identifier, board starting_board, 
     if(!args) err(1, "Memory error while allocating processor args\n");
 
     args->identifier = identifier;
-    args->starting_board = starting_board;
+    args->inputq = inputq;
+    args->outputq = outputq;
     args->cache = cache;
+    args->board_cache = board_cache;
+    args->coord_cache = coord_cache;
+    args->counter = counter;
+    args->counter_lock = counter_lock;
+    args->explored_counter = explored_counter;
+    args->explored_lock = explored_lock;
+    args->repeated_counter = repeated_counter;
+    args->repeated_lock = repeated_lock;
+    args->checkpoint_file = checkpoint_file;
+    args->file_lock = file_lock;
+    args->saving_counter = saving_counter;
+    args->finished_count = finished_count;
+    args->finished_lock = finished_lock;
+
+    return args;
+}
+
+processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, RingBuffer<board>* inputq, size_t nprocs, 
+                                                            uint64_t* counter, pthread_mutex_t* counter_lock,
+                                                            uint64_t* explored_counter, pthread_mutex_t* explored_lock,
+                                                            uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
+                                                            uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock,
+                                                            size_t* finished_count, pthread_mutex_t* finished_lock) {
+    processor_scheduler_args_t* args = (processor_scheduler_args_t*)malloc(sizeof(processor_scheduler_args_t));
+    if(!args) err(1, "Memory error while allocating processor scheduler args\n");
+
+    args->cache = cache;
+    args->inputq = inputq;
+    args->nprocs = nprocs;
     args->counter = counter;
     args->counter_lock = counter_lock;
     args->explored_counter = explored_counter;
@@ -454,4 +471,63 @@ void walker_to_file(FILE* fp, Arraylist<void*>* search_stack) {
         fwrite(&spaceholder, sizeof(uint8_t), 1, fp);
         fwrite(&result, sizeof(__uint128_t), 1, fp);
     }
+}
+
+void* walker_task_scheduler(void* args) {
+    processor_scheduler_args_t* pargs = (processor_scheduler_args_t*)args;
+
+    size_t level_counts[64];
+    for(size_t l = 0; l < 64; l++) { level_counts[l] = 0; }
+
+    // Distribute the initial states to a set of new pthreads.
+    Arraylist<void*>* threads = new Arraylist<void*>(pargs->nprocs + 1);
+    Arraylist<LockedRingBuffer<board>*>* procqs = new Arraylist<LockedRingBuffer<board>*>(pargs->nprocs + 1);
+    LockedArraylist<board>* board_cache = new LockedArraylist<board>(1000 * pargs->nprocs);
+    LockedArraylist<coord>* coord_cache = new LockedArraylist<coord>(1000 * pargs->nprocs);
+
+    for(uint64_t t = 0; t < pargs->nprocs; t++) {
+        pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
+        if(!thread_id) err(1, "Memory error while allocating thread id\n");
+
+        LockedRingBuffer<board>* inputq = new LockedRingBuffer<board>(1000);
+
+        processor_args args = create_processor_args(t, inputq, pargs->inputq, 
+                                                    pargs->cache, board_cache, coord_cache, 
+                                                    pargs->counter, pargs->counter_lock,
+                                                    pargs->explored_counter, pargs->explored_lock,
+                                                    pargs->repeated_counter, pargs->repeated_lock,
+                                                    pargs->saving_counter, pargs->checkpoint_file, pargs->file_lock,
+                                                    pargs->finished_count, pargs->finished_lock);
+
+        // walker_processor(args);
+        pthread_create(thread_id, 0, walker_processor, (void*)args);
+
+        threads->append(thread_id);
+        procqs->append(inputq);
+    }
+
+    size_t current_target = 0;
+    while((pargs->inputq->count || *pargs->finished_count < pargs->nprocs) && !WALKER_KILL_FLAG) {
+        while(pargs->inputq->count) {
+            board b = pargs->inputq->pop_front();
+            procqs->data[current_target++]->append(b);
+            if(current_target >= procqs->size) current_target = 0;
+        }
+
+        // TODO save progress
+        
+        sched_yield();
+    }
+
+    for(size_t i = 0; i < procqs->pointer; i++) {
+        while(procqs->data[i]->count) destroy_board(procqs->data[i]->pop_back());
+        delete procqs->data[i];
+    }
+    while(board_cache->pointer) destroy_board(board_cache->pop_back());
+    while(coord_cache->pointer) free(coord_cache->pop_back());
+    delete threads, procqs, board_cache, coord_cache;
+
+    free(pargs);
+
+    return nullptr;
 }
