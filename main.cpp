@@ -18,6 +18,7 @@
 #include "./mem_man/heir.hpp"
 #include "./gameplay/walker.hpp"
 #include "./utils/tarraylist.hpp"
+#include "./utils/pqueue.hpp"
 #include "./utils/fileio.hpp"
 #include "./utils/path_util.h"
 #include "./utils/csv.h"
@@ -322,7 +323,7 @@ int main() {
     }
     
     pthread_t scheduler;
-    LockedRingBuffer<board>* schedulerq = new LockedRingBuffer<board>(1000);
+    LockedPriorityQueue<board>* schedulerq = new LockedPriorityQueue<board>(1000);
     processor_scheduler_args_t* schargs = create_processor_scheduler_args(cache, schedulerq, procs,
                                                                           &count, &counter_lock,
                                                                           &explored_count, &explored_lock,
@@ -331,7 +332,7 @@ int main() {
                                                                           &finished_count, &finished_lock);
     pthread_create(&scheduler, 0, walker_task_scheduler, schargs);
 
-    schedulerq->append(create_board(1, BOARD_HEIGHT, BOARD_WIDTH, 0));
+    schedulerq->push(create_board(1, BOARD_HEIGHT, BOARD_WIDTH, 0));
 
     #pragma endregion
 

@@ -4,6 +4,7 @@
 #include "../hashing/hash_functions.h"
 #include "./reversi_defs.h"
 #include "../mem_man/heir.hpp"
+#include "../utils/pqueue.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -199,7 +200,7 @@ void* walker_processor(void* args) {
 
                             if(board_is_legal_move(bc, mm->row, mm->column)) {
                                 board_place_piece(bc, mm->row, mm->column);
-                                pargs->outputq->append(bc);
+                                pargs->outputq->push(bc);
                                 move_count++;
                             }
                             else {
@@ -235,7 +236,7 @@ void* walker_processor(void* args) {
 
                                 if(board_is_legal_move(bc, mm->row, mm->column)) {
                                     board_place_piece(bc, mm->row, mm->column);
-                                    pargs->outputq->append(bc);
+                                    pargs->outputq->push(bc);
                                     move_count++;
                                 }
                                 else {
@@ -368,7 +369,7 @@ coord short_to_coord(uint16_t s) {
     return r;
 }
 
-processor_args create_processor_args(uint32_t identifier, RingBuffer<board>* inputq, RingBuffer<board>* outputq, 
+processor_args create_processor_args(uint32_t identifier, LockedRingBuffer<board>* inputq, LockedPriorityQueue<board>* outputq, 
                                      heirarchy cache, Arraylist<board>* board_cache, Arraylist<coord>* coord_cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
@@ -399,7 +400,7 @@ processor_args create_processor_args(uint32_t identifier, RingBuffer<board>* inp
     return args;
 }
 
-processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, RingBuffer<board>* inputq, size_t nprocs, 
+processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, LockedPriorityQueue<board>* inputq, size_t nprocs, 
                                                             uint64_t* counter, pthread_mutex_t* counter_lock,
                                                             uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                                             uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
@@ -510,11 +511,16 @@ void* walker_task_scheduler(void* args) {
         procqs->append(inputq);
     }
 
-    size_t current_target = 0;
+    size_t current_target = 0, current_level = 0;
     while((pargs->inputq->count || *pargs->finished_count < pargs->nprocs) && !WALKER_KILL_FLAG) {
         while(pargs->inputq->count) {
-            board b = pargs->inputq->pop_front();
+            board b = pargs->inputq->pop();
+
+            // Purge the previous level
+            if(b->level > current_level) heirarchy_purge_level(pargs->cache, current_level++);
+
             procqs->data[current_target++]->append(b);
+
             if(current_target >= procqs->size) current_target = 0;
         }
 

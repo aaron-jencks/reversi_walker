@@ -73,4 +73,9 @@ void hdict_put(hdict d, __uint128_t k, uint8_t* value) {
     }
 }
 
+__uint128_t hdict_remove(hdict d, __uint128_t k) {
+    __uint128_t bin = k % d->bin_count;
+    // TODO
+}
+
 double hdict_load_factor(hdict d) { return (double)d->size / (double)d->bin_count; }

@@ -99,6 +99,23 @@ void dmempage_append_bin(dmempage mp, __uint128_t bin_index, dict_pair_t value) 
     }
 }
 
+void dmempage_remove(dmempage mp, __uint128_t bin_index, __uint128_t value) {
+    if(bin_index >= mp->num_bins) err(4, "Index %lu %lu out of bounds in dmempage of size %lu %lu\n", 
+                                      ((uint64_t*)&bin_index)[1], ((uint64_t*)&bin_index)[0], 
+                                      ((uint64_t*)&mp->num_bins)[1], ((uint64_t*)&mp->num_bins)[0]);
+    uint32_t page = bin_index / mp->count_per_page, page_index = bin_index % mp->count_per_page;
+
+    dict_pair_t** l = mp->pages[page];
+    size_t bcount = mp->bin_counts[page][page_index];
+    
+    dict_pair_t* bin = l[page_index];
+    for(size_t b = 0; b < bcount; b++) if(bin[b].key == value) {
+        for(size_t bt = b; bt < (bcount - 1); bt++) bin[bt] = bin[bt + 1];
+        break;
+    }
+    return 0;
+}
+
 uint8_t dmempage_value_in_bin(dmempage mp, __uint128_t bin_index, __uint128_t value) {
     if(bin_index >= mp->num_bins) err(4, "Index out of bounds in dmempage\n");
     uint32_t page = bin_index / mp->count_per_page, page_index = bin_index % mp->count_per_page;

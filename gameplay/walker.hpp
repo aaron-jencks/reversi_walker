@@ -3,6 +3,7 @@
 #include "reversi.h"
 #include "../hashing/hashtable.h"
 #include "../utils/tarraylist.hpp"
+#include "../utils/pqueue.hpp"
 #include "../mem_man/heir.hpp"
 #include "reversi_defs.h"  
 
@@ -12,8 +13,8 @@
 
 typedef struct _processor_args_str {
     uint32_t identifier;
-    RingBuffer<board>* inputq;
-    RingBuffer<board>* outputq;
+    LockedRingBuffer<board>* inputq;
+    LockedPriorityQueue<board>* outputq;
     heirarchy cache; 
     Arraylist<board>* board_cache;
     Arraylist<coord>* coord_cache;
@@ -43,7 +44,7 @@ typedef processor_args_str* processor_args;
 typedef struct _processor_scheduler_args_t {
     size_t nprocs;
     heirarchy cache;
-    RingBuffer<board>* inputq;
+    LockedPriorityQueue<board>* inputq;
     uint64_t* counter;
     pthread_mutex_t* counter_lock;
     uint64_t* explored_counter;
@@ -103,7 +104,7 @@ uint16_t coord_to_short(coord c);
 uint16_t coord_to_short_ints(uint8_t r, uint8_t c);
 coord short_to_coord(uint16_t s);
 
-processor_args create_processor_args(uint32_t identifier, RingBuffer<board>* inputq, RingBuffer<board>* outputq, 
+processor_args create_processor_args(uint32_t identifier, LockedRingBuffer<board>* inputq, LockedPriorityQueue<board>* outputq, 
                                      heirarchy cache, Arraylist<board>* board_cache, Arraylist<coord>* coord_cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
@@ -111,7 +112,7 @@ processor_args create_processor_args(uint32_t identifier, RingBuffer<board>* inp
                                      uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock,
                                      size_t* finished_count, pthread_mutex_t* finished_lock);
 
-processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, RingBuffer<board>* inputq, size_t nprocs, 
+processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, LockedPriorityQueue<board>* inputq, size_t nprocs, 
                                                             uint64_t* counter, pthread_mutex_t* counter_lock,
                                                             uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                                             uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,

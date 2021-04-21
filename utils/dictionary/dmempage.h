@@ -31,6 +31,7 @@ void destroy_dmempage(dmempage mp);
 // void dmempage_put(dmempage mp, __uint128_t index, void* data);
 
 void dmempage_append_bin(dmempage mp, __uint128_t bin_index, dict_pair_t value);
+void dmempage_remove(dmempage mp, __uint128_t bin_index, __uint128_t value);
 uint8_t dmempage_value_in_bin(dmempage mp, __uint128_t bin_index, __uint128_t value);
 uint8_t* dmempage_get(dmempage mp, __uint128_t bin_index, __uint128_t key);
 void dmempage_clear_all(dmempage mp);

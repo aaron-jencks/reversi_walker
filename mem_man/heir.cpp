@@ -165,7 +165,7 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key, size_t level) {
 
 void heirarchy_purge_level(heirarchy h, size_t level) {
     for(size_t i = 0; i < h->level_mappings[level]->pointer; i++) {
-        
+        // TODO remove these boards from memory
     }
 }
 

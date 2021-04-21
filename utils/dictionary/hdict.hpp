@@ -20,5 +20,6 @@ dmempage_buff hdict_get_all(hdict d);
 
 uint8_t* hdict_get(hdict d, __uint128_t k);
 void hdict_put(hdict d, __uint128_t k, uint8_t* value);
+__uint128_t hdict_remove(hdict d, __uint128_t k);
 
 double hdict_load_factor(hdict d);
