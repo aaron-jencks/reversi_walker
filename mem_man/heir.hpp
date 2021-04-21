@@ -36,7 +36,7 @@ extern pthread_mutex_t heirarchy_cache_lock;
 heirarchy create_heirarchy(char* file_directory);
 void destroy_heirarchy(heirarchy h);
 
-uint8_t heirarchy_insert(heirarchy h, __uint128_t key);
+uint8_t heirarchy_insert(heirarchy h, __uint128_t key, size_t level);
 uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key);
 
 void heirarchy_purge_level(heirarchy h, size_t level);

@@ -3,6 +3,7 @@
 #include "../utils/tarraylist.hpp"
 #include "../hashing/hash_functions.h"
 #include "./reversi_defs.h"
+#include "../mem_man/heir.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -154,7 +155,7 @@ void* walker_processor(void* args) {
         uint64_t count = 0;
         Arraylist<void*>* board_cache = new Arraylist<void*>(1000), *coord_cache = new Arraylist<void*>(1000), *coord_buff = new Arraylist<void*>(65);
         for(size_t bc = 0; bc < 1000; bc++) {
-            board_cache->append(create_board(1, BOARD_HEIGHT, BOARD_WIDTH));
+            board_cache->append(create_board(1, BOARD_HEIGHT, BOARD_WIDTH, 0));
             coord_cache->append(create_coord(0, 0));
         }
 
@@ -192,7 +193,7 @@ void* walker_processor(void* args) {
                             coord mm = (coord)coord_buff->data[im];
                             
                             if(board_cache->pointer) bc = (board)board_cache->pop_back();
-                            else bc = create_board(1, sb->height, sb->width);
+                            else bc = create_board(1, sb->height, sb->width, sb->level + 1);
 
                             clone_into_board(sb, bc);
 
@@ -228,7 +229,7 @@ void* walker_processor(void* args) {
                                 coord mm = (coord)coord_buff->data[im];
                                 
                                 if(board_cache->pointer) bc = (board)board_cache->pop_back();
-                                else bc = create_board(1, sb->height, sb->width);
+                                else bc = create_board(1, sb->height, sb->width, sb->level + 1);
 
                                 clone_into_board(sb, bc);
 
@@ -269,7 +270,7 @@ void* walker_processor(void* args) {
                             //     #endif
                             // }
 
-                            if(heirarchy_insert(cache, board_fast_hash_6(sb))) {
+                            if(heirarchy_insert(cache, board_fast_hash_6(sb), sb->level)) {
 
                                 // printf("Found a new board to count\n");
                                 while(pthread_mutex_trylock(counter_lock)) sched_yield();
@@ -518,6 +519,10 @@ void* walker_task_scheduler(void* args) {
         }
 
         // TODO save progress
+        if(SAVING_FLAG) {
+            // Save the last completed level and possibly progress for the current level
+            
+        }
         
         sched_yield();
     }

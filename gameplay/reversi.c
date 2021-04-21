@@ -4,12 +4,13 @@
 #include <err.h>
 #include <stdio.h>
 
-board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
+board create_board(uint8_t starting_player, uint8_t height, uint8_t width, uint8_t level) {
     board b = (board)calloc(1, sizeof(board_str));
     if(!b) err(1, "Memory Error while allocating the board\n");
     b->player = starting_player;
     b->height = height;
     b->width = width;
+    b->level = level;
 
     b->board = (uint8_t*)calloc((height * width) >> 2, sizeof(uint8_t));
     if(!b->board) err(1, "Memory Error while allocating board's board array\n");
@@ -56,6 +57,7 @@ board create_board_unhash_8(uint8_t starting_player, __uint128_t key) {
     b->player = starting_player;
     b->height = 8;
     b->width = 8;
+    b->level = 0;
 
     b->board = (uint8_t*)calloc(32, sizeof(uint8_t));
     if(!b->board) err(1, "Memory Error while allocating board's board array\n");
@@ -79,6 +81,7 @@ board create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
     b->player = starting_player;
     b->height = 6;
     b->width = 6;
+    b->level = 0;
 
     b->board = (uint8_t*)calloc(18, sizeof(uint8_t));
     if(!b->board) err(1, "Memory Error while allocating board's board array\n");
@@ -127,6 +130,7 @@ void clone_into_board(board src, board dest) {
         dest->height = src->height;
         dest->width = src->width;
         dest->player = src->player;
+        dest->level = src->level;
         for(uint8_t i = 0; i < ((src->height * src->width) >> 2); i++) dest->board[i] = src->board[i];
     }
 }

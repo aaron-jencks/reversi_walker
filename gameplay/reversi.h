@@ -16,7 +16,7 @@ extern "C" {
  * @param width The width of the board in columns
  * @return board 
  */
-board create_board(uint8_t starting_player, uint8_t height, uint8_t width);
+board create_board(uint8_t starting_player, uint8_t height, uint8_t width, uint8_t level);
 
 /**
  * @brief Create an 8x8 board object, unhashing from a uint128, must be an 8x8 board or smaller

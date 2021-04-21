@@ -18,6 +18,7 @@ typedef struct _board_str {
     uint8_t width;
     uint8_t height;
     uint8_t* board;
+    uint8_t level;
 } board_str;
 
 typedef board_str* board;

@@ -1,8 +1,8 @@
 cc=gcc
 pp=g++
 cflags+=-O3 -Wall
-objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o 
-cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o 
+objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o
+cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o pqueue.o
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o mmap_test.o dict_test.o heapsort_test.o arraylist_test.o 
 
@@ -86,7 +86,10 @@ fdict.o: ./utils/dictionary/fdict.cpp ./utils/dictionary/fdict.hpp ./utils/dicti
 hdict.o: ./utils/dictionary/hdict.cpp ./utils/dictionary/hdict.hpp dmempage.o 
 	$(pp) $(cflags) -o $@ -c $<
 
-tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp;
+tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp
+	$(pp) $(cflags) -o $@ -c $<
+
+pqueue.o: ./utils/pqueue.cpp ./utils/pqueue.hpp tarraylist.o ./gameplay/reversi_defs.h 
 	$(pp) $(cflags) -o $@ -c $<
 
 semaphore.o: ./utils/semaphore.cpp ./utils/semaphore.hpp

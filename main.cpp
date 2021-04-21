@@ -331,7 +331,7 @@ int main() {
                                                                           &finished_count, &finished_lock);
     pthread_create(&scheduler, 0, walker_task_scheduler, schargs);
 
-    schedulerq->append(create_board(1, BOARD_HEIGHT, BOARD_WIDTH));
+    schedulerq->append(create_board(1, BOARD_HEIGHT, BOARD_WIDTH, 0));
 
     #pragma endregion
 
