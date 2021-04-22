@@ -115,4 +115,10 @@ void fdict_put(fdict d, __uint128_t k, uint8_t* value) {
     d->size++;
 }
 
+__uint128_t fdict_remove(fdict d, __uint128_t k) {
+    size_t bin = k % d->bin_count;
+    d->bins[bin]->pop(d->bins[bin]->index(dict_usage_pair_t { k, 0, 0}));
+    d->size--;
+}
+
 double fdict_load_factor(fdict d) { return (double)d->size / (double)d->bin_count; }

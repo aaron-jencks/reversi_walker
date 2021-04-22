@@ -85,6 +85,16 @@ template <typename T> class Arraylist {
 			return (T)NULL;
 		}
 
+		size_t index(T value) {
+			if(size) {
+				for(size_t i = 0; i < size; i++) {
+					if(data[i] == value) return i;
+				}
+				return size;
+			}
+			return 0;
+		}
+
 		void realloc(size_t new_size) {
 			if(new_size) {
 				data = (T*)std::realloc(data, sizeof(T) * new_size);
@@ -95,6 +105,7 @@ template <typename T> class Arraylist {
 };
 
 template<> void Arraylist<dict_usage_pair_t>::insert(dict_usage_pair_t element, size_t index);
+template<> size_t Arraylist<dict_usage_pair_t>::index(dict_usage_pair_t value);
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop(size_t index);
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop_front();
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop_back();

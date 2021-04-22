@@ -23,6 +23,16 @@ template<> void Arraylist<dict_usage_pair_t>::insert(dict_usage_pair_t element, 
 	}
 }
 
+template<> size_t Arraylist<dict_usage_pair_t>::index(dict_usage_pair_t value) {
+	if(size) {
+		for(size_t i = 0; i < size; i++) {
+			if(data[i].pair.key == value.pair.key) return i;
+		}
+		return size;
+	}
+	return 0;
+}
+
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop(size_t index) {
 	if(size && index < size) {
 		dict_usage_pair_t d = data[index];
