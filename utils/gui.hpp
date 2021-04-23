@@ -1,5 +1,9 @@
 #pragma once
 
+#include "../gameplay/reversi_defs.h"
+#include "../mem_man/heir.hpp"
+#include "tarraylist.hpp"
+
 #include <stdio.h>
 #include <stdint.h>
 

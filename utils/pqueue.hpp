@@ -52,7 +52,7 @@ template <typename T> class LockedPriorityQueue {
         size_t count;
         pthread_mutex_t mutex;
 
-        LockedPriorityQueue(size_t initial_size) : LockedArraylist<T>::LockedArraylist(initial_size) {
+        LockedPriorityQueue(size_t initial_size) {
             data = (T*)malloc(sizeof(T) * initial_size);
 			if(!data) err(1, "Memory error while allocating arraylist\n");
 			size = initial_size;

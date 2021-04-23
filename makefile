@@ -77,8 +77,8 @@ heapsort.o: ./utils/heapsort.c ./utils/heapsort.h
 csv.o: ./utils/csv.c ./utils/csv.h 
 	$(cc) $(cflags) -o $@ -c $<
 
-gui.o: ./utils/gui.c ./utils/gui.h heir.o csv.o ./gameplay/reversi_defs.h reversi.o 
-	$(cc) $(cflags) -o $@ -c $<
+gui.o: ./utils/gui.cpp ./utils/gui.hpp heir.o csv.o ./gameplay/reversi_defs.h reversi.o 
+	$(pp) $(cflags) -o $@ -c $<
 
 dmempage.o: ./utils/dictionary/dmempage.c ./utils/dictionary/dmempage.h ./utils/dictionary/dict_def.h 
 	$(cc) $(cflags) -o $@ -c $<

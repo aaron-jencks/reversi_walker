@@ -150,6 +150,9 @@ int main() {
         explored_count = pf->explored_counter;
         cache = pf->cache;
     }
+    else {
+        cache = create_heirarchy(temp_dir);
+    }
     
     pthread_t scheduler;
     LockedPriorityQueue<board>* schedulerq = new LockedPriorityQueue<board>(1000);

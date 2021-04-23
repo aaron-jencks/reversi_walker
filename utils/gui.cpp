@@ -1,11 +1,9 @@
 #include "gui.hpp"
-#include "../gameplay/reversi_defs.h"
 #include "../gameplay/reversi.h"
 #include "csv.h"
-#include "tarraylist.hpp"
-#include "../mem_man/heir.hpp"
 
 #include <sys/statvfs.h>
+#include <sys/stat.h>
 #include <time.h>
 
 uint8_t ask_yes_no(const char* string) {
@@ -53,7 +51,6 @@ void display_moves(board b, Arraylist<void*>* coords) {
         printf("\n");
     }
 }
-
 
 void display_capture_counts(uint64_t cc) {
     /*
@@ -105,7 +102,7 @@ void display_capture_counts(uint64_t cc) {
 
 struct statvfs disk_usage_buff;
 const double GB = 1024 * 1024 * 1024;
-const double disk_total;
+double disk_total;
 time_t start = time(0), current, fps_timer = time(0), sleep_timer = time(0), log_timer = time(0);
 clock_t cstart = clock();
 uint32_t cpu_time, cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
