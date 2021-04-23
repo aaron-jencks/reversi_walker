@@ -2,7 +2,7 @@ cc=gcc
 pp=g++
 cflags+=-O3 -Wall
 objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o
-cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o pqueue.o
+cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o pqueue.o gui.o
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o mmap_test.o dict_test.o heapsort_test.o arraylist_test.o 
 
@@ -75,6 +75,9 @@ heapsort.o: ./utils/heapsort.c ./utils/heapsort.h
 	$(cc) $(cflags) -o $@ -c $<
 
 csv.o: ./utils/csv.c ./utils/csv.h 
+	$(cc) $(cflags) -o $@ -c $<
+
+gui.o: ./utils/gui.c ./utils/gui.h heir.o csv.o ./gameplay/reversi_defs.h reversi.o 
 	$(cc) $(cflags) -o $@ -c $<
 
 dmempage.o: ./utils/dictionary/dmempage.c ./utils/dictionary/dmempage.h ./utils/dictionary/dict_def.h 

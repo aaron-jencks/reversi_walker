@@ -5,7 +5,6 @@
 #include <err.h>
 #include <pthread.h>
 #include <sys/sysinfo.h>
-#include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <string.h>
@@ -23,6 +22,7 @@
 #include "./utils/path_util.h"
 #include "./utils/csv.h"
 #include "./gameplay/reversi_defs.h"
+#include "./utils/gui.hpp"
 
 // TODO you can use the previous two board states to predict the next set of valid moves.
 
@@ -38,90 +38,6 @@
 uint8_t SHUTDOWN_FLAG = 0;
 pthread_mutex_t shutdown_lock;
 
-
-void display_board(board b) {
-    if(b) {
-        printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
-        for(uint8_t r = 0; r < b->height; r++) {
-            for(uint8_t c = 0; c < b->width; c++) {
-                printf("%c", board_get(b, r, c) + '0');
-            }
-            printf("\n");
-        }
-        printf("\n");
-    }
-}
-
-void display_moves(board b, Arraylist<void*>* coords) {
-    if(b) {
-        printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
-        for(uint8_t r = 0; r < b->height; r++) {
-            for(uint8_t c = 0; c < b->width; c++) {
-                uint8_t move = 0;
-                for(size_t cd = 0; cd < coords->pointer; cd++) {
-                    coord cord = (coord)coords->data[cd];
-                    if(r == cord->row && c == cord->column) {
-                        printf("x");
-                        move = 1;
-                        break;
-                    }
-                }
-                if(!move) printf("%c", board_get(b, r, c) + '0');
-            }
-            printf("\n");
-        }
-        printf("\n");
-    }
-}
-
-
-void display_capture_counts(uint64_t cc) {
-    /*
-    * 0: upper-left
-    * 1: up
-    * 2: upper-right
-    * 3: left
-    * 4: right
-    * 5: lower-left
-    * 6: lower
-    * 7: lower-right
-    */
-    printf("Capture Counts:\n");
-    uint8_t c;
-    for(uint8_t i = 0; i < 8; i++) {
-        c = capture_count_get_count(cc, i);
-        switch(i) {
-            case 0:
-                printf("\tNorthwest: ");
-                break;
-            case 1:
-                printf("\tNorth: ");
-                break;
-            case 2:
-                printf("\tNortheast: ");
-                break;
-            case 3:
-                printf("\tWest: ");
-                break;
-            case 4:
-                printf("\tEast: ");
-                break;
-            case 5:
-                printf("\tSouthwest: ");
-                break;
-            case 6:
-                printf("\tSouth: ");
-                break;
-            case 7:
-                printf("\tSoutheast: ");
-                break;
-        }
-        printf("%u\n", c);
-    }
-    printf("\n");
-}
-
-
 void graceful_shutdown(int sig) {
     pthread_mutex_lock(&shutdown_lock);
     if(sig == SIGINT) {
@@ -131,7 +47,6 @@ void graceful_shutdown(int sig) {
     }
     pthread_mutex_unlock(&shutdown_lock);
 }
-
 
 int main() {
 
@@ -161,22 +76,6 @@ int main() {
     csv_filename = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 9));
     if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
     snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
-
-    char d;
-    while(1) {
-        printf("Would you like to restore from a checkpoint?(y/N): ");
-        d = getc(stdin);
-        if(d == '\n' || d == 'n' || d == 'N') {
-            d = 'n';
-            break;
-        }
-        else if(d == 'y' || d == 'Y') {
-            d = 'y';
-            break;
-        }
-    }
-
-    getc(stdin);    // Read the extra \n character
 
     // Allocate all of the stack parameters necessary for file restoration
     heirarchy cache;
@@ -210,7 +109,7 @@ int main() {
 
     #pragma region determine if loading checkpoint
 
-    if(d == 'y') {
+    if(ask_yes_no("Would you like to restore from a checkpoint?")) {
         char** restore_filename = (char**)malloc(sizeof(char*));
         printf("Please enter a file to restore from: ");
         scanf("%ms", restore_filename);
@@ -218,27 +117,19 @@ int main() {
         processed_file pf = restore_progress_v2(*restore_filename);
 
         #ifndef skipconfirm
-            while(1) {
-                printf("Would you like to continue saving to this checkpoint?(y/N): ");
-                d = getc(stdin);
-                // printf("%c\n", d);
-                if(d == '\n' || d == 'n' || d == 'N') {
-                    checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
-                    break;
-                }
-                else if(d == 'y' || d == 'Y') {
-                    checkpoint_filename = (char*)malloc(sizeof(char) * strlen(*restore_filename));
-                    strcpy(checkpoint_filename, *restore_filename);
-                    csv_filename = (char*)malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
-                    if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
-                    temp_dir = (char*)malloc(sizeof(char) * strlen(checkpoint_filename));
-                    if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
-                    strcpy(temp_dir, checkpoint_filename);
-                    temp_dir = dirname(temp_dir);
-                    snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
-                    break;
-                }
-                else printf("\n");
+            if(ask_yes_no("Would you like to continue saving to this checkpoint?")) {
+                checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
+            }
+            else {
+                checkpoint_filename = (char*)malloc(sizeof(char) * strlen(*restore_filename));
+                strcpy(checkpoint_filename, *restore_filename);
+                csv_filename = (char*)malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
+                if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
+                temp_dir = (char*)malloc(sizeof(char) * strlen(checkpoint_filename));
+                if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
+                strcpy(temp_dir, checkpoint_filename);
+                temp_dir = dirname(temp_dir);
+                snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
             }
         #else
             checkpoint_filename = malloc(sizeof(char) * strlen(*restore_filename));
@@ -257,68 +148,6 @@ int main() {
         // Begin restore
         count = pf->found_counter;
         explored_count = pf->explored_counter;
-
-        Arraylist<void*>* stacks = pf->processor_stacks;
-        if(procs != pf->num_processors) {
-            printf("Redistributing workload to match core count\n");
-            // Redistribute workload
-            Arraylist<void*>* all_current_boards = new Arraylist<void*>(procs * 1000), *important_boards = new Arraylist<void*>(pf->num_processors + 1);
-            for(Arraylist<void*>** p = (Arraylist<void*>**)pf->processor_stacks->data; *p; p++) {
-                for(uint64_t pb = 0; pb < (*p)->pointer; pb++) {
-                    board b = (board)(*p)->data[pb];
-                    // printf("Collected\n"); display_board(b);
-                    ((pb) ? all_current_boards : important_boards)->append(b);
-                }
-                delete *p;
-            }
-
-            while(stacks->pointer) stacks->pop_back();
-
-            // printf("Distributing %lu boards\n", all_current_boards->pointer + important_boards->pointer);
-            
-            for(uint64_t p = 0; p < procs; p++) stacks->append(new Arraylist<void*>(10000));
-
-            uint64_t p_ptr = 0;
-
-            while(important_boards->pointer) {
-                ((Arraylist<void*>*)stacks->data[p_ptr++])->append(important_boards->pop_back());
-                if(p_ptr == procs) p_ptr = 0;
-            }
-
-            while(all_current_boards->pointer) {
-                ((Arraylist<void*>*)stacks->data[p_ptr++])->append(all_current_boards->pop_back());
-                if(p_ptr == procs) p_ptr = 0;
-            }
-        }
-
-        // TODO fix file io
-        // // Create threads
-
-        // // Distribute the initial states to a set of new pthreads.
-        // threads = new Arraylist<void*>(procs + 1);
-
-        // for(uint64_t t = 0; t < procs; t++) {
-        //     pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
-        //     if(!thread_id) err(1, "Memory error while allocating thread id\n");
-
-        //     #ifdef filedebug
-        //         printf("%p %s with %lu elements\n", stacks->data[t], 
-        //                                             (((Arraylist<void*>*)(stacks->data[t]))) ? "Valid" : "Not Valid",
-        //                                             ((Arraylist<void*>*)(stacks->data[t]))->pointer);
-        //     #endif
-
-        //     processor_args args = create_processor_args(t, (board)stacks->data[t], pf->cache, 
-        //                                                 &count, &counter_lock,
-        //                                                 &explored_count, &explored_lock,
-        //                                                 &repeated_count, &repeated_lock,
-        //                                                 &saving_counter, checkpoint_file, &file_lock,
-        //                                                 &finished_count, &finished_lock);
-
-        //     // walker_processor(args);
-        //     pthread_create(thread_id, 0, walker_processor_pre_stacked, (void*)args);
-        //     threads->append(thread_id);
-        // }
-
         cache = pf->cache;
     }
     
@@ -340,33 +169,15 @@ int main() {
     printf("Running on %d threads\n", procs);
     printf("Saving checkpoints to %s\n", checkpoint_filename);
 
-    struct statvfs disk_usage_buff;
-    const double GB = 1024 * 1024 * 1024;
-    if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
-    const double disk_total = (double)(disk_usage_buff.f_blocks * disk_usage_buff.f_frsize) / GB;
-
     // for(uint64_t t = 0; t < threads->pointer; t++) pthread_join(*(pthread_t*)(threads->data[0]), 0);
     SHUTDOWN_FLAG = 0;
-    time_t start = time(0), current, save_timer = time(0), fps_timer = time(0), sleep_timer = time(0), log_timer = time(0);
-    clock_t cstart = clock();
-    uint32_t cpu_time, cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
-             run_time, run_days, run_hours, run_minutes, run_seconds, save_time, previous_run_time = start, fps_update_time, print_sleep;
-    uint64_t previous_board_count = 0, fps = 0;
-    double disk_avail, disk_used, disk_perc;
+    time_t current, save_timer = time(0);
+    uint32_t save_time;
 
-    csv_cont csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f,%.4f,%lu\n", 9);
-    struct stat sbuff;
-    if(stat(csv_filename, &sbuff)) initialize_file(csv, "runtime", "fps", "found", "explored", "disk_usage", 
-        "fixed_hash_load_factor", "hash_load_factor", "cache_load_factor", "collisions");
+    initialize_main_loop_display(csv_filename, cache, &count, &explored_count);
 
     while(1) {
-        if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
-        disk_avail = (double)(disk_usage_buff.f_bfree * disk_usage_buff.f_frsize) / GB;
-        disk_used = disk_total - disk_avail;
-        disk_perc = (double)(disk_used / disk_total) * (double)100;
-        
-        current = time(0);
-        run_time = current - start;
+        display_main_loop();
 
         #ifdef fastsave
             save_time = (current - save_timer) / 5;
@@ -374,65 +185,10 @@ int main() {
             save_time = (current - save_timer) / 3600;
         #endif
 
-        #ifdef slowprint
-            print_sleep = (current - sleep_timer) / 60;
-        #endif
-
-        fps_update_time = (current - fps_timer) / 1;
-
-        run_days = run_time / 86400;
-        run_hours = (run_time / 3600) % 24;
-        run_minutes = (run_time / 60) % 60;
-        run_seconds = run_time % 60;
-
-        cpu_time = (uint32_t)(((double)(clock() - cstart)) / CLOCKS_PER_SEC);
-        cpu_days = cpu_time / 86400;
-        cpu_hours = (cpu_time / 3600) % 24;
-        cpu_minutes = (cpu_time / 60) % 60;
-        cpu_seconds = cpu_time % 60;
-
-        if(fps_update_time) {
-            fps = (explored_count - previous_board_count);
-            previous_board_count = explored_count;
-            fps_timer = time(0);
-        }
-
-        if((current - log_timer) / 60) {
-            append_data(csv, run_time, fps, count, explored_count, disk_perc, 
-                fdict_load_factor(cache->fixed_cache), 
-                hdict_load_factor(cache->rehashing_cache), 
-                fdict_load_factor(cache->temp_board_cache),
-                cache->collision_count);
-            log_timer = time(0);
-        }
-
-        #ifndef hideprint
-        
-        #ifdef slowprint
-            if(print_sleep) {
-                sleep_timer = time(0);
-        #else
-            printf("\r");
-        #endif
-        
-            printf("Found %'lu final board states. Explored %'lu boards with %'lu collisions @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d Disk usage: %.2f%% %s", 
-                count, explored_count, cache->collision_count, fps,
-                run_days, run_hours, run_minutes, run_seconds,
-                cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
-                disk_perc,
-                (save_time) ? "Saving..." : "");
-
-        #ifdef slowprint
-                printf("\n");
-            }
-            else sched_yield();
-        #endif
-        
-        #endif
-
         if(finished_count == procs) break;
 
         if(save_time) {
+            printf(" Saving...\n");
             // SHUTDOWN_FLAG = 1;
             save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
             save_timer = time(0);
