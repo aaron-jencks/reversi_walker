@@ -148,6 +148,26 @@ template <typename T> class RingBuffer {
 			data[push_pointer++] = element;
 			count++;
 		}
+		
+		void append_bulk(T* elements, size_t n) {
+			for(size_t ni = 0; ni < n; ni++) {
+				if(count) {
+					if(count == size) {
+						// reallocate the array
+						size_t psize = size;
+						size = (size) ? size << 1 : 1;
+						data = (T*)std::realloc(data, size * sizeof(T));
+						if(!data) err(1, "Memory error while allocating arraylist\n");
+						if(push_pointer < psize) for(size_t e = psize - 1; e >= push_pointer; e--) { data[e + 1] = data[e]; }
+					}
+					else if(push_pointer >= size) {
+						push_pointer = 0;
+					}
+				}
+				data[push_pointer++] = elements[ni];
+				count++;
+			}
+		}
 
 		T pop_back() {
 			if(size && count) {
@@ -197,6 +217,12 @@ template <typename T> class LockedRingBuffer : public RingBuffer<T> {
 		void append(T element) {
 			while(pthread_mutex_trylock(&mutex)) sched_yield();
 			RingBuffer<T>::append(element);
+			pthread_mutex_unlock(&mutex);
+		}
+
+		void append_bulk(T* elements, size_t n) {
+			while(pthread_mutex_trylock(&mutex)) sched_yield();
+			RingBuffer<T>::append_bulk(elements, n);
 			pthread_mutex_unlock(&mutex);
 		}
 

@@ -37,6 +37,7 @@ heirarchy create_heirarchy(char* file_directory);
 void destroy_heirarchy(heirarchy h);
 
 uint8_t heirarchy_insert(heirarchy h, __uint128_t key, size_t level);
+uint8_t* heirarchy_insert_all(heirarchy h, __uint128_t* keys, size_t* levels, size_t n);
 uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key);
 
 void heirarchy_purge_level(heirarchy h, size_t level);

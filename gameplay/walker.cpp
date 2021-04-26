@@ -5,6 +5,7 @@
 #include "./reversi_defs.h"
 #include "../mem_man/heir.hpp"
 #include "../utils/pqueue.hpp"
+#include "../project_defs.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -163,8 +164,10 @@ void* walker_processor(void* args) {
         // printf("Starting walk...\n");
 
         uint64_t iter = 0, intercap = 0;
+        uint8_t running = 0;
         while(!WALKER_KILL_FLAG) {
             if(pargs->inputq->count) {
+                if(!running) running = 1;
                 board sb = pargs->inputq->pop_front(), bc;
 
                 // #ifdef debug
@@ -334,6 +337,16 @@ void* walker_processor(void* args) {
                 //         sched_yield();
                 //     }
                 // }
+            }
+            else if(running) {
+                // We've finished the current batch
+                printf("Processor %d has finished\n", pargs->identifier);
+
+                while(pthread_mutex_trylock(pargs->finished_lock)) sched_yield();
+                *pargs->finished_count += 1;
+                pthread_mutex_unlock(pargs->finished_lock);
+
+                running = 0;
             }
         }
 
@@ -514,14 +527,34 @@ void* walker_task_scheduler(void* args) {
     size_t current_target = 0, current_level = 0;
     while((pargs->inputq->count || *pargs->finished_count < pargs->nprocs) && !WALKER_KILL_FLAG) {
         while(pargs->inputq->count) {
-            board b = pargs->inputq->pop();
+            board* b = pargs->inputq->pop_bulk(CHUNK_SIZE * pargs->nprocs);
 
-            // Purge the previous level
-            if(b->level > current_level) heirarchy_purge_level(pargs->cache, current_level++);
+            size_t actual_count;
+            for(actual_count = 0; actual_count < CHUNK_SIZE * pargs->nprocs && b[actual_count]; actual_count++) {
+                // Purge the previous level
+                if(b[actual_count]->level > current_level) {
+                    heirarchy_purge_level(pargs->cache, current_level++);
+                    // TODO save progress
+                    break;
+                }
+            }
 
-            procqs->data[current_target++]->append(b);
+            if(actual_count < CHUNK_SIZE) {
+                procqs->data[current_target++]->append_bulk(b, actual_count);
+                if(current_target >= procqs->size) current_target = 0;
+            }
+            else {
+                size_t chunk_count = actual_count >> 5;
+                if(actual_count % CHUNK_SIZE) chunk_count++;
 
-            if(current_target >= procqs->size) current_target = 0;
+                for(size_t c = 0; c < chunk_count; c++) {
+                    procqs->data[current_target++]->append_bulk(b, 
+                        (c < (chunk_count - 1) && actual_count % CHUNK_SIZE) ? 
+                            CHUNK_SIZE : actual_count % CHUNK_SIZE);
+
+                    if(current_target >= procqs->size) current_target = 0;
+                }
+            }
         }
 
         // TODO save progress

@@ -163,6 +163,17 @@ uint8_t heirarchy_insert(heirarchy h, __uint128_t key, size_t level) {
     }
 }
 
+uint8_t* heirarchy_insert_all(heirarchy h, __uint128_t* keys, size_t* levels, size_t n) {
+    uint8_t* result = (uint8_t*)malloc(sizeof(uint8_t) * n);
+    if(!result) err(1, "Memory error while allocating result bit array for heirarchy insert\n");
+
+    for(size_t ni = 0; ni < n; ni++) {
+        result[ni] = heirarchy_insert(h, keys[ni], levels[ni]);
+    }
+
+    return result;
+}
+
 void heirarchy_purge_level(heirarchy h, size_t level) {
     for(size_t i = 0; i < h->level_mappings[level]->pointer; i++) {
         __uint128_t key = h->level_mappings[level]->data[i];

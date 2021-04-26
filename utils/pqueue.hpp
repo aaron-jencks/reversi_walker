@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdlib.h>
 #include <pthread.h>
 
 #include "tarraylist.hpp"
@@ -83,6 +84,28 @@ template <typename T> class LockedPriorityQueue {
             pthread_mutex_unlock(&mutex);
         }
 
+        void push_bulk(T* elements, size_t n) {
+            while(pthread_mutex_trylock(&mutex)) sched_yield();
+
+            for(size_t ni = 0; ni < n; ni++) {
+                if(count >= size) {
+                    // reallocate the array
+                    size = (size) ? size << 1 : 1;
+                    data = (T*)std::realloc(data, size * sizeof(T));
+                    if(!data) err(1, "Memory error while allocating arraylist\n");
+                }
+
+                data[count] = elements[ni];
+                size_t i = count++;
+                while(i && data[i >> 1] > data[i]) {
+                    swap_heap_elements(i, i >> 1);
+                    i = i >> 1;
+                }
+            }
+
+            pthread_mutex_unlock(&mutex);
+        }
+
         T pop() {
             while(pthread_mutex_trylock(&mutex)) sched_yield();
 
@@ -97,6 +120,35 @@ template <typename T> class LockedPriorityQueue {
             pthread_mutex_unlock(&mutex);
 
             return (T)NULL;
+        }
+
+        T* pop_bulk(size_t n) {
+            while(pthread_mutex_trylock(&mutex)) sched_yield();
+
+            if(count >= n || count) {
+                T* result = (T*)malloc(sizeof(T) * n);
+                if(!result) err(1, "Memory error while allocating priority queue pop chunk\n");
+
+                for(size_t ni = 0; ni < ((count >= n) ? n : count); ni++) {
+                    T res = data[0];
+                    data[0] = data[--count];
+                    min_heapify(count, 0);
+                    result[ni] = res;
+                }
+
+                if(count < n) {
+                    size_t diff = n - count;
+                    for(size_t ni = 0; ni < diff; ni++) result[n + ni] = 0;
+                }
+
+                pthread_mutex_unlock(&mutex);
+
+                return result;
+            }
+
+            pthread_mutex_unlock(&mutex);
+
+            return (T*)NULL;
         }
 };
 
