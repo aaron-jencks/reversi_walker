@@ -142,7 +142,7 @@ processed_file restore_progress_v2(char* filename);
  * @param level_n The number of boards in the last completed level
  */
 void save_progress_v3(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* filename, 
-                   uint64_t* saving_counter, heirarchy cache, uint8_t level, __uint128_t* last_completed_level, size_t level_n, 
+                   heirarchy cache, uint8_t level, __uint128_t* last_completed_level, size_t level_n, 
                    uint64_t found_counter, uint64_t explored_counter, uint64_t repeated_counter);
 
 processed_file_3 restore_progress_v3(char* filename);

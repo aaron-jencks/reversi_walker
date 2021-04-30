@@ -6,6 +6,7 @@
 #include "../mem_man/heir.hpp"
 #include "../utils/pqueue.hpp"
 #include "../project_defs.hpp"
+#include "../utils/fileio.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -417,7 +418,7 @@ processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, Loc
                                                             uint64_t* counter, pthread_mutex_t* counter_lock,
                                                             uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                                             uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
-                                                            uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock,
+                                                            uint64_t* saving_counter, char* checkpoint_file, pthread_mutex_t* file_lock,
                                                             size_t* finished_count, pthread_mutex_t* finished_lock) {
     processor_scheduler_args_t* args = (processor_scheduler_args_t*)malloc(sizeof(processor_scheduler_args_t));
     if(!args) err(1, "Memory error while allocating processor scheduler args\n");
@@ -503,6 +504,8 @@ void* walker_task_scheduler(void* args) {
     LockedArraylist<board>* board_cache = new LockedArraylist<board>(1000 * pargs->nprocs);
     LockedArraylist<coord>* coord_cache = new LockedArraylist<coord>(1000 * pargs->nprocs);
 
+    FILE** checkpoint_file_pointer;
+
     for(uint64_t t = 0; t < pargs->nprocs; t++) {
         pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
         if(!thread_id) err(1, "Memory error while allocating thread id\n");
@@ -514,7 +517,7 @@ void* walker_task_scheduler(void* args) {
                                                     pargs->counter, pargs->counter_lock,
                                                     pargs->explored_counter, pargs->explored_lock,
                                                     pargs->repeated_counter, pargs->repeated_lock,
-                                                    pargs->saving_counter, pargs->checkpoint_file, pargs->file_lock,
+                                                    pargs->saving_counter, checkpoint_file_pointer, pargs->file_lock,
                                                     pargs->finished_count, pargs->finished_lock);
 
         // walker_processor(args);
@@ -523,6 +526,9 @@ void* walker_task_scheduler(void* args) {
         threads->append(thread_id);
         procqs->append(inputq);
     }
+
+    time_t current, save_timer = time(0);
+    uint32_t save_time;
 
     size_t current_target = 0, current_level = 0;
     while((pargs->inputq->count || *pargs->finished_count < pargs->nprocs) && !WALKER_KILL_FLAG) {
@@ -533,8 +539,10 @@ void* walker_task_scheduler(void* args) {
             for(actual_count = 0; actual_count < CHUNK_SIZE * pargs->nprocs && b[actual_count]; actual_count++) {
                 // Purge the previous level
                 if(b[actual_count]->level > current_level) {
+                    save_progress_v3(checkpoint_file_pointer, pargs->file_lock, pargs->checkpoint_file, pargs->cache, 
+                        current_level, pargs->cache->level_mappings[current_level]->data, pargs->cache->level_mappings[current_level]->pointer,
+                        *pargs->counter, *pargs->explored_counter, *pargs->repeated_counter);
                     heirarchy_purge_level(pargs->cache, current_level++);
-                    // TODO save progress
                     break;
                 }
             }
@@ -557,11 +565,20 @@ void* walker_task_scheduler(void* args) {
             }
         }
 
-        // TODO save progress
-        if(SAVING_FLAG) {
-            // Save the last completed level and possibly progress for the current level
-            
-        }
+        // #ifdef fastsave
+        //     save_time = (current - save_timer) / 5;
+        // #else
+        //     save_time = (current - save_timer) / 3600;
+        // #endif
+
+        // if(save_time) {
+        //     printf(" Saving...\n");
+        //     // SHUTDOWN_FLAG = 1;
+        //     save_progress_v3(checkpoint_file_pointer, pargs->file_lock, pargs->checkpoint_file, pargs->cache, 
+        //                 current_level, pargs->cache->level_mappings[current_level]->data, pargs->cache->level_mappings[current_level]->pointer,
+        //                 *pargs->counter, *pargs->explored_counter, *pargs->repeated_counter);
+        //     save_timer = time(0);
+        // }
         
         sched_yield();
     }

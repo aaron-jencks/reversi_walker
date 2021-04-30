@@ -187,6 +187,10 @@ void heirarchy_purge_level(heirarchy h, size_t level) {
     }
 }
 
+__uint128_t* heirarchy_get_level(heirarchy h, size_t level) {
+    return h->level_mappings[level]->data;
+}
+
 uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key) {
     // #ifdef heirdebug
     //     printf("Inserting %lu %lu into the cache\n", ((uint64_t*)&key)[1], ((uint64_t*)&key)[0]);

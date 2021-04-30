@@ -41,6 +41,7 @@ uint8_t* heirarchy_insert_all(heirarchy h, __uint128_t* keys, size_t* levels, si
 uint8_t heirarchy_insert_cache(heirarchy h, __uint128_t key);
 
 void heirarchy_purge_level(heirarchy h, size_t level);
+__uint128_t* heirarchy_get_level(heirarchy h, size_t level);
 
 void to_file_heir(FILE* fp, heirarchy h);
 

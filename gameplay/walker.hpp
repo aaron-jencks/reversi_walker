@@ -52,7 +52,7 @@ typedef struct _processor_scheduler_args_t {
     uint64_t* repeated_counter;
     pthread_mutex_t* repeated_lock;
     uint64_t* saving_counter;
-    FILE** checkpoint_file;
+    char* checkpoint_file;
     pthread_mutex_t* file_lock;
     size_t* finished_count;
     pthread_mutex_t* finished_lock;
@@ -116,7 +116,7 @@ processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, Loc
                                                             uint64_t* counter, pthread_mutex_t* counter_lock,
                                                             uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                                             uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
-                                                            uint64_t* saving_counter, FILE** checkpoint_file, pthread_mutex_t* file_lock,
+                                                            uint64_t* saving_counter, char* checkpoint_file, pthread_mutex_t* file_lock,
                                                             size_t* finished_count, pthread_mutex_t* finished_lock);
 
 /**

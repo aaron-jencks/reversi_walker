@@ -160,7 +160,7 @@ int main() {
                                                                           &count, &counter_lock,
                                                                           &explored_count, &explored_lock,
                                                                           &repeated_count, &repeated_lock,
-                                                                          &saving_counter, checkpoint_file, &file_lock,
+                                                                          &saving_counter, checkpoint_filename, &file_lock,
                                                                           &finished_count, &finished_lock);
     pthread_create(&scheduler, 0, walker_task_scheduler, schargs);
 
@@ -182,24 +182,24 @@ int main() {
     while(1) {
         display_main_loop();
 
-        #ifdef fastsave
-            save_time = (current - save_timer) / 5;
-        #else
-            save_time = (current - save_timer) / 3600;
-        #endif
+        // #ifdef fastsave
+        //     save_time = (current - save_timer) / 5;
+        // #else
+        //     save_time = (current - save_timer) / 3600;
+        // #endif
 
         if(finished_count == procs) break;
 
-        if(save_time) {
-            printf(" Saving...\n");
-            // SHUTDOWN_FLAG = 1;
-            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
-            save_timer = time(0);
-        }
+        // if(save_time) {
+        //     printf(" Saving...\n");
+        //     // SHUTDOWN_FLAG = 1;
+        //     save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
+        //     save_timer = time(0);
+        // }
 
         if(SHUTDOWN_FLAG) {
             fflush(stdout);
-            save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
+            // save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
             WALKER_KILL_FLAG = 1;
             while(finished_count < procs) sched_yield();
             destroy_heirarchy(cache);
