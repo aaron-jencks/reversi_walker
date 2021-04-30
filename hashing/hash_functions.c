@@ -122,3 +122,17 @@ __uint128_t board_fast_hash_6(board b) {
 
     return result;
 }
+
+board board_unhash_6(__uint128_t key, uint8_t level) {
+    uint8_t player = key >> 68, middle_four = (key >> 64) & 0b00001111;
+    board b = create_board(player, 6, 6, level);
+    board_put(b, 3, 3, (middle_four & 0b00001000) + 1);
+    board_put(b, 2, 3, (middle_four & 0b00000100) + 1);
+    board_put(b, 2, 2, (middle_four & 0b00000010) + 1);
+    board_put(b, 3, 2, (middle_four & 0b00000001) + 1);
+    for(size_t bc = 31; bc; bc--) {
+        board_put(b, r6[bc], c6[bc], key & 3);
+        key = key >> 2;
+    }
+    board_put(b, r6[0], c6[0], key & 3);
+}

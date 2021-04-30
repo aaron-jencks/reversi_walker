@@ -1,6 +1,8 @@
 #include "fileio.hpp"
 #include "../gameplay/walker.hpp"
 #include "../utils/path_util.h"
+#include "../utils/pqueue.hpp"
+#include "../hashing/hash_functions.h"
 
 #include <err.h>
 #include <stdlib.h>
@@ -277,6 +279,94 @@ processed_file restore_progress_v2(char* filename) {
 
         printf("Read a processor with a stack of %lu elements\n", stack->pointer);
         result->processor_stacks->append(stack);
+    }
+
+    // Read in the hashtable
+    printf("Restoring cache\n");
+    result->cache = from_file_heir(fp);
+    clear_file_cache();
+
+    return result;
+}
+
+#pragma endregion
+
+#pragma region version 3
+
+/**
+ * @brief Called by the main thread to cause the system to save itself to a checkpoint file
+ * 
+ * @param checkpoint_file A FILE pointer pointer that is populated and used by the processors to save themselves once the file is open.
+ * @param file_lock The lock used to stop simultaneous file access
+ * @param filename The name of the file to save the checkpoint to
+ * @param found_counter The number of final board states found so far
+ * @param explored_counter The number of boards that have been explored so far
+ * @param level The level number of the last level that was completed
+ * @param last_completed_level The boards that were in the last completed level
+ * @param level_n The number of boards in the last completed level
+ */
+void save_progress_v3(FILE** checkpoint_file, pthread_mutex_t* file_lock, char* filename, 
+                   uint64_t* saving_counter, heirarchy cache, uint8_t level, __uint128_t* last_completed_level, size_t level_n, 
+                   uint64_t found_counter, uint64_t explored_counter, uint64_t repeated_counter) {
+    printf("\nStarting save...\n");
+    *checkpoint_file = fopen(filename, "wb+");
+    if(!*checkpoint_file) err(7, "Unable to open or create file %s\n", filename);
+    // printf("Saving child thread search queues\n");
+    *saving_counter = 0;
+
+    // Save the counts
+    printf("Saving the walk counters\n");
+    while(pthread_mutex_trylock(file_lock)) sched_yield();
+    fwrite(&found_counter, sizeof(found_counter), 1, *checkpoint_file);
+    fwrite(&explored_counter, sizeof(explored_counter), 1, *checkpoint_file);
+    pthread_mutex_unlock(file_lock);
+
+    // Save the level info
+    printf("Saving child thread search queues\n");
+    while(pthread_mutex_trylock(&saving_lock)) sched_yield();
+    fwrite(&level, sizeof(uint8_t), 1, *checkpoint_file);
+    fwrite(&level_n, sizeof(size_t), 1, *checkpoint_file);
+    fwrite(last_completed_level, sizeof(__uint128_t), level_n, *checkpoint_file);
+    pthread_mutex_unlock(&saving_lock);
+
+    // Save the hashtable
+    printf("\nSaving the hashtable\n");
+    while(pthread_mutex_trylock(file_lock)) sched_yield();
+    to_file_heir(*checkpoint_file, cache);
+    pthread_mutex_unlock(file_lock);
+
+    fclose(*checkpoint_file);
+
+    clear_file_cache();
+}
+
+processed_file_3 restore_progress_v3(char* filename) {
+    FILE* fp = fopen(filename, "rb+");
+    if(!fp) err(7, "Cannot find/open given restore file %s\n", filename);
+
+    printf("Restoring from file %s\n", filename);
+
+    processed_file_3 result = (processed_file_3)calloc(1, sizeof(processed_file_3_str));
+    if(!result) err(1, "Memory error while allocating processed file\n");
+
+    // Read the counters
+    fread(&result->found_counter, sizeof(result->found_counter), 1, fp);
+    fread(&result->explored_counter, sizeof(result->explored_counter), 1, fp);
+    printf("Restored progress, %lu final boards found, %lu boards explored\n", 
+           result->found_counter, result->explored_counter);
+
+    // Read the processors
+    fread(&result->level, sizeof(uint8_t), 1, fp);
+    fread(&result->level_n, sizeof(size_t), 1, fp);
+
+    result->last_level = (board*)malloc(sizeof(board_str) * result->level_n);
+    __uint128_t* board_keys = (__uint128_t*)malloc(sizeof(__uint128_t) * result->level_n);
+    if(!result->last_level || !board_keys) err(1, "Memory error while allocating boards from checkpoint\n");
+
+    fread(board_keys, sizeof(__uint128_t), result->level_n, fp);
+
+    for(uint64_t p = 0; p < result->level_n; p++) {
+            result->last_level[p] = board_unhash_6(board_keys[p], result->level);
     }
 
     // Read in the hashtable
