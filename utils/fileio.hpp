@@ -7,6 +7,7 @@
 
 #include "tarraylist.hpp"
 #include "../mem_man/heir.hpp"
+#include "../gameplay/reversi_defs.h"
 
 #ifdef __cplusplus
 extern "C" {

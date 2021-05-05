@@ -109,12 +109,15 @@ int main() {
 
     #pragma region determine if loading checkpoint
 
+    board* level_boards;
+    size_t level_n = 0;
+
     if(ask_yes_no("Would you like to restore from a checkpoint?")) {
         char** restore_filename = (char**)malloc(sizeof(char*));
         printf("Please enter a file to restore from: ");
         scanf("%ms", restore_filename);
         getc(stdin);    // Read the extra \n character
-        processed_file pf = restore_progress_v2(*restore_filename);
+        processed_file_3 pf = restore_progress_v3(*restore_filename);
 
         #ifndef skipconfirm
             if(ask_yes_no("Would you like to continue saving to this checkpoint?")) {
@@ -149,6 +152,8 @@ int main() {
         count = pf->found_counter;
         explored_count = pf->explored_counter;
         cache = pf->cache;
+        level_boards = pf->last_level;
+        level_n = pf->level_n;
     }
     else {
         cache = create_heirarchy(temp_dir);
@@ -164,7 +169,12 @@ int main() {
                                                                           &finished_count, &finished_lock);
     pthread_create(&scheduler, 0, walker_task_scheduler, schargs);
 
-    schedulerq->push(create_board(1, BOARD_HEIGHT, BOARD_WIDTH, 0));
+    // Queue up the starting boards
+    if(level_n) {
+        for(size_t b = 0; b < level_n; b++) schedulerq->push_bulk(level_boards, level_n);
+        free(level_boards);
+    }
+    else schedulerq->push(create_board(1, BOARD_HEIGHT, BOARD_WIDTH, 0));
 
     #pragma endregion
 
