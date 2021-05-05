@@ -77,6 +77,7 @@ __uint128_t hdict_remove(hdict d, __uint128_t k) {
     __uint128_t bin = k % d->bin_count;
     dmempage_remove(d->bins, bin, k);
     d->size--;
+    return k;
 }
 
 double hdict_load_factor(hdict d) { return (double)d->size / (double)d->bin_count; }

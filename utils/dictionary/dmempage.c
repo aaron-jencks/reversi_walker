@@ -113,7 +113,6 @@ void dmempage_remove(dmempage mp, __uint128_t bin_index, __uint128_t value) {
         for(size_t bt = b; bt < (bcount - 1); bt++) bin[bt] = bin[bt + 1];
         break;
     }
-    return 0;
 }
 
 uint8_t dmempage_value_in_bin(dmempage mp, __uint128_t bin_index, __uint128_t value) {

@@ -62,7 +62,7 @@ mmap_man.o: ./mem_man/mmap_man.c ./mem_man/mmap_man.h path_util.o
 mempage.o: ./mem_man/mempage.c ./mem_man/mempage.h path_util.o
 	$(cc) $(cflags) -o $@ -c $<
 
-walker.o: ./gameplay/walker.cpp ./gameplay/walker.hpp reversi.o tarraylist.o heir.o project_defs.hpp
+walker.o: ./gameplay/walker.cpp ./gameplay/walker.hpp reversi.o tarraylist.o heir.o project_defs.hpp pqueue.o 
 	$(pp) $(cflags) -o $@ -c $<
 
 fileio.o: ./utils/fileio.cpp ./utils/fileio.hpp walker.o tarraylist.o path_util.o heir.o 

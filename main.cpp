@@ -79,7 +79,7 @@ int main() {
 
     // Allocate all of the stack parameters necessary for file restoration
     heirarchy cache;
-    uint64_t count = 0, explored_count = 1, repeated_count = 0;
+    uint64_t count = 0, explored_count = 0, repeated_count = 0;
     size_t finished_count = 0;
     // char* checkpoint_filename;
 

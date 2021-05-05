@@ -125,20 +125,22 @@ template <typename T> class LockedPriorityQueue {
         T* pop_bulk(size_t n) {
             while(pthread_mutex_trylock(&mutex)) sched_yield();
 
-            if(count >= n || count) {
+            if(count >= n | count) {
                 T* result = (T*)malloc(sizeof(T) * n);
-                if(!result) err(1, "Memory error while allocating priority queue pop chunk\n");
+                if(!result) err(1, "Memory error while allocating priority queue pop chunk of size %lu\n", n);
 
-                for(size_t ni = 0; ni < ((count >= n) ? n : count); ni++) {
+                size_t prev_count = count;
+
+                for(size_t ni = 0; ni < ((prev_count >= n) ? n : prev_count); ni++) {
                     T res = data[0];
                     data[0] = data[--count];
                     min_heapify(count, 0);
                     result[ni] = res;
                 }
 
-                if(count < n) {
-                    size_t diff = n - count;
-                    for(size_t ni = 0; ni < diff; ni++) result[n + ni] = 0;
+                if(prev_count < n) {
+                    size_t diff = n - prev_count;
+                    for(size_t ni = 0; ni < diff; ni++) result[prev_count + ni] = 0;
                 }
 
                 pthread_mutex_unlock(&mutex);
