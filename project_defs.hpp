@@ -7,7 +7,11 @@
 #endif
 
 #define BOARD_MEMORY_SIZE 13
-#define SYSTEM_MEMORY 30000000000
+#ifdef lowmem
+    #define SYSTEM_MEMORY 5368709120
+#else
+    #define SYSTEM_MEMORY 32813092000
+#endif
 #define CHUNK_SIZE (SYSTEM_MEMORY / (BOARD_MEMORY_SIZE * PROC_COUNT))
 
 // TODO add error codes here.

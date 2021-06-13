@@ -58,6 +58,7 @@ template <typename T> class LockedPriorityQueue {
 			if(!data) err(1, "Memory error while allocating arraylist\n");
 			size = initial_size;
 			count = 0;
+            pthread_mutex_init(&mutex, 0);
         }
 
         ~LockedPriorityQueue() {

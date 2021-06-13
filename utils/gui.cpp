@@ -1,10 +1,7 @@
 #include "gui.hpp"
 #include "../gameplay/reversi.h"
-#include "csv.h"
 
-#include <sys/statvfs.h>
-#include <sys/stat.h>
-#include <time.h>
+#include <err.h>
 
 uint8_t ask_yes_no(const char* string) {
     char d;
@@ -100,67 +97,56 @@ void display_capture_counts(uint64_t cc) {
 
 #pragma region Main Loop Display
 
-struct statvfs disk_usage_buff;
-const double GB = 1024 * 1024 * 1024;
-double disk_total;
-time_t start = time(0), current, fps_timer = time(0), sleep_timer = time(0), log_timer = time(0);
-clock_t cstart = clock();
-uint32_t cpu_time, cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
-            run_time, run_days, run_hours, run_minutes, run_seconds, previous_run_time = start, fps_update_time, print_sleep;
-uint64_t previous_board_count = 0, fps = 0, *ccount, *eccount;
-double disk_avail, disk_used, disk_perc;
-heirarchy hcache;
-
-csv_cont csv;
-struct stat sbuff;
-
-void initialize_main_loop_display(char* csv_filename, heirarchy cache, uint64_t* count, uint64_t* explored_count) {
-    if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
-    csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f,%.4f,%lu\n", 9);
-    hcache = cache;
-    ccount = count;
-    eccount = explored_count;
+loop_display_t* initialize_main_loop_display(char* csv_filename, heirarchy cache, uint64_t* count, uint64_t* explored_count) {
+    loop_display_t* display = (loop_display_t*)calloc(1, sizeof(loop_display_t));
+    if(!display) err(1, "Memory error while allocating display loop\n");
+    if(statvfs("/home", &display->disk_usage_buff)) err(2, "Finding information about the disk failed\n");
+    display->csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f,%.4f,%lu\n", 9);
+    display->hcache = cache;
+    display->ccount = count;
+    display->eccount = explored_count;
+    return display;
 }
 
-void display_main_loop() {
-    if(statvfs("/home", &disk_usage_buff)) err(2, "Finding information about the disk failed\n");
-    disk_avail = (double)(disk_usage_buff.f_bfree * disk_usage_buff.f_frsize) / GB;
-    disk_used = disk_total - disk_avail;
-    disk_perc = (double)(disk_used / disk_total) * (double)100;
+void display_main_loop(loop_display_t* display) {
+    if(statvfs("/home", &display->disk_usage_buff)) err(2, "Finding information about the disk failed\n");
+    display->disk_avail = (double)(display->disk_usage_buff.f_bfree * display->disk_usage_buff.f_frsize) / display->GB;
+    display->disk_used = display->disk_total - display->disk_avail;
+    display->disk_perc = (double)(display->disk_used / display->disk_total) * (double)100;
     
-    current = time(0);
-    run_time = current - start;
+    display->current = time(0);
+    display->run_time = display->current - display->start;
 
     #ifdef slowprint
         print_sleep = (current - sleep_timer) / 60;
     #endif
 
-    fps_update_time = (current - fps_timer) / 1;
+    display->fps_update_time = (display->current - display->fps_timer) / 1;
 
-    run_days = run_time / 86400;
-    run_hours = (run_time / 3600) % 24;
-    run_minutes = (run_time / 60) % 60;
-    run_seconds = run_time % 60;
+    display->run_days = display->run_time / 86400;
+    display->run_hours = (display->run_time / 3600) % 24;
+    display->run_minutes = (display->run_time / 60) % 60;
+    display->run_seconds = display->run_time % 60;
 
-    cpu_time = (uint32_t)(((double)(clock() - cstart)) / CLOCKS_PER_SEC);
-    cpu_days = cpu_time / 86400;
-    cpu_hours = (cpu_time / 3600) % 24;
-    cpu_minutes = (cpu_time / 60) % 60;
-    cpu_seconds = cpu_time % 60;
+    display->cpu_time = (uint32_t)(((double)(clock() - display->cstart)) / CLOCKS_PER_SEC);
+    display->cpu_days = display->cpu_time / 86400;
+    display->cpu_hours = (display->cpu_time / 3600) % 24;
+    display->cpu_minutes = (display->cpu_time / 60) % 60;
+    display->cpu_seconds = display->cpu_time % 60;
 
-    if(fps_update_time) {
-        fps = (*eccount - previous_board_count);
-        previous_board_count = *eccount;
-        fps_timer = time(0);
+    if(display->fps_update_time) {
+        display->fps = (*display->eccount - display->previous_board_count);
+        display->previous_board_count = *display->eccount;
+        display->fps_timer = time(0);
     }
 
-    if((current - log_timer) / 60) {
-        append_data(csv, run_time, fps, *ccount, *eccount, disk_perc, 
-            fdict_load_factor(hcache->fixed_cache), 
-            hdict_load_factor(hcache->rehashing_cache), 
-            fdict_load_factor(hcache->temp_board_cache),
-            hcache->collision_count);
-        log_timer = time(0);
+    if((display->current - display->log_timer) / 60) {
+        append_data(display->csv, display->run_time, display->fps, *display->ccount, *display->eccount, display->disk_perc, 
+            fdict_load_factor(display->hcache->fixed_cache), 
+            hdict_load_factor(display->hcache->rehashing_cache), 
+            fdict_load_factor(display->hcache->temp_board_cache),
+            display->hcache->collision_count);
+        display->log_timer = time(0);
     }
 
     #ifndef hideprint
@@ -173,10 +159,10 @@ void display_main_loop() {
     #endif
     
         printf("Found %'lu final board states. Explored %'lu boards with %'lu collisions @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d Disk usage: %.2f%%", 
-                *ccount, *eccount, hcache->collision_count, fps,
-                run_days, run_hours, run_minutes, run_seconds,
-                cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
-                disk_perc);
+                *display->ccount, *display->eccount, display->hcache->collision_count, display->fps,
+                display->run_days, display->run_hours, display->run_minutes, display->run_seconds,
+                display->cpu_days, display->cpu_hours, display->cpu_minutes, display->cpu_seconds,
+                display->disk_perc);
 
     #ifdef slowprint
             printf("\n");

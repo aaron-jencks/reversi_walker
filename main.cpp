@@ -187,10 +187,10 @@ int main() {
     time_t current, save_timer = time(0);
     uint32_t save_time;
 
-    initialize_main_loop_display(csv_filename, cache, &count, &explored_count);
+    loop_display_t* display = initialize_main_loop_display(csv_filename, cache, &count, &explored_count);
 
     while(1) {
-        display_main_loop();
+        display_main_loop(display);
 
         // #ifdef fastsave
         //     save_time = (current - save_timer) / 5;
@@ -224,6 +224,7 @@ int main() {
     fflush(stdout);
     // save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
     destroy_heirarchy(cache);
+    free(display);
 
     printf("\nThere are %ld possible board states\n", count);
 }

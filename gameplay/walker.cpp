@@ -165,10 +165,11 @@ void* walker_processor(void* args) {
         // printf("Starting walk...\n");
 
         uint64_t iter = 0, intercap = 0;
-        uint8_t running = 0;
+        uint8_t running = 0, starved = 0;
         while(!WALKER_KILL_FLAG) {
             if(pargs->inputq->count) {
                 if(!running) running = 1;
+                if(starved) starved = 0;
                 board sb = pargs->inputq->pop_front(), bc;
 
                 // #ifdef debug
@@ -277,6 +278,8 @@ void* walker_processor(void* args) {
 
                             if(heirarchy_insert(cache, board_fast_hash_6(sb), sb->level)) {
 
+                                fprintf(stderr, "Found a board\n");
+
                                 // printf("Found a new board to count\n");
                                 while(pthread_mutex_trylock(counter_lock)) sched_yield();
                                 *counter += 1;
@@ -290,6 +293,7 @@ void* walker_processor(void* args) {
                                 // count = 0;
                             }
                             else {
+                                fprintf(stderr, "Found a repeated board\n");
                                 while(pthread_mutex_trylock(repeated_lock)) sched_yield();
                                 *repeated += 1;
                                 pthread_mutex_unlock(repeated_lock);
@@ -348,6 +352,10 @@ void* walker_processor(void* args) {
                 pthread_mutex_unlock(pargs->finished_lock);
 
                 running = 0;
+            }
+            else if(!starved) {
+                fprintf(stderr, "Processor %d is being starved\n", pargs->identifier);
+                starved = 1;
             }
         }
 
@@ -511,6 +519,7 @@ void* walker_task_scheduler(void* args) {
         if(!thread_id) err(1, "Memory error while allocating thread id\n");
 
         LockedRingBuffer<board>* inputq = new LockedRingBuffer<board>(1000);
+        if(!inputq) err(1, "Memory error while allocating locked ring buffer\n");
 
         processor_args args = create_processor_args(t, inputq, pargs->inputq, 
                                                     pargs->cache, board_cache, coord_cache, 
@@ -547,9 +556,11 @@ void* walker_task_scheduler(void* args) {
                 }
             }
 
+            fprintf(stderr, "Found %lu boards in the chunk\n", actual_count);
+
             if(actual_count < CHUNK_SIZE) {
                 procqs->data[current_target++]->append_bulk(b, actual_count);
-                if(current_target >= procqs->size) current_target = 0;
+                if(current_target >= procqs->pointer) current_target = 0;
             }
             else {
                 size_t chunk_count = actual_count >> 5;
@@ -564,6 +575,8 @@ void* walker_task_scheduler(void* args) {
                 }
             }
         }
+
+        // fprintf(stderr, "The scheduler ran out of boards\n");
 
         // #ifdef fastsave
         //     save_time = (current - save_timer) / 5;
