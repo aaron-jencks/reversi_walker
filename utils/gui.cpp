@@ -100,17 +100,25 @@ void display_capture_counts(uint64_t cc) {
 loop_display_t* initialize_main_loop_display(char* csv_filename, heirarchy cache, uint64_t* count, uint64_t* explored_count) {
     loop_display_t* display = (loop_display_t*)calloc(1, sizeof(loop_display_t));
     if(!display) err(1, "Memory error while allocating display loop\n");
+    display->GB = 1024 * 1024 * 1024;
     if(statvfs("/home", &display->disk_usage_buff)) err(2, "Finding information about the disk failed\n");
+    display->disk_total = (double)(display->disk_usage_buff.f_blocks * display->disk_usage_buff.f_bsize) / display->GB;
     display->csv = create_csv_cont(csv_filename, "%u,%lu,%lu,%lu,%.2f,%.4f,%.4f,%.4f,%lu\n", 9);
     display->hcache = cache;
     display->ccount = count;
     display->eccount = explored_count;
+    display->start = time(0);
+    display->fps_timer = time(0);
+    display->sleep_timer = time(0);
+    display->log_timer = time(0);
+    display->cstart = clock();
     return display;
 }
 
 void display_main_loop(loop_display_t* display) {
     if(statvfs("/home", &display->disk_usage_buff)) err(2, "Finding information about the disk failed\n");
     display->disk_avail = (double)(display->disk_usage_buff.f_bfree * display->disk_usage_buff.f_frsize) / display->GB;
+    // fprintf(stderr, "The available disk space is %lu %lu for a total of %lu\n", display->disk_usage_buff.f_bfree, display->disk_usage_buff.f_frsize, display->disk_avail);
     display->disk_used = display->disk_total - display->disk_avail;
     display->disk_perc = (double)(display->disk_used / display->disk_total) * (double)100;
     

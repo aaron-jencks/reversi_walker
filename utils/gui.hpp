@@ -19,10 +19,10 @@ void display_capture_counts(uint64_t cc);
 
 typedef struct {
     struct statvfs disk_usage_buff;
-    const double GB = 1024 * 1024 * 1024;
+    double GB;
     double disk_total;
-    time_t start = time(0), current, fps_timer = time(0), sleep_timer = time(0), log_timer = time(0);
-    clock_t cstart = clock();
+    time_t start, current, fps_timer, sleep_timer, log_timer;
+    clock_t cstart;
     uint32_t cpu_time, cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
                 run_time, run_days, run_hours, run_minutes, run_seconds, previous_run_time = start, fps_update_time, print_sleep;
     uint64_t previous_board_count = 0, fps = 0, *ccount, *eccount;
