@@ -216,7 +216,7 @@ void* walker_processor(void* args) {
                         }
 
                         #ifdef debug
-                            // printf("Found %u moves\n", move_count);
+                            printf("Found %u moves\n", move_count);
                         #endif
                     }
                     else {
@@ -235,7 +235,7 @@ void* walker_processor(void* args) {
                                 coord mm = (coord)coord_buff->data[im];
                                 
                                 if(board_cache->pointer) bc = (board)board_cache->pop_back();
-                                else bc = create_board(1, sb->height, sb->width, sb->level + 1);
+                                else bc = create_board(1, sb->height, sb->width, sb->level);
 
                                 clone_into_board(sb, bc);
 
@@ -276,28 +276,29 @@ void* walker_processor(void* args) {
                             //     #endif
                             // }
 
-                            if(heirarchy_insert(cache, board_fast_hash_6(sb), sb->level)) {
+                            // TODO move this into the scheduler
+                            // if(heirarchy_insert(cache, board_fast_hash_6(sb), sb->level)) {
 
-                                fprintf(stderr, "Found a board\n");
+                            //     fprintf(stderr, "Found a board\n");
 
-                                // printf("Found a new board to count\n");
-                                while(pthread_mutex_trylock(counter_lock)) sched_yield();
-                                *counter += 1;
-                                // *explored += count;
-                                pthread_mutex_unlock(counter_lock);
+                            //     // printf("Found a new board to count\n");
+                            //     while(pthread_mutex_trylock(counter_lock)) sched_yield();
+                            //     *counter += 1;
+                            //     // *explored += count;
+                            //     pthread_mutex_unlock(counter_lock);
 
-                                // while(pthread_mutex_trylock(explored_lock)) sched_yield();
-                                // *explored += count;
-                                // pthread_mutex_unlock(explored_lock);
+                            //     // while(pthread_mutex_trylock(explored_lock)) sched_yield();
+                            //     // *explored += count;
+                            //     // pthread_mutex_unlock(explored_lock);
 
-                                // count = 0;
-                            }
-                            else {
-                                fprintf(stderr, "Found a repeated board\n");
-                                while(pthread_mutex_trylock(repeated_lock)) sched_yield();
-                                *repeated += 1;
-                                pthread_mutex_unlock(repeated_lock);
-                            }
+                            //     // count = 0;
+                            // }
+                            // else {
+                            //     fprintf(stderr, "Found a repeated board\n");
+                            //     while(pthread_mutex_trylock(repeated_lock)) sched_yield();
+                            //     *repeated += 1;
+                            //     pthread_mutex_unlock(repeated_lock);
+                            // }
                         }
                     }
 
@@ -345,7 +346,7 @@ void* walker_processor(void* args) {
             }
             else if(running) {
                 // We've finished the current batch
-                printf("Processor %d has finished\n", pargs->identifier);
+                printf("Processor %d has finished it's batch\n", pargs->identifier);
 
                 while(pthread_mutex_trylock(pargs->finished_lock)) sched_yield();
                 *pargs->finished_count += 1;
@@ -366,6 +367,7 @@ void* walker_processor(void* args) {
         pthread_mutex_unlock(pargs->finished_lock);
 
         free(pargs);
+        delete board_cache, coord_cache, coord_buff;
         // while(pargs->inputq->count) destroy_board(pargs->inputq->pop_back());
 
         return 0;
@@ -513,6 +515,8 @@ void* walker_task_scheduler(void* args) {
     LockedArraylist<coord>* coord_cache = new LockedArraylist<coord>(1000 * pargs->nprocs);
 
     FILE** checkpoint_file_pointer;
+    FILE* file_pointer;
+    checkpoint_file_pointer = &file_pointer;
 
     for(uint64_t t = 0; t < pargs->nprocs; t++) {
         pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
@@ -540,19 +544,29 @@ void* walker_task_scheduler(void* args) {
     uint32_t save_time;
 
     size_t current_target = 0, current_level = 0;
+    #ifdef debug
+        printf("Starting scheduler\n");
+    #endif
     while((pargs->inputq->count || *pargs->finished_count < pargs->nprocs) && !WALKER_KILL_FLAG) {
+        size_t assigned_procs = 0;
+
         while(pargs->inputq->count) {
             board* b = pargs->inputq->pop_bulk(CHUNK_SIZE * pargs->nprocs);
 
             size_t actual_count;
             for(actual_count = 0; actual_count < CHUNK_SIZE * pargs->nprocs && b[actual_count]; actual_count++) {
                 // Purge the previous level
+                #ifdef debug
+                    printf("Found board at level %u\n", b[actual_count]->level);
+                #endif
                 if(b[actual_count]->level > current_level) {
+                    #ifdef debug
+                        printf("Saving current level\n");
+                    #endif
                     save_progress_v3(checkpoint_file_pointer, pargs->file_lock, pargs->checkpoint_file, pargs->cache, 
                         current_level, pargs->cache->level_mappings[current_level]->data, pargs->cache->level_mappings[current_level]->pointer,
                         *pargs->counter, *pargs->explored_counter, *pargs->repeated_counter);
                     heirarchy_purge_level(pargs->cache, current_level++);
-                    break;
                 }
             }
 
@@ -561,6 +575,7 @@ void* walker_task_scheduler(void* args) {
             if(actual_count < CHUNK_SIZE) {
                 procqs->data[current_target++]->append_bulk(b, actual_count);
                 if(current_target >= procqs->pointer) current_target = 0;
+                if(++assigned_procs > procqs->pointer) assigned_procs = procqs->pointer;
             }
             else {
                 size_t chunk_count = actual_count >> 5;
@@ -572,9 +587,22 @@ void* walker_task_scheduler(void* args) {
                             CHUNK_SIZE : actual_count % CHUNK_SIZE);
 
                     if(current_target >= procqs->size) current_target = 0;
+                    if(++assigned_procs > procqs->pointer) assigned_procs = procqs->pointer;
                 }
             }
+
+            free(b);
         }
+
+        #ifdef debug
+            printf("Scheduler waiting for processors to finish batch\n");
+        #endif
+        while(*pargs->finished_count < assigned_procs) sched_yield();
+        *pargs->finished_count = 0;
+
+        #ifdef debug
+            printf("Scheduler moving to next batch\n");
+        #endif
 
         // fprintf(stderr, "The scheduler ran out of boards\n");
 

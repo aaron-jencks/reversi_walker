@@ -257,6 +257,7 @@ uint64_t board_place_piece(board b, uint8_t row, uint8_t column) {
         // if(!counts) err(1, "Memory Error while allocating capture count struct\n");
 
         board_put(b, row, column, b->player);
+        b->level++;
         int8_t cr, cc, bv;
         uint8_t capture_direction, count;
         for(int8_t rd = -1; rd < 2; rd++) {
