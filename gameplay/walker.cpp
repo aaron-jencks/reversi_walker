@@ -346,7 +346,9 @@ void* walker_processor(void* args) {
             }
             else if(running) {
                 // We've finished the current batch
-                printf("Processor %d has finished it's batch\n", pargs->identifier);
+                #ifdef debug
+                    printf("Processor %d has finished it's batch\n", pargs->identifier);
+                #endif
 
                 while(pthread_mutex_trylock(pargs->finished_lock)) sched_yield();
                 *pargs->finished_count += 1;
@@ -355,7 +357,10 @@ void* walker_processor(void* args) {
                 running = 0;
             }
             else if(!starved) {
-                fprintf(stderr, "Processor %d is being starved\n", pargs->identifier);
+                #ifdef debug
+                    fprintf(stderr, "Processor %d is being starved\n", pargs->identifier);
+                #endif
+
                 starved = 1;
             }
         }
@@ -522,7 +527,7 @@ void* walker_task_scheduler(void* args) {
         pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
         if(!thread_id) err(1, "Memory error while allocating thread id\n");
 
-        LockedRingBuffer<board>* inputq = new LockedRingBuffer<board>(1000);
+        LockedRingBuffer<board>* inputq = new LockedRingBuffer<board>(CHUNK_SIZE + 64);
         if(!inputq) err(1, "Memory error while allocating locked ring buffer\n");
 
         processor_args args = create_processor_args(t, inputq, pargs->inputq, 
@@ -547,7 +552,7 @@ void* walker_task_scheduler(void* args) {
     #ifdef debug
         printf("Starting scheduler\n");
     #endif
-    while((pargs->inputq->count || *pargs->finished_count < pargs->nprocs) && !WALKER_KILL_FLAG) {
+    while(!WALKER_KILL_FLAG && current_level < (BOARD_HEIGHT * BOARD_WIDTH - 1)) {
         size_t assigned_procs = 0;
 
         while(pargs->inputq->count) {
@@ -563,6 +568,7 @@ void* walker_task_scheduler(void* args) {
                     #ifdef debug
                         printf("Saving current level\n");
                     #endif
+                    printf("Saving level %lu\n", current_level);
                     save_progress_v3(checkpoint_file_pointer, pargs->file_lock, pargs->checkpoint_file, pargs->cache, 
                         current_level, pargs->cache->level_mappings[current_level]->data, pargs->cache->level_mappings[current_level]->pointer,
                         *pargs->counter, *pargs->explored_counter, *pargs->repeated_counter);
@@ -570,7 +576,9 @@ void* walker_task_scheduler(void* args) {
                 }
             }
 
-            fprintf(stderr, "Found %lu boards in the chunk\n", actual_count);
+            #ifdef debug
+                fprintf(stderr, "Found %lu boards in the chunk\n", actual_count);
+            #endif
 
             if(actual_count < CHUNK_SIZE) {
                 procqs->data[current_target++]->append_bulk(b, actual_count);

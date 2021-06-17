@@ -198,7 +198,7 @@ int main() {
         //     save_time = (current - save_timer) / 3600;
         // #endif
 
-        if(finished_count == procs) break;
+        // if(finished_count == procs) break;
 
         // if(save_time) {
         //     printf(" Saving...\n");
@@ -209,6 +209,7 @@ int main() {
 
         if(SHUTDOWN_FLAG) {
             fflush(stdout);
+            printf("Stopping simulation\n");
             // save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
             WALKER_KILL_FLAG = 1;
             while(finished_count < procs) sched_yield();
