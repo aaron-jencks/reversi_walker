@@ -594,7 +594,7 @@ void* walker_task_scheduler(void* args) {
                         (c < (chunk_count - 1) && actual_count % CHUNK_SIZE) ? 
                             CHUNK_SIZE : actual_count % CHUNK_SIZE);
 
-                    if(current_target >= procqs->size) current_target = 0;
+                    if(current_target >= procqs->pointer) current_target = 0;
                     if(++assigned_procs > procqs->pointer) assigned_procs = procqs->pointer;
                 }
             }
@@ -602,6 +602,7 @@ void* walker_task_scheduler(void* args) {
             free(b);
         }
 
+        printf("Assigned to %lu processors\n", assigned_procs);
         #ifdef debug
             printf("Scheduler waiting for processors to finish batch\n");
         #endif
