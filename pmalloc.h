@@ -2,6 +2,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief A wrapper for malloc, that prints allocation information to the console in addition to allocating the memory.
  * 
@@ -20,3 +24,7 @@ void* pmalloc(size_t size, const char* filename, const size_t line_number);
  * @param line_number The line number of the calling
  */
 void pfree(void* ptr, const char* filename, const size_t line_number);
+
+#ifdef __cplusplus
+}
+#endif
