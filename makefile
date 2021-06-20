@@ -1,7 +1,7 @@
 cc=gcc
 pp=g++
 cflags+=-O3 -Wall
-objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o
+objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o pmalloc.o 
 cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o pqueue.o gui.o
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o mmap_test.o dict_test.o heapsort_test.o arraylist_test.o 
@@ -14,13 +14,13 @@ all: main;
 main: main.o $(objects) $(cpp_objects)
 	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) -pthread
 
-gmain: gmain.cu $(cuda_objects)
-	nvcc -arch=sm_61 $(cppflags) -o $@ $< $(cuda_objects) -lpthread
+gmain: gmain.cu $(cuda_objects) pmalloc.o
+	nvcc -arch=sm_61 $(cppflags) -o $@ $< $(cuda_objects) pmalloc.o -lpthread
 
 tester: tester.o $(objects) $(cpp_objects) $(test_objects)
 	$(pp) $(cflags) -o $@ $< $(objects) $(cpp_objects) $(test_objects) -pthread
 
-experimenter: experimenter.cpp
+experimenter: experimenter.cpp pmalloc.o
 	$(pp) $(cflags) -o $@ $< -pthread
 
 main.o: main.cpp $(objects) $(cpp_objects)
@@ -89,7 +89,7 @@ fdict.o: ./utils/dictionary/fdict.cpp ./utils/dictionary/fdict.hpp ./utils/dicti
 hdict.o: ./utils/dictionary/hdict.cpp ./utils/dictionary/hdict.hpp dmempage.o 
 	$(pp) $(cflags) -o $@ -c $<
 
-tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp
+tarraylist.o: ./utils/tarraylist.cpp ./utils/tarraylist.hpp pmalloc.o 
 	$(pp) $(cflags) -o $@ -c $<
 
 pqueue.o: ./utils/pqueue.cpp ./utils/pqueue.hpp tarraylist.o ./gameplay/reversi_defs.h 
@@ -97,6 +97,9 @@ pqueue.o: ./utils/pqueue.cpp ./utils/pqueue.hpp tarraylist.o ./gameplay/reversi_
 
 semaphore.o: ./utils/semaphore.cpp ./utils/semaphore.hpp
 	$(pp) $(cflags) -o $@ -c $<
+
+pmalloc.o: ./pmalloc.c ./pmalloc.h 
+	$(cc) $(cflags) -o $@ -c $<
 
 # Tests
 
