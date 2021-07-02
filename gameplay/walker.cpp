@@ -565,13 +565,15 @@ void* walker_task_scheduler(void* args) {
                     printf("Found board at level %u\n", b[actual_count]->level);
                 #endif
                 if(b[actual_count]->level > current_level) {
-                    #ifdef debug
-                        printf("Saving current level\n");
+                    #ifndef nosave
+                        #ifdef debug
+                            printf("Saving current level\n");
+                        #endif
+                        printf("Saving level %lu\n", current_level);
+                        save_progress_v3(checkpoint_file_pointer, pargs->file_lock, pargs->checkpoint_file, pargs->cache, 
+                            current_level, pargs->cache->level_mappings[current_level]->data, pargs->cache->level_mappings[current_level]->pointer,
+                            *pargs->counter, *pargs->explored_counter, *pargs->repeated_counter);
                     #endif
-                    printf("Saving level %lu\n", current_level);
-                    save_progress_v3(checkpoint_file_pointer, pargs->file_lock, pargs->checkpoint_file, pargs->cache, 
-                        current_level, pargs->cache->level_mappings[current_level]->data, pargs->cache->level_mappings[current_level]->pointer,
-                        *pargs->counter, *pargs->explored_counter, *pargs->repeated_counter);
                     heirarchy_purge_level(pargs->cache, current_level++);
                 }
             }

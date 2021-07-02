@@ -1,0 +1,2705 @@
+# callgrind format
+version: 1
+creator: xtree-1
+pid: 170231
+cmd: ./main
+
+positions: line
+event: curB : currently allocated Bytes
+event: curBk : currently allocated Blocks
+event: totB : total allocated Bytes
+event: totBk : total allocated Blocks
+event: totFdB : total Freed Bytes
+event: totFdBk : total Freed Blocks
+events: curB  curBk  totB  totBk  totFdB  totFdBk 
+fl=(1) UnknownFile???
+fn=(1) UnknownFn???
+0
+cfi=(2) /build/glibc-YbNSs7/glibc-2.31/elf/dl-init.c
+cfn=(2) _dl_init
+calls=0 30
+0 0 0 72704 1 0 0
+fl=(2)
+fn=(2)
+30
+cfi=(2)
+cfn=(3) call_init.part.0
+calls=0 72
+30 0 0 72704 1 0 0
+fl=(2)
+fn=(3)
+72
+cfi=(1)
+cfn=(1)
+calls=0 0
+72 0 0 72704 1 0 0
+fl=(1)
+fn=(1)
+0 0 0 72704 1 0 0
+
+fl=(3) /home/aaron/Workspace/github/mine/reversi_walker/main.cpp
+fn=(4) main
+58
+cfi=(4) /build/glibc-YbNSs7/glibc-2.31/locale/setlocale.c
+cfn=(5) setlocale
+calls=0 414
+58 0 0 5 1 0 0
+fl=(4)
+fn=(5)
+414
+cfi=(5) /build/glibc-YbNSs7/glibc-2.31/locale/findlocale.c
+cfn=(6) _nl_find_locale
+calls=0 153
+414 0 0 5 1 0 0
+fl=(5)
+fn=(6)
+153
+cfi=(6) /build/glibc-YbNSs7/glibc-2.31/locale/loadarchive.c
+cfn=(7) _nl_load_locale_from_archive
+calls=0 173
+153 0 0 5 1 0 0
+fl=(6)
+fn=(7)
+173
+cfi=(7) /build/glibc-YbNSs7/glibc-2.31/intl/../intl/l10nflist.c
+cfn=(8) _nl_normalize_codeset
+calls=0 332
+173 0 0 5 1 0 0
+fl=(7)
+fn=(8)
+332 0 0 5 1 0 0
+
+fl=(3)
+fn=(4)
+58
+cfi=(4)
+cfn=(5)
+calls=0 414
+58 0 0 0 0 5 1
+fl=(4)
+fn=(5)
+414
+cfi=(5)
+cfn=(6)
+calls=0 153
+414 0 0 0 0 5 1
+fl=(5)
+fn=(6)
+153
+cfi=(6)
+cfn=(7)
+calls=0 189
+153 0 0 0 0 5 1
+fl=(6)
+fn=(7)
+189 0 0 0 0 5 1
+
+fl=(3)
+fn=(4)
+58
+cfi=(4)
+cfn=(5)
+calls=0 414
+58 0 0 120 1 0 0
+fl=(4)
+fn=(5)
+414
+cfi=(5)
+cfn=(6)
+calls=0 153
+414 0 0 120 1 0 0
+fl=(5)
+fn=(6)
+153
+cfi=(6)
+cfn=(7)
+calls=0 460
+153 0 0 120 1 0 0
+fl=(6)
+fn=(7)
+460 0 0 120 1 0 0
+
+fl=(3)
+fn=(4)
+58
+cfi=(4)
+cfn=(5)
+calls=0 414
+58 0 0 12 1 0 0
+fl=(4)
+fn=(5)
+414
+cfi=(5)
+cfn=(6)
+calls=0 153
+414 0 0 12 1 0 0
+fl=(5)
+fn=(6)
+153
+cfi=(6)
+cfn=(7)
+calls=0 464
+153 0 0 12 1 0 0
+fl=(6)
+fn=(7)
+464
+cfi=(8) /build/glibc-YbNSs7/glibc-2.31/string/strdup.c
+cfn=(9) strdup
+calls=0 42
+464 0 0 12 1 0 0
+fl=(8)
+fn=(9)
+42 0 0 12 1 0 0
+
+fl=(3)
+fn=(4)
+58
+cfi=(4)
+cfn=(5)
+calls=0 414
+58 0 0 3728 12 0 0
+fl=(4)
+fn=(5)
+414
+cfi=(5)
+cfn=(6)
+calls=0 153
+414 0 0 3728 12 0 0
+fl=(5)
+fn=(6)
+153
+cfi=(6)
+cfn=(7)
+calls=0 477
+153 0 0 3728 12 0 0
+fl=(6)
+fn=(7)
+477
+cfi=(9) /build/glibc-YbNSs7/glibc-2.31/locale/loadlocale.c
+cfn=(10) _nl_intern_locale_data
+calls=0 98
+477 0 0 3728 12 0 0
+fl=(9)
+fn=(10)
+98 0 0 3728 12 0 0
+
+fl=(3)
+fn=(4)
+58
+cfi=(4)
+cfn=(5)
+calls=0 431
+58 0 0 12 1 0 0
+fl=(4)
+fn=(5)
+431
+cfi=(8)
+cfn=(9)
+calls=0 42
+431 0 0 12 1 0 0
+fl=(8)
+fn=(9)
+42 0 0 12 1 0 0
+
+fl=(3)
+fn=(4)
+58
+cfi=(4)
+cfn=(5)
+calls=0 437
+58 0 0 171 1 0 0
+fl=(4)
+fn=(5)
+437
+cfi=(4)
+cfn=(11) new_composite_name
+calls=0 170
+437 0 0 171 1 0 0
+fl=(4)
+fn=(11)
+170 0 0 171 1 0 0
+
+fl=(3)
+fn=(4)
+63 20 1 20 1 0 0
+
+fl=(3)
+fn=(4)
+71 35 1 35 1 0 0
+
+fl=(3)
+fn=(4)
+76 28 1 28 1 0 0
+
+fl=(3)
+fn=(4)
+98 8 1 8 1 0 0
+
+fl=(3)
+fn=(4)
+115
+cfi=(10) /home/aaron/Workspace/github/mine/reversi_walker/utils/gui.cpp
+cfn=(12) ask_yes_no(char const*)
+calls=0 9
+115 0 0 1024 1 0 0
+fl=(10)
+fn=(12)
+9
+cfi=(11) /build/glibc-YbNSs7/glibc-2.31/stdio-common/printf.c
+cfn=(13) printf
+calls=0 33
+9 0 0 1024 1 0 0
+fl=(11)
+fn=(13)
+33
+cfi=(12) /build/glibc-YbNSs7/glibc-2.31/stdio-common/vfprintf-internal.c
+cfn=(14) __vfprintf_internal
+calls=0 1688
+33 0 0 1024 1 0 0
+fl=(12)
+fn=(14)
+1688
+cfi=(13) /build/glibc-YbNSs7/glibc-2.31/libio/fileops.c
+cfn=(15) _IO_file_xsputn@@GLIBC_2.2.5
+calls=0 1244
+1688 0 0 1024 1 0 0
+fl=(13)
+fn=(15)
+1244
+cfi=(13)
+cfn=(16) _IO_file_overflow@@GLIBC_2.2.5
+calls=0 745
+1244 0 0 1024 1 0 0
+fl=(13)
+fn=(16)
+745
+cfi=(14) /build/glibc-YbNSs7/glibc-2.31/libio/genops.c
+cfn=(17) _IO_doallocbuf
+calls=0 347
+745 0 0 1024 1 0 0
+fl=(14)
+fn=(17)
+347
+cfi=(15) /build/glibc-YbNSs7/glibc-2.31/libio/filedoalloc.c
+cfn=(18) _IO_file_doallocate
+calls=0 101
+347 0 0 1024 1 0 0
+fl=(15)
+fn=(18)
+101 0 0 1024 1 0 0
+
+fl=(3)
+fn=(4)
+115
+cfi=(10)
+cfn=(12)
+calls=0 10
+115 0 0 1024 1 0 0
+fl=(10)
+fn=(12)
+10
+cfi=(14)
+cfn=(19) _IO_default_uflow
+calls=0 362
+10 0 0 1024 1 0 0
+fl=(14)
+fn=(19)
+362
+cfi=(13)
+cfn=(20) _IO_file_underflow@@GLIBC_2.2.5
+calls=0 486
+362 0 0 1024 1 0 0
+fl=(13)
+fn=(20)
+486
+cfi=(14)
+cfn=(17)
+calls=0 347
+486 0 0 1024 1 0 0
+fl=(14)
+fn=(17)
+347
+cfi=(15)
+cfn=(18)
+calls=0 101
+347 0 0 1024 1 0 0
+fl=(15)
+fn=(18)
+101 0 0 1024 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16) /home/aaron/Workspace/github/mine/reversi_walker/mem_man/heir.cpp
+cfn=(21) create_heirarchy(char*)
+calls=0 21
+159 0 0 88 1 0 0
+fl=(16)
+fn=(21)
+21 0 0 88 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 43
+159 0 0 25 1 0 0
+fl=(16)
+fn=(21)
+43 0 0 25 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 48
+159 0 0 48 1 0 0
+fl=(16)
+fn=(21)
+48
+cfi=(17) /home/aaron/Workspace/github/mine/reversi_walker/mem_man/mmap_man.c
+cfn=(22) create_mmap_man
+calls=0 96
+48 0 0 48 1 0 0
+fl=(17)
+fn=(22)
+96 0 0 48 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 48
+159 0 0 8 1 0 0
+fl=(16)
+fn=(21)
+48
+cfi=(17)
+cfn=(22)
+calls=0 100
+48 0 0 8 1 0 0
+fl=(17)
+fn=(22)
+100 0 0 8 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 48
+159 0 0 25 1 0 0
+fl=(16)
+fn=(21)
+48
+cfi=(17)
+cfn=(22)
+calls=0 103
+48 0 0 25 1 0 0
+fl=(17)
+fn=(22)
+103 0 0 25 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 48
+159 0 0 16 1 0 0
+fl=(16)
+fn=(21)
+48
+cfi=(17)
+cfn=(22)
+calls=0 112
+48 0 0 16 1 0 0
+fl=(17)
+fn=(22)
+112
+cfi=(18) /home/aaron/Workspace/github/mine/reversi_walker/utils/path_util.c
+cfn=(23) find_abs_path
+calls=0 65
+112 0 0 16 1 0 0
+fl=(18)
+fn=(23)
+65 0 0 16 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 48
+159 0 0 41 1 0 0
+fl=(16)
+fn=(21)
+48
+cfi=(17)
+cfn=(22)
+calls=0 112
+48 0 0 41 1 0 0
+fl=(17)
+fn=(22)
+112
+cfi=(18)
+cfn=(23)
+calls=0 66
+112 0 0 41 1 0 0
+fl=(18)
+fn=(23)
+66 0 0 41 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 48
+159 0 0 0 0 16 1
+fl=(16)
+fn=(21)
+48
+cfi=(17)
+cfn=(22)
+calls=0 112
+48 0 0 0 0 16 1
+fl=(17)
+fn=(22)
+112
+cfi=(18)
+cfn=(23)
+calls=0 87
+112 0 0 0 0 16 1
+fl=(18)
+fn=(23)
+87 0 0 0 0 16 1
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 48
+159 0 0 40 1 0 0
+fl=(16)
+fn=(21)
+48
+cfi=(17)
+cfn=(22)
+calls=0 113
+48 0 0 40 1 0 0
+fl=(17)
+fn=(22)
+113
+cfi=(17)
+cfn=(24) create_mmap_page
+calls=0 35
+113 0 0 40 1 0 0
+fl=(17)
+fn=(24)
+35 0 0 40 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 48
+159 0 0 32 1 0 0
+fl=(16)
+fn=(21)
+48
+cfi=(17)
+cfn=(22)
+calls=0 113
+48 0 0 32 1 0 0
+fl=(17)
+fn=(22)
+113
+cfi=(17)
+cfn=(24)
+calls=0 37
+113 0 0 32 1 0 0
+fl=(17)
+fn=(24)
+37 0 0 32 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 48
+159 0 0 0 0 41 1
+fl=(16)
+fn=(21)
+48
+cfi=(17)
+cfn=(22)
+calls=0 114
+48 0 0 0 0 41 1
+fl=(17)
+fn=(22)
+114 0 0 0 0 41 1
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 49
+159 0 0 0 0 25 1
+fl=(16)
+fn=(21)
+49 0 0 0 0 25 1
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 51
+159 0 0 48 1 0 0
+fl=(16)
+fn=(21)
+51
+cfi=(19) /home/aaron/Workspace/github/mine/reversi_walker/utils/dictionary/fdict.cpp
+cfn=(25) create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long)
+calls=0 10
+51 0 0 48 1 0 0
+fl=(19)
+fn=(25)
+10 0 0 48 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 51
+159 0 0 8000000 1 0 0
+fl=(16)
+fn=(21)
+51
+cfi=(19)
+cfn=(25)
+calls=0 13
+51 0 0 8000000 1 0 0
+fl=(19)
+fn=(25)
+13 0 0 8000000 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 51
+159 0 0 24000000 1000000 0 0
+fl=(16)
+fn=(21)
+51
+cfi=(19)
+cfn=(25)
+calls=0 17
+51 0 0 24000000 1000000 0 0
+fl=(19)
+fn=(25)
+17 0 0 24000000 1000000 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 51
+159 0 0 720000000 1000000 0 0
+fl=(16)
+fn=(21)
+51
+cfi=(19)
+cfn=(25)
+calls=0 17
+51 0 0 720000000 1000000 0 0
+fl=(19)
+fn=(25)
+17
+cfi=(20) /home/aaron/Workspace/github/mine/reversi_walker/utils/dictionary/../tarraylist.hpp
+cfn=(26) Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long)
+calls=0 18
+17 0 0 720000000 1000000 0 0
+fl=(20)
+fn=(26)
+18 0 0 720000000 1000000 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 52
+159 0 0 48 1 0 0
+fl=(16)
+fn=(21)
+52
+cfi=(21) /home/aaron/Workspace/github/mine/reversi_walker/utils/dictionary/hdict.cpp
+cfn=(27) create_rehashing_dictionary(unsigned long, unsigned long)
+calls=0 9
+52 0 0 48 1 0 0
+fl=(21)
+fn=(27)
+9 0 0 48 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 52
+159 0 0 64 1 0 0
+fl=(16)
+fn=(21)
+52
+cfi=(21)
+cfn=(27)
+calls=0 12
+52 0 0 64 1 0 0
+fl=(21)
+fn=(27)
+12
+cfi=(22) /home/aaron/Workspace/github/mine/reversi_walker/utils/dictionary/dmempage.c
+cfn=(28) create_dmempage
+calls=0 11
+12 0 0 64 1 0 0
+fl=(22)
+fn=(28)
+11 0 0 64 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 52
+159 0 0 16 1 0 0
+fl=(16)
+fn=(21)
+52
+cfi=(21)
+cfn=(27)
+calls=0 12
+52 0 0 16 1 0 0
+fl=(21)
+fn=(27)
+12
+cfi=(22)
+cfn=(28)
+calls=0 21
+12 0 0 16 1 0 0
+fl=(22)
+fn=(28)
+21 0 0 16 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 52
+159 0 0 16 1 0 0
+fl=(16)
+fn=(21)
+52
+cfi=(21)
+cfn=(27)
+calls=0 12
+52 0 0 16 1 0 0
+fl=(21)
+fn=(27)
+12
+cfi=(22)
+cfn=(28)
+calls=0 24
+12 0 0 16 1 0 0
+fl=(22)
+fn=(28)
+24 0 0 16 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 52
+159 0 0 16000000 2 0 0
+fl=(16)
+fn=(21)
+52
+cfi=(21)
+cfn=(27)
+calls=0 12
+52 0 0 16000000 2 0 0
+fl=(21)
+fn=(27)
+12
+cfi=(22)
+cfn=(28)
+calls=0 33
+12 0 0 16000000 2 0 0
+fl=(22)
+fn=(28)
+33 0 0 16000000 2 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 52
+159 0 0 16000000 2 0 0
+fl=(16)
+fn=(21)
+52
+cfi=(21)
+cfn=(27)
+calls=0 12
+52 0 0 16000000 2 0 0
+fl=(21)
+fn=(27)
+12
+cfi=(22)
+cfn=(28)
+calls=0 36
+12 0 0 16000000 2 0 0
+fl=(22)
+fn=(28)
+36 0 0 16000000 2 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 52
+159 0 0 960000000 2000000 0 0
+fl=(16)
+fn=(21)
+52
+cfi=(21)
+cfn=(27)
+calls=0 12
+52 0 0 960000000 2000000 0 0
+fl=(21)
+fn=(27)
+12
+cfi=(22)
+cfn=(28)
+calls=0 40
+12 0 0 960000000 2000000 0 0
+fl=(22)
+fn=(28)
+40 0 0 960000000 2000000 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 54
+159 48 1 48 1 0 0
+fl=(16)
+fn=(21)
+54
+cfi=(19)
+cfn=(25)
+calls=0 10
+54 48 1 48 1 0 0
+fl=(19)
+fn=(25)
+10 48 1 48 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 54
+159 8000000 1 8000000 1 0 0
+fl=(16)
+fn=(21)
+54
+cfi=(19)
+cfn=(25)
+calls=0 13
+54 8000000 1 8000000 1 0 0
+fl=(19)
+fn=(25)
+13 8000000 1 8000000 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 54
+159 24000000 1000000 24000000 1000000 0 0
+fl=(16)
+fn=(21)
+54
+cfi=(19)
+cfn=(25)
+calls=0 17
+54 24000000 1000000 24000000 1000000 0 0
+fl=(19)
+fn=(25)
+17 24000000 1000000 24000000 1000000 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 54
+159 720000000 1000000 720000000 1000000 0 0
+fl=(16)
+fn=(21)
+54
+cfi=(19)
+cfn=(25)
+calls=0 17
+54 720000000 1000000 720000000 1000000 0 0
+fl=(19)
+fn=(25)
+17
+cfi=(20)
+cfn=(26)
+calls=0 18
+17 720000000 1000000 720000000 1000000 0 0
+fl=(20)
+fn=(26)
+18 720000000 1000000 720000000 1000000 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 59
+159 0 0 512 1 0 0
+fl=(16)
+fn=(21)
+59 0 0 512 1 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 61
+159 0 0 1536 64 0 0
+fl=(16)
+fn=(21)
+61 0 0 1536 64 0 0
+
+fl=(3)
+fn=(4)
+159
+cfi=(16)
+cfn=(21)
+calls=0 61
+159 0 0 1024000 64 0 0
+fl=(16)
+fn=(21)
+61
+cfi=(23) /home/aaron/Workspace/github/mine/reversi_walker/mem_man/../utils/dictionary/../tarraylist.hpp
+cfn=(29) Arraylist<unsigned __int128>::Arraylist(unsigned long)
+calls=0 18
+61 0 0 1024000 64 0 0
+fl=(23)
+fn=(29)
+18 0 0 1024000 64 0 0
+
+fl=(3)
+fn=(4)
+163 64 1 64 1 0 0
+
+fl=(3)
+fn=(4)
+163
+cfi=(24) /home/aaron/Workspace/github/mine/reversi_walker/./gameplay/../utils/pqueue.hpp
+cfn=(30) LockedPriorityQueue<_board_str*>::LockedPriorityQueue(unsigned long)
+calls=0 57
+163 0 0 8000 1 0 0
+fl=(24)
+fn=(30)
+57 0 0 8000 1 0 0
+
+fl=(3)
+fn=(4)
+164
+cfi=(25) /home/aaron/Workspace/github/mine/reversi_walker/gameplay/walker.cpp
+cfn=(31) create_processor_scheduler_args(__heirarchy_str*, LockedPriorityQueue<_board_str*>*, unsigned long, unsigned long*, pthread_mutex_t*, unsigned long*, pthread_mutex_t*, unsigned long*, pthread_mutex_t*, unsigned long*, char*, pthread_mutex_t*, unsigned long*, pthread_mutex_t*)
+calls=0 438
+164 112 1 112 1 0 0
+fl=(25)
+fn=(31)
+438 112 1 112 1 0 0
+
+fl=(3)
+fn=(4)
+170
+cfi=(26) /build/glibc-YbNSs7/glibc-2.31/nptl/allocatestack.c
+cfn=(32) pthread_create@@GLIBC_2.2.5
+calls=0 622
+170 288 1 288 1 0 0
+fl=(26)
+fn=(32)
+622
+cfi=(27) /build/glibc-YbNSs7/glibc-2.31/elf/../elf/dl-tls.c
+cfn=(33) _dl_allocate_tls
+calls=0 343
+622 288 1 288 1 0 0
+fl=(27)
+fn=(33)
+343 288 1 288 1 0 0
+
+fl=(3)
+fn=(4)
+177
+cfi=(28) /home/aaron/Workspace/github/mine/reversi_walker/gameplay/reversi.c
+cfn=(34) create_board
+calls=0 8
+177 24 1 24 1 0 0
+fl=(28)
+fn=(34)
+8 24 1 24 1 0 0
+
+fl=(3)
+fn=(4)
+177
+cfi=(28)
+cfn=(34)
+calls=0 15
+177 9 1 9 1 0 0
+fl=(28)
+fn=(34)
+15 9 1 9 1 0 0
+
+fl=(29) /build/glibc-YbNSs7/glibc-2.31/misc/../sysdeps/unix/sysv/linux/x86_64/clone.S
+fn=(35) clone
+95
+cfi=(30) /build/glibc-YbNSs7/glibc-2.31/nptl/pthread_create.c
+cfn=(36) start_thread
+calls=0 477
+95 24 1 24 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37) walker_task_scheduler(void*)
+calls=0 517
+477 24 1 24 1 0 0
+fl=(25)
+fn=(37)
+517 24 1 24 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 16 1 16 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 517
+477 16 1 16 1 0 0
+fl=(25)
+fn=(37)
+517
+cfi=(31) /home/aaron/Workspace/github/mine/reversi_walker/gameplay/../utils/tarraylist.hpp
+cfn=(38) Arraylist<void*>::Arraylist(unsigned long)
+calls=0 18
+517 16 1 16 1 0 0
+fl=(31)
+fn=(38)
+18 16 1 16 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 24 1 24 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 518
+477 24 1 24 1 0 0
+fl=(25)
+fn=(37)
+518 24 1 24 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 16 1 16 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 518
+477 16 1 16 1 0 0
+fl=(25)
+fn=(37)
+518
+cfi=(31)
+cfn=(39) Arraylist<LockedRingBuffer<_board_str*>*>::Arraylist(unsigned long)
+calls=0 18
+518 16 1 16 1 0 0
+fl=(31)
+fn=(39)
+18 16 1 16 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 64 1 64 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 519
+477 64 1 64 1 0 0
+fl=(25)
+fn=(37)
+519 64 1 64 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 8000 1 8000 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 519
+477 8000 1 8000 1 0 0
+fl=(25)
+fn=(37)
+519
+cfi=(31)
+cfn=(40) LockedArraylist<_board_str*>::LockedArraylist(unsigned long)
+calls=0 248
+519 8000 1 8000 1 0 0
+fl=(31)
+fn=(40)
+248
+cfi=(31)
+cfn=(41) Arraylist<_board_str*>::Arraylist(unsigned long)
+calls=0 18
+248 8000 1 8000 1 0 0
+fl=(31)
+fn=(41)
+18 8000 1 8000 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 64 1 64 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 520
+477 64 1 64 1 0 0
+fl=(25)
+fn=(37)
+520 64 1 64 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 8000 1 8000 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 520
+477 8000 1 8000 1 0 0
+fl=(25)
+fn=(37)
+520
+cfi=(31)
+cfn=(42) LockedArraylist<_coord_str*>::LockedArraylist(unsigned long)
+calls=0 248
+520 8000 1 8000 1 0 0
+fl=(31)
+fn=(42)
+248
+cfi=(31)
+cfn=(43) Arraylist<_coord_str*>::Arraylist(unsigned long)
+calls=0 18
+248 8000 1 8000 1 0 0
+fl=(31)
+fn=(43)
+18 8000 1 8000 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 8 1 8 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 527
+477 8 1 8 1 0 0
+fl=(25)
+fn=(37)
+527 8 1 8 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 80 1 80 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 530
+477 80 1 80 1 0 0
+fl=(25)
+fn=(37)
+530 80 1 80 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 3303821504 1 3303821504 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 530
+477 3303821504 1 3303821504 1 0 0
+fl=(25)
+fn=(37)
+530
+cfi=(31)
+cfn=(44) LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long)
+calls=0 209
+530 3303821504 1 3303821504 1 0 0
+fl=(31)
+fn=(44)
+209
+cfi=(31)
+cfn=(45) RingBuffer<_board_str*>::RingBuffer(unsigned long)
+calls=0 122
+209 3303821504 1 3303821504 1 0 0
+fl=(31)
+fn=(45)
+122 3303821504 1 3303821504 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 136 1 136 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 533
+477 136 1 136 1 0 0
+fl=(25)
+fn=(37)
+533
+cfi=(25)
+cfn=(46) create_processor_args(unsigned int, LockedRingBuffer<_board_str*>*, LockedPriorityQueue<_board_str*>*, __heirarchy_str*, Arraylist<_board_str*>*, Arraylist<_coord_str*>*, unsigned long*, pthread_mutex_t*, unsigned long*, pthread_mutex_t*, unsigned long*, pthread_mutex_t*, unsigned long*, _IO_FILE**, pthread_mutex_t*, unsigned long*, pthread_mutex_t*)
+calls=0 408
+533 136 1 136 1 0 0
+fl=(25)
+fn=(46)
+408 136 1 136 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 288 1 288 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 542
+477 288 1 288 1 0 0
+fl=(25)
+fn=(37)
+542
+cfi=(26)
+cfn=(32)
+calls=0 622
+542 288 1 288 1 0 0
+fl=(26)
+fn=(32)
+622
+cfi=(27)
+cfn=(33)
+calls=0 343
+622 288 1 288 1 0 0
+fl=(27)
+fn=(33)
+343 288 1 288 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 0 0 456264 8 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 559
+477 0 0 456264 8 0 0
+fl=(25)
+fn=(37)
+559
+cfi=(32) /home/aaron/Workspace/github/mine/reversi_walker/gameplay/../utils/pqueue.hpp
+cfn=(47) LockedPriorityQueue<_board_str*>::pop_bulk(unsigned long)
+calls=0 130
+559 0 0 456264 8 0 0
+fl=(32)
+fn=(47)
+130 0 0 456264 8 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 0 0 0 0 456264 8
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 602
+477 0 0 0 0 456264 8
+fl=(25)
+fn=(37)
+602 0 0 0 0 456264 8
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 24 1 24 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48) walker_processor(void*)
+calls=0 159
+477 24 1 24 1 0 0
+fl=(25)
+fn=(48)
+159 24 1 24 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 8000 1 8000 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 159
+477 8000 1 8000 1 0 0
+fl=(25)
+fn=(48)
+159
+cfi=(31)
+cfn=(38)
+calls=0 18
+159 8000 1 8000 1 0 0
+fl=(31)
+fn=(38)
+18 8000 1 8000 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 24 1 24 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 159
+477 24 1 24 1 0 0
+fl=(25)
+fn=(48)
+159 24 1 24 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 8000 1 8000 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 159
+477 8000 1 8000 1 0 0
+fl=(25)
+fn=(48)
+159
+cfi=(31)
+cfn=(38)
+calls=0 18
+159 8000 1 8000 1 0 0
+fl=(31)
+fn=(38)
+18 8000 1 8000 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 24 1 24 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 159
+477 24 1 24 1 0 0
+fl=(25)
+fn=(48)
+159 24 1 24 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 520 1 520 1 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 159
+477 520 1 520 1 0 0
+fl=(25)
+fn=(48)
+159
+cfi=(31)
+cfn=(38)
+calls=0 18
+159 520 1 520 1 0 0
+fl=(31)
+fn=(38)
+18 520 1 520 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 24000 1000 24000 1000 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 161
+477 24000 1000 24000 1000 0 0
+fl=(25)
+fn=(48)
+161
+cfi=(28)
+cfn=(34)
+calls=0 8
+161 24000 1000 24000 1000 0 0
+fl=(28)
+fn=(34)
+8 24000 1000 24000 1000 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 9000 1000 9000 1000 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 161
+477 9000 1000 9000 1000 0 0
+fl=(25)
+fn=(48)
+161
+cfi=(28)
+cfn=(34)
+calls=0 15
+161 9000 1000 9000 1000 0 0
+fl=(28)
+fn=(34)
+15 9000 1000 9000 1000 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 2000 1000 2000 1000 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 162
+477 2000 1000 2000 1000 0 0
+fl=(25)
+fn=(48)
+162
+cfi=(25)
+cfn=(49) create_coord(unsigned char, unsigned char)
+calls=0 57
+162 2000 1000 2000 1000 0 0
+fl=(25)
+fn=(49)
+57 2000 1000 2000 1000 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 0 0 3304 7 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 572
+477 0 0 3304 7 0 0
+fl=(25)
+fn=(37)
+572
+cfi=(33) /home/aaron/Workspace/github/mine/reversi_walker/utils/fileio.cpp
+cfn=(50) save_progress_v3(_IO_FILE**, pthread_mutex_t*, char*, __heirarchy_str*, unsigned char, unsigned __int128*, unsigned long, unsigned long, unsigned long, unsigned long)
+calls=0 312
+572 0 0 3304 7 0 0
+fl=(33)
+fn=(50)
+312
+cfi=(34) /build/glibc-YbNSs7/glibc-2.31/libio/iofopen.c
+cfn=(51) fopen@@GLIBC_2.2.5
+calls=0 65
+312 0 0 3304 7 0 0
+fl=(34)
+fn=(51)
+65 0 0 3304 7 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 0 0 28672 7 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 572
+477 0 0 28672 7 0 0
+fl=(25)
+fn=(37)
+572
+cfi=(33)
+cfn=(50)
+calls=0 319
+572 0 0 28672 7 0 0
+fl=(33)
+fn=(50)
+319
+cfi=(35) /build/glibc-YbNSs7/glibc-2.31/libio/iofwrite.c
+cfn=(52) fwrite
+calls=0 39
+319 0 0 28672 7 0 0
+fl=(35)
+fn=(52)
+39
+cfi=(13)
+cfn=(15)
+calls=0 1244
+39 0 0 28672 7 0 0
+fl=(13)
+fn=(15)
+1244
+cfi=(13)
+cfn=(16)
+calls=0 745
+1244 0 0 28672 7 0 0
+fl=(13)
+fn=(16)
+745
+cfi=(14)
+cfn=(17)
+calls=0 347
+745 0 0 28672 7 0 0
+fl=(14)
+fn=(17)
+347
+cfi=(15)
+cfn=(18)
+calls=0 101
+347 0 0 28672 7 0 0
+fl=(15)
+fn=(18)
+101 0 0 28672 7 0 0
+
+fl=(3)
+fn=(4)
+190
+cfi=(10)
+cfn=(53) initialize_main_loop_display(char*, __heirarchy_str*, unsigned long*, unsigned long*)
+calls=0 101
+190 448 1 448 1 0 0
+fl=(10)
+fn=(53)
+101 448 1 448 1 0 0
+
+fl=(3)
+fn=(4)
+190
+cfi=(10)
+cfn=(53)
+calls=0 106
+190 24 1 24 1 0 0
+fl=(10)
+fn=(53)
+106
+cfi=(36) /home/aaron/Workspace/github/mine/reversi_walker/utils/csv.c
+cfn=(54) create_csv_cont
+calls=0 9
+106 24 1 24 1 0 0
+fl=(36)
+fn=(54)
+9 24 1 24 1 0 0
+
+fl=(3)
+fn=(4)
+190
+cfi=(10)
+cfn=(53)
+calls=0 106
+190 28 1 28 1 0 0
+fl=(10)
+fn=(53)
+106
+cfi=(36)
+cfn=(54)
+calls=0 11
+106 28 1 28 1 0 0
+fl=(36)
+fn=(54)
+11 28 1 28 1 0 0
+
+fl=(3)
+fn=(4)
+190
+cfi=(10)
+cfn=(53)
+calls=0 106
+190 40 1 40 1 0 0
+fl=(10)
+fn=(53)
+106
+cfi=(36)
+cfn=(54)
+calls=0 12
+106 40 1 40 1 0 0
+fl=(36)
+fn=(54)
+12 40 1 40 1 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 0 0 0 0 28672 7
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 572
+477 0 0 0 0 28672 7
+fl=(25)
+fn=(37)
+572
+cfi=(33)
+cfn=(50)
+calls=0 337
+572 0 0 0 0 28672 7
+fl=(33)
+fn=(50)
+337
+cfi=(37) /build/glibc-YbNSs7/glibc-2.31/libio/iofclose.c
+cfn=(55) fclose@@GLIBC_2.2.5
+calls=0 53
+337 0 0 0 0 28672 7
+fl=(37)
+fn=(55)
+53
+cfi=(13)
+cfn=(56) _IO_file_close_it@@GLIBC_2.2.5
+calls=0 154
+53 0 0 0 0 28672 7
+fl=(13)
+fn=(56)
+154
+cfi=(14)
+cfn=(57) _IO_setb
+calls=0 331
+154 0 0 0 0 28672 7
+fl=(14)
+fn=(57)
+331 0 0 0 0 28672 7
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 0 0 0 0 3304 7
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(37)
+calls=0 572
+477 0 0 0 0 3304 7
+fl=(25)
+fn=(37)
+572
+cfi=(33)
+cfn=(50)
+calls=0 337
+572 0 0 0 0 3304 7
+fl=(33)
+fn=(50)
+337
+cfi=(38) /build/glibc-YbNSs7/glibc-2.31/libio/libioP.h
+cfn=(55)
+calls=0 863
+337 0 0 0 0 3304 7
+fl=(38)
+fn=(55)
+863 0 0 0 0 3304 7
+
+fl=(3)
+fn=(4)
+193
+cfi=(10)
+cfn=(58) display_main_loop(loop_display_t*)
+calls=0 152
+193 0 0 8496 18 0 0
+fl=(10)
+fn=(58)
+152
+cfi=(36)
+cfn=(59) append_data
+calls=0 58
+152 0 0 8496 18 0 0
+fl=(36)
+fn=(59)
+58
+cfi=(34)
+cfn=(51)
+calls=0 65
+58 0 0 8496 18 0 0
+fl=(34)
+fn=(51)
+65 0 0 8496 18 0 0
+
+fl=(3)
+fn=(4)
+193
+cfi=(10)
+cfn=(58)
+calls=0 152
+193 0 0 73728 18 0 0
+fl=(10)
+fn=(58)
+152
+cfi=(36)
+cfn=(59)
+calls=0 60
+152 0 0 73728 18 0 0
+fl=(36)
+fn=(59)
+60
+cfi=(12)
+cfn=(14)
+calls=0 1687
+60 0 0 73728 18 0 0
+fl=(12)
+fn=(14)
+1687
+cfi=(13)
+cfn=(15)
+calls=0 1244
+1687 0 0 73728 18 0 0
+fl=(13)
+fn=(15)
+1244
+cfi=(13)
+cfn=(16)
+calls=0 745
+1244 0 0 73728 18 0 0
+fl=(13)
+fn=(16)
+745
+cfi=(14)
+cfn=(17)
+calls=0 347
+745 0 0 73728 18 0 0
+fl=(14)
+fn=(17)
+347
+cfi=(15)
+cfn=(18)
+calls=0 101
+347 0 0 73728 18 0 0
+fl=(15)
+fn=(18)
+101 0 0 73728 18 0 0
+
+fl=(3)
+fn=(4)
+193
+cfi=(10)
+cfn=(58)
+calls=0 152
+193 0 0 0 0 73728 18
+fl=(10)
+fn=(58)
+152
+cfi=(36)
+cfn=(59)
+calls=0 62
+152 0 0 0 0 73728 18
+fl=(36)
+fn=(59)
+62
+cfi=(37)
+cfn=(55)
+calls=0 53
+62 0 0 0 0 73728 18
+fl=(37)
+fn=(55)
+53
+cfi=(13)
+cfn=(56)
+calls=0 154
+53 0 0 0 0 73728 18
+fl=(13)
+fn=(56)
+154
+cfi=(14)
+cfn=(57)
+calls=0 331
+154 0 0 0 0 73728 18
+fl=(14)
+fn=(57)
+331 0 0 0 0 73728 18
+
+fl=(3)
+fn=(4)
+193
+cfi=(10)
+cfn=(58)
+calls=0 152
+193 0 0 0 0 8496 18
+fl=(10)
+fn=(58)
+152
+cfi=(36)
+cfn=(59)
+calls=0 62
+152 0 0 0 0 8496 18
+fl=(36)
+fn=(59)
+62
+cfi=(38)
+cfn=(55)
+calls=0 863
+62 0 0 0 0 8496 18
+fl=(38)
+fn=(55)
+863 0 0 0 0 8496 18
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 7385184 307716 7385184 307716 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 202
+477 7385184 307716 7385184 307716 0 0
+fl=(25)
+fn=(48)
+202
+cfi=(28)
+cfn=(34)
+calls=0 8
+202 7385184 307716 7385184 307716 0 0
+fl=(28)
+fn=(34)
+8 7385184 307716 7385184 307716 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 2769444 307716 2769444 307716 0 0
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 202
+477 2769444 307716 2769444 307716 0 0
+fl=(25)
+fn=(48)
+202
+cfi=(28)
+cfn=(34)
+calls=0 15
+202 2769444 307716 2769444 307716 0 0
+fl=(28)
+fn=(34)
+15 2769444 307716 2769444 307716 0 0
+
+fl=(29)
+fn=(35)
+95
+cfi=(30)
+cfn=(36)
+calls=0 477
+95 4096000 1 8176000 9 4088000 9
+fl=(30)
+fn=(36)
+477
+cfi=(25)
+cfn=(48)
+calls=0 208
+477 4096000 1 8176000 9 4088000 9
+fl=(25)
+fn=(48)
+208
+cfi=(32)
+cfn=(60) LockedPriorityQueue<_board_str*>::push(_board_str*)
+calls=0 74
+208 4096000 1 8176000 9 4088000 9
+fl=(32)
+fn=(60)
+74 4096000 1 8176000 9 4088000 9
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61) destroy_heirarchy(__heirarchy_str*)
+calls=0 68
+216 0 0 0 0 32 1
+fl=(16)
+fn=(61)
+68
+cfi=(17)
+cfn=(62) destroy_mmap_man
+calls=0 122
+68 0 0 0 0 32 1
+fl=(17)
+fn=(62)
+122
+cfi=(17)
+cfn=(63) destroy_mmap_page
+calls=0 90
+122 0 0 0 0 32 1
+fl=(17)
+fn=(63)
+90 0 0 0 0 32 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 68
+216 0 0 0 0 40 1
+fl=(16)
+fn=(61)
+68
+cfi=(17)
+cfn=(62)
+calls=0 122
+68 0 0 0 0 40 1
+fl=(17)
+fn=(62)
+122
+cfi=(17)
+cfn=(63)
+calls=0 91
+122 0 0 0 0 40 1
+fl=(17)
+fn=(63)
+91 0 0 0 0 40 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 68
+216 0 0 0 0 25 1
+fl=(16)
+fn=(61)
+68
+cfi=(17)
+cfn=(62)
+calls=0 123
+68 0 0 0 0 25 1
+fl=(17)
+fn=(62)
+123 0 0 0 0 25 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 68
+216 0 0 0 0 8 1
+fl=(16)
+fn=(61)
+68
+cfi=(17)
+cfn=(62)
+calls=0 124
+68 0 0 0 0 8 1
+fl=(17)
+fn=(62)
+124 0 0 0 0 8 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 68
+216 0 0 0 0 48 1
+fl=(16)
+fn=(61)
+68
+cfi=(17)
+cfn=(62)
+calls=0 125
+68 0 0 0 0 48 1
+fl=(17)
+fn=(62)
+125 0 0 0 0 48 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 69
+216 0 0 0 0 720000000 1000000
+fl=(16)
+fn=(61)
+69
+cfi=(19)
+cfn=(64) destroy_fixed_dictionary(_fdict_t*)
+calls=0 32
+69 0 0 0 0 720000000 1000000
+fl=(19)
+fn=(64)
+32
+cfi=(20)
+cfn=(65) Arraylist<_dict_usage_pair_t>::~Arraylist()
+calls=0 25
+32 0 0 0 0 720000000 1000000
+fl=(20)
+fn=(65)
+25 0 0 0 0 720000000 1000000
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 69
+216 0 0 0 0 24000000 1000000
+fl=(16)
+fn=(61)
+69
+cfi=(19)
+cfn=(64)
+calls=0 32
+69 0 0 0 0 24000000 1000000
+fl=(19)
+fn=(64)
+32 0 0 0 0 24000000 1000000
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 69
+216 0 0 0 0 8000000 1
+fl=(16)
+fn=(61)
+69
+cfi=(19)
+cfn=(64)
+calls=0 34
+69 0 0 0 0 8000000 1
+fl=(19)
+fn=(64)
+34 0 0 0 0 8000000 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 69
+216 0 0 0 0 48 1
+fl=(16)
+fn=(61)
+69
+cfi=(19)
+cfn=(64)
+calls=0 35
+69 0 0 0 0 48 1
+fl=(19)
+fn=(64)
+35 0 0 0 0 48 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 70
+216 0 0 0 0 960000000 2000000
+fl=(16)
+fn=(61)
+70
+cfi=(21)
+cfn=(66) destroy_rehashing_dictionary(_hdict_t*)
+calls=0 23
+70 0 0 0 0 960000000 2000000
+fl=(21)
+fn=(66)
+23
+cfi=(22)
+cfn=(67) destroy_dmempage
+calls=0 56
+23 0 0 0 0 960000000 2000000
+fl=(22)
+fn=(67)
+56 0 0 0 0 960000000 2000000
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 70
+216 0 0 0 0 16000000 2
+fl=(16)
+fn=(61)
+70
+cfi=(21)
+cfn=(66)
+calls=0 23
+70 0 0 0 0 16000000 2
+fl=(21)
+fn=(66)
+23
+cfi=(22)
+cfn=(67)
+calls=0 57
+23 0 0 0 0 16000000 2
+fl=(22)
+fn=(67)
+57 0 0 0 0 16000000 2
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 70
+216 0 0 0 0 16000000 2
+fl=(16)
+fn=(61)
+70
+cfi=(21)
+cfn=(66)
+calls=0 23
+70 0 0 0 0 16000000 2
+fl=(21)
+fn=(66)
+23
+cfi=(22)
+cfn=(67)
+calls=0 58
+23 0 0 0 0 16000000 2
+fl=(22)
+fn=(67)
+58 0 0 0 0 16000000 2
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 70
+216 0 0 0 0 16 1
+fl=(16)
+fn=(61)
+70
+cfi=(21)
+cfn=(66)
+calls=0 23
+70 0 0 0 0 16 1
+fl=(21)
+fn=(66)
+23
+cfi=(22)
+cfn=(67)
+calls=0 60
+23 0 0 0 0 16 1
+fl=(22)
+fn=(67)
+60 0 0 0 0 16 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 70
+216 0 0 0 0 16 1
+fl=(16)
+fn=(61)
+70
+cfi=(21)
+cfn=(66)
+calls=0 23
+70 0 0 0 0 16 1
+fl=(21)
+fn=(66)
+23
+cfi=(22)
+cfn=(67)
+calls=0 61
+23 0 0 0 0 16 1
+fl=(22)
+fn=(67)
+61 0 0 0 0 16 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 70
+216 0 0 0 0 64 1
+fl=(16)
+fn=(61)
+70
+cfi=(21)
+cfn=(66)
+calls=0 23
+70 0 0 0 0 64 1
+fl=(21)
+fn=(66)
+23
+cfi=(22)
+cfn=(67)
+calls=0 62
+23 0 0 0 0 64 1
+fl=(22)
+fn=(67)
+62 0 0 0 0 64 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 70
+216 0 0 0 0 48 1
+fl=(16)
+fn=(61)
+70
+cfi=(21)
+cfn=(66)
+calls=0 24
+70 0 0 0 0 48 1
+fl=(21)
+fn=(66)
+24 0 0 0 0 48 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 71
+216 0 0 0 0 1024000 64
+fl=(16)
+fn=(61)
+71
+cfi=(23)
+cfn=(68) Arraylist<unsigned __int128>::~Arraylist()
+calls=0 25
+71 0 0 0 0 1024000 64
+fl=(23)
+fn=(68)
+25 0 0 0 0 1024000 64
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 71
+216 0 0 0 0 1536 64
+fl=(16)
+fn=(61)
+71 0 0 0 0 1536 64
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 72
+216 0 0 0 0 512 1
+fl=(16)
+fn=(61)
+72 0 0 0 0 512 1
+
+fl=(3)
+fn=(4)
+216
+cfi=(16)
+cfn=(61)
+calls=0 73
+216 0 0 0 0 88 1
+fl=(16)
+fn=(61)
+73 0 0 0 0 88 1
+
+fl=(3)
+fn=(4)
+217
+cfi=(39) /build/glibc-YbNSs7/glibc-2.31/stdlib/exit.c
+cfn=(69) exit
+calls=0 139
+217 0 0 0 0 72704 1
+fl=(39)
+fn=(69)
+139
+cfi=(39)
+cfn=(70) __run_exit_handlers
+calls=0 132
+139 0 0 0 0 72704 1
+fl=(39)
+fn=(70)
+132
+cfi=(1)
+cfn=(71) _vgnU_freeres
+calls=0 0
+132 0 0 0 0 72704 1
+fl=(1)
+fn=(71)
+0
+cfi=(1)
+cfn=(72) __gnu_cxx::__freeres()
+calls=0 0
+0 0 0 0 0 72704 1
+fl=(1)
+fn=(72)
+0 0 0 0 0 72704 1
+
+fl=(3)
+fn=(4)
+217
+cfi=(39)
+cfn=(69)
+calls=0 139
+217 0 0 0 0 12 1
+fl=(39)
+fn=(69)
+139
+cfi=(39)
+cfn=(70)
+calls=0 132
+139 0 0 0 0 12 1
+fl=(39)
+fn=(70)
+132
+cfi=(1)
+cfn=(71)
+calls=0 0
+132 0 0 0 0 12 1
+fl=(1)
+fn=(71)
+0
+cfi=(1)
+cfn=(73) __libc_freeres
+calls=0 0
+0 0 0 0 0 12 1
+fl=(1)
+fn=(73)
+0
+cfi=(1)
+cfn=(74) free_mem
+calls=0 0
+0 0 0 0 0 12 1
+fl=(1)
+fn=(74)
+0
+cfi=(1)
+cfn=(75) _nl_locale_subfreeres
+calls=0 0
+0 0 0 0 0 12 1
+fl=(1)
+fn=(75)
+0 0 0 0 0 12 1
+
+fl=(3)
+fn=(4)
+217
+cfi=(39)
+cfn=(69)
+calls=0 139
+217 0 0 0 0 171 1
+fl=(39)
+fn=(69)
+139
+cfi=(39)
+cfn=(70)
+calls=0 132
+139 0 0 0 0 171 1
+fl=(39)
+fn=(70)
+132
+cfi=(1)
+cfn=(71)
+calls=0 0
+132 0 0 0 0 171 1
+fl=(1)
+fn=(71)
+0
+cfi=(1)
+cfn=(73)
+calls=0 0
+0 0 0 0 0 171 1
+fl=(1)
+fn=(73)
+0
+cfi=(1)
+cfn=(74)
+calls=0 0
+0 0 0 0 0 171 1
+fl=(1)
+fn=(74)
+0
+cfi=(1)
+cfn=(75)
+calls=0 0
+0 0 0 0 0 171 1
+fl=(1)
+fn=(75)
+0 0 0 0 0 171 1
+
+fl=(3)
+fn=(4)
+217
+cfi=(39)
+cfn=(69)
+calls=0 139
+217 0 0 0 0 12 1
+fl=(39)
+fn=(69)
+139
+cfi=(39)
+cfn=(70)
+calls=0 132
+139 0 0 0 0 12 1
+fl=(39)
+fn=(70)
+132
+cfi=(1)
+cfn=(71)
+calls=0 0
+132 0 0 0 0 12 1
+fl=(1)
+fn=(71)
+0
+cfi=(1)
+cfn=(73)
+calls=0 0
+0 0 0 0 0 12 1
+fl=(1)
+fn=(73)
+0
+cfi=(1)
+cfn=(74)
+calls=0 0
+0 0 0 0 0 12 1
+fl=(1)
+fn=(74)
+0
+cfi=(1)
+cfn=(76) _nl_archive_subfreeres
+calls=0 0
+0 0 0 0 0 12 1
+fl=(1)
+fn=(76)
+0 0 0 0 0 12 1
+
+fl=(3)
+fn=(4)
+217
+cfi=(39)
+cfn=(69)
+calls=0 139
+217 0 0 0 0 3728 12
+fl=(39)
+fn=(69)
+139
+cfi=(39)
+cfn=(70)
+calls=0 132
+139 0 0 0 0 3728 12
+fl=(39)
+fn=(70)
+132
+cfi=(1)
+cfn=(71)
+calls=0 0
+132 0 0 0 0 3728 12
+fl=(1)
+fn=(71)
+0
+cfi=(1)
+cfn=(73)
+calls=0 0
+0 0 0 0 0 3728 12
+fl=(1)
+fn=(73)
+0
+cfi=(1)
+cfn=(74)
+calls=0 0
+0 0 0 0 0 3728 12
+fl=(1)
+fn=(74)
+0
+cfi=(1)
+cfn=(76)
+calls=0 0
+0 0 0 0 0 3728 12
+fl=(1)
+fn=(76)
+0 0 0 0 0 3728 12
+
+fl=(3)
+fn=(4)
+217
+cfi=(39)
+cfn=(69)
+calls=0 139
+217 0 0 0 0 120 1
+fl=(39)
+fn=(69)
+139
+cfi=(39)
+cfn=(70)
+calls=0 132
+139 0 0 0 0 120 1
+fl=(39)
+fn=(70)
+132
+cfi=(1)
+cfn=(71)
+calls=0 0
+132 0 0 0 0 120 1
+fl=(1)
+fn=(71)
+0
+cfi=(1)
+cfn=(73)
+calls=0 0
+0 0 0 0 0 120 1
+fl=(1)
+fn=(73)
+0
+cfi=(1)
+cfn=(74)
+calls=0 0
+0 0 0 0 0 120 1
+fl=(1)
+fn=(74)
+0
+cfi=(1)
+cfn=(76)
+calls=0 0
+0 0 0 0 0 120 1
+fl=(1)
+fn=(76)
+0 0 0 0 0 120 1
+
+fl=(3)
+fn=(4)
+217
+cfi=(39)
+cfn=(69)
+calls=0 139
+217 0 0 0 0 2048 2
+fl=(39)
+fn=(69)
+139
+cfi=(39)
+cfn=(70)
+calls=0 132
+139 0 0 0 0 2048 2
+fl=(39)
+fn=(70)
+132
+cfi=(1)
+cfn=(71)
+calls=0 0
+132 0 0 0 0 2048 2
+fl=(1)
+fn=(71)
+0
+cfi=(1)
+cfn=(73)
+calls=0 0
+0 0 0 0 0 2048 2
+fl=(1)
+fn=(73)
+0
+cfi=(1)
+cfn=(77) buffer_free
+calls=0 0
+0 0 0 0 0 2048 2
+fl=(1)
+fn=(77)
+0 0 0 0 0 2048 2
+
+totals: 4070141620 2618467 5819905447 6618702 1749763827 4000235

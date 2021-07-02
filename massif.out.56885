@@ -1,0 +1,802 @@
+desc: (none)
+cmd: ./main
+time_unit: i
+#-----------
+snapshot=0
+#-----------
+time=0
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=1
+#-----------
+time=16459103746
+mem_heap_B=5801004308
+mem_heap_extra_B=64080332
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=2
+#-----------
+time=22963193379
+mem_heap_B=5801004372
+mem_heap_extra_B=64080332
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=3
+#-----------
+time=76916687207
+mem_heap_B=5801004724
+mem_heap_extra_B=64080332
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=4
+#-----------
+time=100229290095
+mem_heap_B=5801004740
+mem_heap_extra_B=64080332
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=5
+#-----------
+time=116192402865
+mem_heap_B=5801269281
+mem_heap_extra_B=64276687
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=6
+#-----------
+time=144070210692
+mem_heap_B=5801339040
+mem_heap_extra_B=64285088
+mem_stacks_B=0
+heap_tree=detailed
+n4: 5801339040 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n0: 97517536 in 60 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=7
+#-----------
+time=151370063197
+mem_heap_B=5815236822
+mem_heap_extra_B=73610202
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=8
+#-----------
+time=191271498347
+mem_heap_B=5815247368
+mem_heap_extra_B=73619688
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=9
+#-----------
+time=213899805592
+mem_heap_B=5903530790
+mem_heap_extra_B=129622354
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=10
+#-----------
+time=229405952509
+mem_heap_B=5920451996
+mem_heap_extra_B=129626108
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=11
+#-----------
+time=244038124726
+mem_heap_B=5952725049
+mem_heap_extra_B=175831303
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=12
+#-----------
+time=253474938651
+mem_heap_B=5987402604
+mem_heap_extra_B=208407188
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=13
+#-----------
+time=268924877817
+mem_heap_B=6077949785
+mem_heap_extra_B=262684607
+mem_stacks_B=0
+heap_tree=detailed
+n6: 6077949785 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n0: 154813385 in 58 places, all below massif's threshold (1.00%)
+ n2: 153778896 0x10B5CA: create_board (reversi.c:8)
+  n1: 153744096 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 153744096 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 153744096 0x4BB4292: clone (clone.S:95)
+  n0: 34800 in 3 places, all below massif's threshold (1.00%)
+ n1: 65536000 0x10B45C: LockedPriorityQueue<_board_str*>::push(_board_str*) (pqueue.hpp:74)
+  n1: 65536000 0x113531: walker_processor(void*) (walker.cpp:208)
+   n1: 65536000 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 65536000 0x4BB4292: clone (clone.S:95)
+#-----------
+snapshot=14
+#-----------
+time=278911545309
+mem_heap_B=6115549170
+mem_heap_extra_B=298009518
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=15
+#-----------
+time=292040480939
+mem_heap_B=6164938983
+mem_heap_extra_B=344406009
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=16
+#-----------
+time=306401423904
+mem_heap_B=6284428465
+mem_heap_extra_B=395089583
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=17
+#-----------
+time=323634197371
+mem_heap_B=6349038208
+mem_heap_extra_B=455783584
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=18
+#-----------
+time=335176553174
+mem_heap_B=6392126011
+mem_heap_extra_B=496260005
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=19
+#-----------
+time=348972554864
+mem_heap_B=6546153612
+mem_heap_extra_B=528387380
+mem_stacks_B=0
+heap_tree=detailed
+n8: 6546153612 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n2: 359483928 0x10B5CA: create_board (reversi.c:8)
+  n1: 359435232 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 359435232 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 359435232 0x4BB4292: clone (clone.S:95)
+  n0: 48696 in 3 places, all below massif's threshold (1.00%)
+ n2: 134806473 0x10B633: create_board (reversi.c:15)
+  n1: 134788212 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 134788212 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 134788212 0x4BB4292: clone (clone.S:95)
+  n0: 18261 in 3 places, all below massif's threshold (1.00%)
+ n1: 131072000 0x10B45C: LockedPriorityQueue<_board_str*>::push(_board_str*) (pqueue.hpp:74)
+  n1: 131072000 0x113531: walker_processor(void*) (walker.cpp:208)
+   n1: 131072000 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 131072000 0x4BB4292: clone (clone.S:95)
+ n1: 119827976 0x114B2D: LockedPriorityQueue<_board_str*>::pop_bulk(unsigned long) (pqueue.hpp:130)
+  n1: 119827976 0x1141D7: walker_task_scheduler(void*) (walker.cpp:559)
+   n1: 119827976 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 119827976 0x4BB4292: clone (clone.S:95)
+ n0: 97141731 in 56 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=20
+#-----------
+time=367413263881
+mem_heap_B=6495420235
+mem_heap_extra_B=593293973
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=21
+#-----------
+time=389993862138
+mem_heap_B=6580450906
+mem_heap_extra_B=673171270
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=22
+#-----------
+time=402413041422
+mem_heap_B=6627149701
+mem_heap_extra_B=717039835
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=23
+#-----------
+time=419724813467
+mem_heap_B=6692032585
+mem_heap_extra_B=777990423
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=24
+#-----------
+time=432896764892
+mem_heap_B=6741397285
+mem_heap_extra_B=824363323
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=25
+#-----------
+time=447574240916
+mem_heap_B=6796529075
+mem_heap_extra_B=876153365
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=26
+#-----------
+time=470531176151
+mem_heap_B=6885023468
+mem_heap_extra_B=959284468
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=27
+#-----------
+time=481445079858
+mem_heap_B=7057725421
+mem_heap_extra_B=998391387
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=28
+#-----------
+time=498380533154
+mem_heap_B=7122904678
+mem_heap_extra_B=1059620386
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=29
+#-----------
+time=520961136652
+mem_heap_B=7209317851
+mem_heap_extra_B=1140796397
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=30
+#-----------
+time=538084514863
+mem_heap_B=7274850485
+mem_heap_extra_B=1202353523
+mem_stacks_B=0
+heap_tree=detailed
+n7: 7274850485 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n2: 881264496 0x10B5CA: create_board (reversi.c:8)
+  n1: 881095656 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 881095656 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 881095656 0x4BB4292: clone (clone.S:95)
+  n0: 168840 in 3 places, all below massif's threshold (1.00%)
+ n2: 330474186 0x10B633: create_board (reversi.c:15)
+  n1: 330410871 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 330410871 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 330410871 0x4BB4292: clone (clone.S:95)
+  n0: 63315 in 3 places, all below massif's threshold (1.00%)
+ n1: 262144000 0x10B45C: LockedPriorityQueue<_board_str*>::push(_board_str*) (pqueue.hpp:74)
+  n1: 262144000 0x113531: walker_processor(void*) (walker.cpp:208)
+   n1: 262144000 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 262144000 0x4BB4292: clone (clone.S:95)
+ n0: 97146299 in 57 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=31
+#-----------
+time=555772657375
+mem_heap_B=7343826732
+mem_heap_extra_B=1267153652
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=32
+#-----------
+time=574213388231
+mem_heap_B=7416210945
+mem_heap_extra_B=1335150943
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=33
+#-----------
+time=590772522462
+mem_heap_B=7481291400
+mem_heap_extra_B=1396287128
+mem_stacks_B=0
+heap_tree=detailed
+n7: 7481291400 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n2: 1031406672 0x10B5CA: create_board (reversi.c:8)
+  n1: 1031225592 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 1031225592 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 1031225592 0x4BB4292: clone (clone.S:95)
+  n0: 181080 in 3 places, all below massif's threshold (1.00%)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n2: 386777493 0x10B633: create_board (reversi.c:15)
+  n1: 386709588 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 386709588 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 386709588 0x4BB4292: clone (clone.S:95)
+  n0: 67905 in 3 places, all below massif's threshold (1.00%)
+ n1: 262144000 0x10B45C: LockedPriorityQueue<_board_str*>::push(_board_str*) (pqueue.hpp:74)
+  n1: 262144000 0x113531: walker_processor(void*) (walker.cpp:208)
+   n1: 262144000 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 262144000 0x4BB4292: clone (clone.S:95)
+ n0: 97141731 in 57 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=34
+#-----------
+time=609966048776
+mem_heap_B=7818848287
+mem_heap_extra_B=1467129537
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=35
+#-----------
+time=626148714740
+mem_heap_B=7882397292
+mem_heap_extra_B=1526822820
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=36
+#-----------
+time=637819577343
+mem_heap_B=7928094909
+mem_heap_extra_B=1569750891
+mem_stacks_B=0
+heap_tree=detailed
+n7: 7928094909 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n2: 1165701168 0x10B5CA: create_board (reversi.c:8)
+  n1: 1165504968 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 1165504968 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 1165504968 0x4BB4292: clone (clone.S:95)
+  n0: 196200 in 3 places, all below massif's threshold (1.00%)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n1: 524288000 0x10B45C: LockedPriorityQueue<_board_str*>::push(_board_str*) (pqueue.hpp:74)
+  n1: 524288000 0x113531: walker_processor(void*) (walker.cpp:208)
+   n1: 524288000 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 524288000 0x4BB4292: clone (clone.S:95)
+ n2: 437137938 0x10B633: create_board (reversi.c:15)
+  n1: 437064363 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 437064363 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 437064363 0x4BB4292: clone (clone.S:95)
+  n0: 73575 in 3 places, all below massif's threshold (1.00%)
+ n0: 97146299 in 57 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=37
+#-----------
+time=654864110883
+mem_heap_B=7994969353
+mem_heap_extra_B=1632576615
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=38
+#-----------
+time=673856438612
+mem_heap_B=8069342047
+mem_heap_extra_B=1702441873
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=39
+#-----------
+time=687669020305
+mem_heap_B=8123459440
+mem_heap_extra_B=1753279424
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=40
+#-----------
+time=701481655061
+mem_heap_B=8177057677
+mem_heap_extra_B=1803629283
+mem_stacks_B=0
+heap_tree=detailed
+n7: 8177057677 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n2: 1346768328 0x10B5CA: create_board (reversi.c:8)
+  n1: 1346553072 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 1346553072 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 1346553072 0x4BB4292: clone (clone.S:95)
+  n0: 215256 in 3 places, all below massif's threshold (1.00%)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n1: 524288000 0x10B45C: LockedPriorityQueue<_board_str*>::push(_board_str*) (pqueue.hpp:74)
+  n1: 524288000 0x113531: walker_processor(void*) (walker.cpp:208)
+   n1: 524288000 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 524288000 0x4BB4292: clone (clone.S:95)
+ n2: 505038114 0x10B633: create_board (reversi.c:15)
+  n1: 504957393 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 504957393 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 504957393 0x4BB4292: clone (clone.S:95)
+  n0: 80721 in 3 places, all below massif's threshold (1.00%)
+ n0: 97141731 in 57 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=41
+#-----------
+time=715294287705
+mem_heap_B=8230567474
+mem_heap_extra_B=1853896062
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=42
+#-----------
+time=725653718312
+mem_heap_B=8270916640
+mem_heap_extra_B=1891799824
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=43
+#-----------
+time=741117635481
+mem_heap_B=8330831968
+mem_heap_extra_B=1948083920
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=44
+#-----------
+time=756581509791
+mem_heap_B=8391651199
+mem_heap_extra_B=2005217137
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=45
+#-----------
+time=767627181414
+mem_heap_B=8434735273
+mem_heap_extra_B=2045690055
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=46
+#-----------
+time=780882032829
+mem_heap_B=8486436406
+mem_heap_extra_B=2094257786
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=47
+#-----------
+time=794136857807
+mem_heap_B=8538118630
+mem_heap_extra_B=2142807754
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=48
+#-----------
+time=811809949785
+mem_heap_B=8607126118
+mem_heap_extra_B=2207632970
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=49
+#-----------
+time=834379300263
+mem_heap_B=9219737387
+mem_heap_extra_B=2290599053
+mem_stacks_B=0
+heap_tree=detailed
+n7: 9219737387 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n2: 1723777152 0x10B5CA: create_board (reversi.c:8)
+  n1: 1723524216 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 1723524216 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 1723524216 0x4BB4292: clone (clone.S:95)
+  n0: 252936 in 3 places, all below massif's threshold (1.00%)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n1: 1048576000 0x10B45C: LockedPriorityQueue<_board_str*>::push(_board_str*) (pqueue.hpp:74)
+  n1: 1048576000 0x113531: walker_processor(void*) (walker.cpp:208)
+   n1: 1048576000 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 1048576000 0x4BB4292: clone (clone.S:95)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n2: 646416432 0x10B633: create_board (reversi.c:15)
+  n1: 646321581 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 646321581 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 646321581 0x4BB4292: clone (clone.S:95)
+  n0: 94851 in 3 places, all below massif's threshold (1.00%)
+ n0: 97146299 in 57 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=50
+#-----------
+time=836588430423
+mem_heap_B=9228382803
+mem_heap_extra_B=2298724765
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=51
+#-----------
+time=838797570818
+mem_heap_B=9236964981
+mem_heap_extra_B=2306786811
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=52
+#-----------
+time=841006694678
+mem_heap_B=9245710476
+mem_heap_extra_B=2315002276
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=53
+#-----------
+time=843215818692
+mem_heap_B=9254347698
+mem_heap_extra_B=2323116030
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=54
+#-----------
+time=845424943430
+mem_heap_B=9262918590
+mem_heap_extra_B=2331167474
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=55
+#-----------
+time=847634084242
+mem_heap_B=9271626696
+mem_heap_extra_B=2339347816
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=56
+#-----------
+time=849843210975
+mem_heap_B=9280298238
+mem_heap_extra_B=2347493810
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=57
+#-----------
+time=852052336004
+mem_heap_B=9288983112
+mem_heap_extra_B=2355652328
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=58
+#-----------
+time=854261463586
+mem_heap_B=9297571164
+mem_heap_extra_B=2363719892
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=59
+#-----------
+time=856470595400
+mem_heap_B=9306200895
+mem_heap_extra_B=2371826609
+mem_stacks_B=0
+heap_tree=detailed
+n7: 9306200895 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n2: 1786663032 0x10B5CA: create_board (reversi.c:8)
+  n1: 1786405224 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 1786405224 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 1786405224 0x4BB4292: clone (clone.S:95)
+  n0: 257808 in 3 places, all below massif's threshold (1.00%)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n1: 1048576000 0x10B45C: LockedPriorityQueue<_board_str*>::push(_board_str*) (pqueue.hpp:74)
+  n1: 1048576000 0x113531: walker_processor(void*) (walker.cpp:208)
+   n1: 1048576000 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 1048576000 0x4BB4292: clone (clone.S:95)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n2: 669998628 0x10B633: create_board (reversi.c:15)
+  n1: 669901950 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 669901950 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 669901950 0x4BB4292: clone (clone.S:95)
+  n0: 96678 in 3 places, all below massif's threshold (1.00%)
+ n0: 97141731 in 57 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=60
+#-----------
+time=858679720502
+mem_heap_B=9314821089
+mem_heap_extra_B=2379924367
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=61
+#-----------
+time=860888845796
+mem_heap_B=9323492301
+mem_heap_extra_B=2388070051
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=62
+#-----------
+time=862530511229
+mem_heap_B=9329980275
+mem_heap_extra_B=2394164821
+mem_stacks_B=0
+heap_tree=peak
+n7: 9329980275 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 3303821504 0x114FC1: RingBuffer<_board_str*>::RingBuffer(unsigned long) (tarraylist.hpp:122)
+  n1: 3303821504 0x11497F: LockedRingBuffer<_board_str*>::LockedRingBuffer(unsigned long) (tarraylist.hpp:209)
+   n1: 3303821504 0x113FD0: walker_task_scheduler(void*) (walker.cpp:530)
+    n1: 3303821504 0x4A78608: start_thread (pthread_create.c:477)
+     n0: 3303821504 0x4BB4292: clone (clone.S:95)
+ n2: 1803957120 0x10B5CA: create_board (reversi.c:8)
+  n1: 1803698184 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 1803698184 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 1803698184 0x4BB4292: clone (clone.S:95)
+  n0: 258936 in 3 places, all below massif's threshold (1.00%)
+ n1: 1440000000 0x110980: Arraylist<_dict_usage_pair_t>::Arraylist(unsigned long) (tarraylist.hpp:18)
+  n2: 1440000000 0x10FF9F: create_fixed_size_dictionary(unsigned long, unsigned long, unsigned long, unsigned long) (fdict.cpp:17)
+   n1: 720000000 0x1114F4: create_heirarchy(char*) (heir.cpp:51)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+   n1: 720000000 0x111532: create_heirarchy(char*) (heir.cpp:54)
+    n0: 720000000 0x10AF4B: main (main.cpp:159)
+ n1: 1048576000 0x10B45C: LockedPriorityQueue<_board_str*>::push(_board_str*) (pqueue.hpp:74)
+  n1: 1048576000 0x113531: walker_processor(void*) (walker.cpp:208)
+   n1: 1048576000 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 1048576000 0x4BB4292: clone (clone.S:95)
+ n1: 960000000 0x10EC05: create_dmempage (dmempage.c:40)
+  n1: 960000000 0x110BD7: create_rehashing_dictionary(unsigned long, unsigned long) (hdict.cpp:12)
+   n1: 960000000 0x11150E: create_heirarchy(char*) (heir.cpp:52)
+    n0: 960000000 0x10AF4B: main (main.cpp:159)
+ n2: 676483920 0x10B633: create_board (reversi.c:15)
+  n1: 676386819 0x1134A2: walker_processor(void*) (walker.cpp:202)
+   n1: 676386819 0x4A78608: start_thread (pthread_create.c:477)
+    n0: 676386819 0x4BB4292: clone (clone.S:95)
+  n0: 97101 in 3 places, all below massif's threshold (1.00%)
+ n0: 97141731 in 57 places, all below massif's threshold (1.00%)

@@ -23,7 +23,6 @@
 #include "./utils/csv.h"
 #include "./gameplay/reversi_defs.h"
 #include "./utils/gui.hpp"
-#include "./pmalloc.h"
 
 // TODO you can use the previous two board states to predict the next set of valid moves.
 
@@ -61,7 +60,7 @@ int main() {
     char* temp_dir = (char*)((getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/tmp");
 
     #ifndef reusefiles
-        char* temp_result = (char*)pmalloc(sizeof(char) * (strlen(temp_dir) + 16), "main.cpp", 64);
+        char* temp_result = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 16));
         snprintf(temp_result, strlen(temp_dir) + 16, "%s/reversi.XXXXXX", temp_dir);
         temp_dir = mkdtemp(temp_result);
     #endif
@@ -69,13 +68,13 @@ int main() {
     char* checkpoint_filename, *csv_filename;
 
     if(!getenv("CHECKPOINT_PATH")) {
-        checkpoint_filename = (char*)pmalloc(sizeof(char) * (strlen(temp_dir) + 16), "main.cpp", 72);
+        checkpoint_filename = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 16));
         snprintf(checkpoint_filename, strlen(temp_dir) + 16, "%s/checkpoint.bin", temp_dir);
     }
     else checkpoint_filename = getenv("CHECKPOINT_PATH");
 
-    csv_filename = (char*)pmalloc(sizeof(char) * (strlen(temp_dir) + 9), "main.cpp", 77);
-    // if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
+    csv_filename = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 9));
+    if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
     snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
 
     // Allocate all of the stack parameters necessary for file restoration
@@ -96,8 +95,8 @@ int main() {
     pthread_mutex_t counter_lock, explored_lock, file_lock, repeated_lock, finished_lock;
 
     // Setup the checkpoint saving system
-    FILE** checkpoint_file = (FILE**)pmalloc(sizeof(FILE*), "main.cpp", 99);
-    // if(!checkpoint_file) err(1, "Memory error while allocating checkpoint file pointer\n");
+    FILE** checkpoint_file = (FILE**)malloc(sizeof(FILE*));
+    if(!checkpoint_file) err(1, "Memory error while allocating checkpoint file pointer\n");
     uint64_t saving_counter;
 
     // Initialize the locks
@@ -114,7 +113,7 @@ int main() {
     size_t level_n = 0;
 
     if(ask_yes_no("Would you like to restore from a checkpoint?")) {
-        char** restore_filename = (char**)pmalloc(sizeof(char*), "main.cpp", 117);
+        char** restore_filename = (char**)malloc(sizeof(char*));
         printf("Please enter a file to restore from: ");
         scanf("%ms", restore_filename);
         getc(stdin);    // Read the extra \n character
@@ -125,29 +124,29 @@ int main() {
                 checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
             }
             else {
-                checkpoint_filename = (char*)pmalloc(sizeof(char) * strlen(*restore_filename), "main.cpp", 128);
+                checkpoint_filename = (char*)malloc(sizeof(char) * strlen(*restore_filename));
                 strcpy(checkpoint_filename, *restore_filename);
-                csv_filename = (char*)pmalloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9), "main.cpp", 130);
-                // if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
-                temp_dir = (char*)pmalloc(sizeof(char) * strlen(checkpoint_filename), "main.cpp", 132);
-                // if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
+                csv_filename = (char*)malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
+                if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
+                temp_dir = (char*)malloc(sizeof(char) * strlen(checkpoint_filename));
+                if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
                 strcpy(temp_dir, checkpoint_filename);
                 temp_dir = dirname(temp_dir);
                 snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
             }
         #else
-            checkpoint_filename = (char*)pmalloc(sizeof(char) * strlen(*restore_filename), "main.cpp", 139);
+            checkpoint_filename = malloc(sizeof(char) * strlen(*restore_filename));
             strcpy(checkpoint_filename, *restore_filename);
-            csv_filename = (char*)pmalloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9), "main.cpp", 141);
-            // if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
-            temp_dir = (char*)pmalloc(sizeof(char) * strlen(checkpoint_filename), "main.cpp", 143);
-            // if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
+            csv_filename = malloc(sizeof(char) * (strlen(pf->cache->final_level->file_directory) + 9));
+            if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
+            temp_dir = malloc(sizeof(char) * strlen(checkpoint_filename));
+            if(!temp_dir) err(1, "Memory error while allocating csv_filename\n");
             strcpy(temp_dir, checkpoint_filename);
             temp_dir = dirname(temp_dir);
             snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
         #endif
 
-        pfree(*restore_filename, "main.cpp", 150);
+        free(*restore_filename);
 
         // Begin restore
         count = pf->found_counter;
@@ -173,7 +172,7 @@ int main() {
     // Queue up the starting boards
     if(level_n) {
         for(size_t b = 0; b < level_n; b++) schedulerq->push_bulk(level_boards, level_n);
-        pfree(level_boards, "main.cpp", 176);
+        free(level_boards);
     }
     else schedulerq->push(create_board(1, BOARD_HEIGHT, BOARD_WIDTH, 0));
 
@@ -214,7 +213,8 @@ int main() {
             // save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
             WALKER_KILL_FLAG = 1;
             while(finished_count < procs) sched_yield();
-            destroy_heirarchy(cache);
+            // destroy_heirarchy(cache);
+            // free(display);
             exit(0);
         }
         else {
@@ -225,8 +225,8 @@ int main() {
 
     fflush(stdout);
     // save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
-    destroy_heirarchy(cache);
-    pfree(display, "main.cpp", 229);
+    // destroy_heirarchy(cache);
+    // free(display);
 
     printf("\nThere are %ld possible board states\n", count);
 }

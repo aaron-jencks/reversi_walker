@@ -12,6 +12,6 @@
 #else
     #define SYSTEM_MEMORY 32813092000
 #endif
-#define CHUNK_SIZE (SYSTEM_MEMORY / (BOARD_MEMORY_SIZE * PROC_COUNT))
+#define CHUNK_SIZE (SYSTEM_MEMORY / (BOARD_MEMORY_SIZE * (PROC_COUNT + 1)))
 
 // TODO add error codes here.

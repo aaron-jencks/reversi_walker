@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 
+#define BOARD_WIDTH 6
+#define BOARD_HEIGHT 6
+
 typedef struct _coord_str {
     uint8_t row;
     uint8_t column;
@@ -14,10 +17,10 @@ typedef struct _coord_str {
 typedef coord_str* coord;
 
 typedef struct _board_str {
-    uint8_t player;
-    uint8_t width;
+    uint8_t player; // TODO merge with level
+    uint8_t width;  // TODO get rid of this
     uint8_t height;
-    uint8_t* board;
+    uint8_t board[(BOARD_HEIGHT * BOARD_WIDTH) >> 2];
     uint8_t level;
 } board_str;
 
@@ -28,6 +31,3 @@ typedef struct _capture_count_str {
 } capture_count_str;
 
 typedef capture_count_str* capture_count;
-
-#define BOARD_WIDTH 6
-#define BOARD_HEIGHT 6
