@@ -92,3 +92,26 @@ char* find_abs_path(size_t page_index, const char* swap_directory) {
 
     return abs_path;
 }
+
+char* temp_dir = 0;
+
+char* get_temp_path() {
+    if(temp_dir) return temp_dir;
+    else {
+        temp_dir = (char*)((getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/tmp");
+        return temp_dir;
+    }
+}
+
+char* checkpoint_path = 0;
+
+char* get_checkpoint_filepath() {
+    if(!checkpoint_path) {
+        if(!getenv("CHECKPOINT_PATH")) {
+            checkpoint_path = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 16));
+            snprintf(checkpoint_path, strlen(temp_dir) + 16, "%s/checkpoint.bin", temp_dir);
+        }
+        else checkpoint_path = getenv("CHECKPOINT_PATH");
+    }
+    return checkpoint_path;
+}

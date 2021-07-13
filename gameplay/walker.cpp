@@ -398,7 +398,7 @@ coord short_to_coord(uint16_t s) {
     return r;
 }
 
-processor_args create_processor_args(uint32_t identifier, LockedRingBuffer<board>* inputq, LockedPriorityQueue<board>* outputq, 
+processor_args create_processor_args(uint32_t identifier, LockedRingBuffer<board>* inputq, MMappedLockedPriorityQueue<board>* outputq, 
                                      heirarchy cache, Arraylist<board>* board_cache, Arraylist<coord>* coord_cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
@@ -429,7 +429,7 @@ processor_args create_processor_args(uint32_t identifier, LockedRingBuffer<board
     return args;
 }
 
-processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, LockedPriorityQueue<board>* inputq, size_t nprocs, 
+processor_scheduler_args_t* create_processor_scheduler_args(heirarchy cache, MMappedLockedPriorityQueue<board>* inputq, size_t nprocs, 
                                                             uint64_t* counter, pthread_mutex_t* counter_lock,
                                                             uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                                             uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,

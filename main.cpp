@@ -15,6 +15,7 @@
 #include "./gameplay/reversi.h"
 #include "./hashing/hash_functions.h"
 #include "./mem_man/heir.hpp"
+#include "./mem_man/dheap.hpp"
 #include "./gameplay/walker.hpp"
 #include "./utils/tarraylist.hpp"
 #include "./utils/pqueue.hpp"
@@ -57,7 +58,7 @@ int main() {
 
     setlocale(LC_NUMERIC, "");
 
-    char* temp_dir = (char*)((getenv("TEMP_DIR")) ? getenv("TEMP_DIR") : "/tmp");
+    get_temp_path();    // Just to force the temp_dir global to be populated
 
     #ifndef reusefiles
         char* temp_result = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 16));
@@ -67,11 +68,7 @@ int main() {
 
     char* checkpoint_filename, *csv_filename;
 
-    if(!getenv("CHECKPOINT_PATH")) {
-        checkpoint_filename = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 16));
-        snprintf(checkpoint_filename, strlen(temp_dir) + 16, "%s/checkpoint.bin", temp_dir);
-    }
-    else checkpoint_filename = getenv("CHECKPOINT_PATH");
+    checkpoint_filename = get_checkpoint_filepath();
 
     csv_filename = (char*)malloc(sizeof(char) * (strlen(temp_dir) + 9));
     if(!csv_filename) err(1, "Memory error while allocating csv_filename\n");
@@ -84,6 +81,7 @@ int main() {
     // char* checkpoint_filename;
 
     // Calculate the number of processors to use
+    // TODO replace with project definitions.
     uint32_t procs = get_nprocs();
     #ifndef limitprocs
         procs = procs << 1;
@@ -120,7 +118,7 @@ int main() {
         processed_file_3 pf = restore_progress_v3(*restore_filename);
 
         #ifndef skipconfirm
-            if(ask_yes_no("Would you like to continue saving to this checkpoint?")) {
+            if(!ask_yes_no("Would you like to continue saving to this checkpoint?")) {
                 checkpoint_filename = (getenv("CHECKPOINT_PATH")) ? getenv("CHECKPOINT_PATH") : checkpoint_filename; // find_temp_filename("checkpoint.bin\0");
             }
             else {
@@ -145,6 +143,7 @@ int main() {
             temp_dir = dirname(temp_dir);
             snprintf(csv_filename, strlen(temp_dir) + 16, "%s/log.csv", temp_dir);
         #endif
+        checkpoint_path = checkpoint_filename;
 
         free(*restore_filename);
 
@@ -160,7 +159,7 @@ int main() {
     }
     
     pthread_t scheduler;
-    LockedPriorityQueue<board>* schedulerq = new LockedPriorityQueue<board>(1000);
+    MMappedLockedPriorityQueue<board>* schedulerq = new MMappedLockedPriorityQueue<board>(1000);
     processor_scheduler_args_t* schargs = create_processor_scheduler_args(cache, schedulerq, procs,
                                                                           &count, &counter_lock,
                                                                           &explored_count, &explored_lock,

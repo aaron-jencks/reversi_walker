@@ -30,6 +30,31 @@ char* find_temp_directory();
  */
 char* find_abs_path(size_t page_index, const char* directory);
 
+/**
+ * @brief This is where the checkpoint files and the bit cache will be stored.
+ * 
+ */
+extern char* temp_dir;
+
+/**
+ * @brief Get the temp path location
+ * 
+ * @return char* which is /tmp by default, but can be overriden by modifying the TEMP_DIR environment variable
+ */
+char* get_temp_path();
+
+/**
+ * @brief This is the filepath of the checkpoint file that the binary data is stored in.
+ * 
+ */
+extern char* checkpoint_path;
+
+/**
+ * @brief Returns the filepath of the checkpoint file being used for this run.
+ * 
+ */
+char* get_checkpoint_filepath();
+
 #ifdef __cplusplus
 }
 #endif

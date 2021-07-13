@@ -2,7 +2,7 @@ cc=gcc
 pp=g++
 cflags+=-O3 -Wall
 objects=reversi.o mmap_man.o hash_functions.o path_util.o heapsort.o csv.o dmempage.o pmalloc.o 
-cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o pqueue.o gui.o
+cpp_objects=fdict.o hdict.o heir.o fileio.o walker.o semaphore.o tarraylist.o pqueue.o gui.o dheap.o
 cuda_objects=
 test_objects=capturecounts_test.o legal_moves_test.o board_placement_test.o mempage_test.o mmap_test.o dict_test.o heapsort_test.o arraylist_test.o 
 
@@ -62,7 +62,7 @@ mmap_man.o: ./mem_man/mmap_man.c ./mem_man/mmap_man.h path_util.o
 mempage.o: ./mem_man/mempage.c ./mem_man/mempage.h path_util.o
 	$(cc) $(cflags) -o $@ -c $<
 
-walker.o: ./gameplay/walker.cpp ./gameplay/walker.hpp reversi.o tarraylist.o heir.o project_defs.hpp pqueue.o 
+walker.o: ./gameplay/walker.cpp ./gameplay/walker.hpp reversi.o tarraylist.o heir.o project_defs.hpp pqueue.o dheap.o
 	$(pp) $(cflags) -o $@ -c $<
 
 fileio.o: ./utils/fileio.cpp ./utils/fileio.hpp walker.o tarraylist.o path_util.o heir.o 
@@ -96,6 +96,9 @@ pqueue.o: ./utils/pqueue.cpp ./utils/pqueue.hpp tarraylist.o ./gameplay/reversi_
 	$(pp) $(cflags) -o $@ -c $<
 
 semaphore.o: ./utils/semaphore.cpp ./utils/semaphore.hpp
+	$(pp) $(cflags) -o $@ -c $<
+
+dheap.o: ./mem_man/dheap.cpp ./mem_man/dheap.hpp mempage.o mmap_man.o
 	$(pp) $(cflags) -o $@ -c $<
 
 pmalloc.o: ./pmalloc.c ./pmalloc.h 

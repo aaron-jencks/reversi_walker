@@ -1,9 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-
-#define BOARD_WIDTH 6
-#define BOARD_HEIGHT 6
+#include "../project_defs.hpp"
 
 typedef struct _coord_str {
     uint8_t row;

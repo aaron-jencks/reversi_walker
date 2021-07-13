@@ -2,23 +2,32 @@
 
 #include "./mempage.h"
 #include "./mmap_man.h"
+#include "../project_defs.hpp"
+#include "../utils/path_util.h"
+#include "../gameplay/reversi_defs.h"
 #include <stdint.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <err.h>
+#include <pthread.h>
+#include <string.h>
+
 
 template <typename T> class MMappedLockedPriorityQueue {
     protected:
         inline size_t get_bin_number(size_t i) {
-            return ++i / mem_manager->elements_per_bin;
+            return ++i / (mem_manager->elements_per_bin / sizeof(T));
         }
 
         inline size_t get_bin_index(size_t i) {
-            return i % mem_manager->elements_per_bin;
+            return i % (mem_manager->elements_per_bin / sizeof(T));
         }
 
         void swap_heap_elements(size_t a, size_t b) {
             T temp;
-            temp = data[get_bin_number(a)][get_bin_index(a)];
-            data[a] = data[b];
-            data[b] = temp;
+            temp = get(a);
+            set(a, get(b));
+            set(b, temp);
         }
 
         virtual void min_heapify(size_t n, size_t i) {
@@ -28,9 +37,9 @@ template <typename T> class MMappedLockedPriorityQueue {
                 l = (i << 1) + 1;
                 r = (i << 1) + 2;
 
-                if(l < n && data[l] < data[i]) smallest = l;
+                if(l < n && get(l) < get(i)) smallest = l;
                 else smallest = i;
-                if(r < n && data[r] < data[smallest]) smallest = r;
+                if(r < n && get(r) < get(smallest)) smallest = r;
                 if(smallest != i) {
                     swap_heap_elements(i, smallest);
                     i = smallest;
@@ -55,20 +64,47 @@ template <typename T> class MMappedLockedPriorityQueue {
     public:
         T** data;
         size_t size;
+        size_t bin_count;
         size_t count;
         pthread_mutex_t mutex;
         mmap_man mem_manager;
 
-        LockedPriorityQueue(size_t initial_size) {
-            data = (T*)malloc(sizeof(T) * initial_size);
+        MMappedLockedPriorityQueue(size_t initial_size) {
+            size_t bin_size = ARRAYLIST_INCREMENT * sizeof(T);
+            size_t initial_bin_count = initial_size / ARRAYLIST_INCREMENT;
+            data = (T**)malloc(sizeof(T*) * initial_bin_count);
 			if(!data) err(1, "Memory error while allocating arraylist\n");
 			size = initial_size;
 			count = 0;
             pthread_mutex_init(&mutex, 0);
+
+            // Setup the heap directory
+            struct stat st;
+            char* temp = (char*)malloc(sizeof(char) * (strlen(get_temp_path()) + 6));
+            temp = (char*)memcpy(temp, get_temp_path(), strlen(get_temp_path()));
+            memcpy(temp + strlen(get_temp_path()), "/heap", 6);
+            if(stat(temp, &st) == -1) mkdir(temp, 0700);
+
+            mem_manager = create_mmap_man(FILE_SIZE_INCREMENT, bin_size, temp);
+            free(temp);
+
+            for(size_t b = 0; b < initial_bin_count; b++) {
+                data[b] = (T*)mmap_allocate_bin(mem_manager);
+            }
+            bin_count = initial_bin_count;
         }
 
-        ~LockedPriorityQueue() {
+        ~MMappedLockedPriorityQueue() {
             free(data);
+            destroy_mmap_man(mem_manager);
+        }
+
+        inline T get(size_t i) {
+            return data[get_bin_number(i)][get_bin_index(i)];
+        }
+
+        inline void set(size_t i, T v) {
+            data[get_bin_number(i)][get_bin_index(i)] = v;
         }
 
         void push(T element) {
@@ -76,14 +112,15 @@ template <typename T> class MMappedLockedPriorityQueue {
 
             if(count >= size) {
 				// reallocate the array
-				size = (size) ? size << 1 : 1;
-				data = (T*)std::realloc(data, size * sizeof(T));
+				size = ++bin_count * ARRAYLIST_INCREMENT;
+				data = (T**)std::realloc(data, bin_count * sizeof(T*));
 				if(!data) err(1, "Memory error while allocating arraylist\n");
+                data[bin_count - 1] = (T*)mmap_allocate_bin(mem_manager);
 			}
 
-            data[count] = element;
+            set(count, element);
             size_t i = count++;
-            while(i && data[i >> 1] > data[i]) {
+            while(i && get(i >> 1) > get(i)) {
                 swap_heap_elements(i, i >> 1);
                 i = i >> 1;
             }
@@ -97,14 +134,15 @@ template <typename T> class MMappedLockedPriorityQueue {
             for(size_t ni = 0; ni < n; ni++) {
                 if(count >= size) {
                     // reallocate the array
-                    size = (size) ? size << 1 : 1;
-                    data = (T*)std::realloc(data, size * sizeof(T));
+                    size = ++bin_count * ARRAYLIST_INCREMENT;
+                    data = (T**)std::realloc(data, bin_count * sizeof(T*));
                     if(!data) err(1, "Memory error while allocating arraylist\n");
+                    data[bin_count - 1] = (T*)mmap_allocate_bin(mem_manager);
                 }
 
-                data[count] = elements[ni];
+                set(count, elements[ni]);
                 size_t i = count++;
-                while(i && data[i >> 1] > data[i]) {
+                while(i && get(i >> 1) > get(i)) {
                     swap_heap_elements(i, i >> 1);
                     i = i >> 1;
                 }
@@ -117,8 +155,8 @@ template <typename T> class MMappedLockedPriorityQueue {
             while(pthread_mutex_trylock(&mutex)) sched_yield();
 
             if(count) {
-                T result = data[0];
-                data[0] = data[--count];
+                T result = get(0);
+                set(0, get(--count));
                 min_heapify(count, 0);
                 pthread_mutex_unlock(&mutex);
                 return result;
@@ -139,8 +177,8 @@ template <typename T> class MMappedLockedPriorityQueue {
                 size_t prev_count = count;
 
                 for(size_t ni = 0; ni < ((prev_count >= n) ? n : prev_count); ni++) {
-                    T res = data[0];
-                    data[0] = data[--count];
+                    T res = get(0);
+                    set(0, get(--count));
                     min_heapify(count, 0);
                     result[ni] = res;
                 }
