@@ -7,7 +7,7 @@
 
 class ReversiIterator {
     private:
-        board_str current_board;
+        board_t current_board;
         uint8_t current_row;
         uint8_t current_column;
     public:

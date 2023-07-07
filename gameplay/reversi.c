@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
-    board b = (board)calloc(1, sizeof(board_str));
+    board b = (board)calloc(1, sizeof(board_t));
     if(!b) err(1, "Memory Error while allocating the board\n");
     b->player = starting_player;
     b->height = height;
@@ -51,7 +51,7 @@ board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
 }
 
 board create_board_unhash_8(uint8_t starting_player, __uint128_t key) {
-    board b = (board)calloc(1, sizeof(board_str));
+    board b = (board)calloc(1, sizeof(board_t));
     if(!b) err(1, "Memory Error while allocating the board\n");
     b->player = starting_player;
     b->height = 8;
@@ -74,7 +74,7 @@ board create_board_unhash_8(uint8_t starting_player, __uint128_t key) {
 }
 
 board create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
-    board b = (board)calloc(1, sizeof(board_str));
+    board b = (board)calloc(1, sizeof(board_t));
     if(!b) err(1, "Memory Error while allocating the board\n");
     b->player = starting_player;
     b->height = 6;
@@ -105,7 +105,7 @@ board create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
  * @return othelloboard 
  */
 board clone_board(board b) {
-    board bc = (board)malloc(sizeof(board_str));
+    board bc = (board)malloc(sizeof(board_t));
     if(!bc) err(1, "Memory Error Occured while allocating a board.");
 
     bc->board = (uint8_t*)calloc((b->height * b->width) >> 2, sizeof(uint8_t));
