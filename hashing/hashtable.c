@@ -18,7 +18,7 @@
  */
 hashtable create_hashtable(uint64_t initial_bin_count) {
     assert(initial_bin_count);
-    hashtable t = malloc(sizeof(hashtable_str));
+    hashtable t = (hashtable)malloc(sizeof(hashtable_str));
     if(!t) err(1, "Memory Error while trying to allocate hashtable\n");
     if(pthread_mutex_init(&t->table_lock, 0) != 0) err(4, "Hashtable mutex init has failed\n");
     t->bins = create_mempage(BIN_PAGE_COUNT, initial_bin_count, BIN_SIZE); // calloc(initial_bin_count, sizeof(uint128_arraylist));
@@ -80,6 +80,7 @@ mempage_buff get_pairs(hashtable t) {
 
         return buff;
     }
+    return 0;
 }
 
 /**

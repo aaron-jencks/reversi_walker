@@ -23,7 +23,7 @@
 #include "./utils/csv.h"
 #include "./gameplay/reversi_defs.h"
 
-// TODO you can use the previous two board states to predict the next set of valid moves.
+// TODO you can use the previous two board_t states to predict the next set of valid moves.
 
 /**
  * 
@@ -38,39 +38,35 @@ uint8_t SHUTDOWN_FLAG = 0;
 pthread_mutex_t shutdown_lock;
 
 
-void display_board(board b) {
-    if(b) {
-        printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
-        for(uint8_t r = 0; r < b->height; r++) {
-            for(uint8_t c = 0; c < b->width; c++) {
-                printf("%c", board_get(b, r, c) + '0');
-            }
-            printf("\n");
+void display_board(board_t b) {
+    printf("%s's Turn\n", (b.player == 1) ? "White" : "Black");
+    for(uint8_t r = 0; r < b.height; r++) {
+        for(uint8_t c = 0; c < b.width; c++) {
+            printf("%c", board_get(b, r, c) + '0');
         }
         printf("\n");
     }
+    printf("\n");
 }
 
-void display_moves(board b, Arraylist<void*>* coords) {
-    if(b) {
-        printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
-        for(uint8_t r = 0; r < b->height; r++) {
-            for(uint8_t c = 0; c < b->width; c++) {
-                uint8_t move = 0;
-                for(size_t cd = 0; cd < coords->pointer; cd++) {
-                    coord cord = (coord)coords->data[cd];
-                    if(r == cord->row && c == cord->column) {
-                        printf("x");
-                        move = 1;
-                        break;
-                    }
+void display_moves(board_t b, Arraylist<coord_t>* coords) {
+    printf("%s's Turn\n", (b.player == 1) ? "White" : "Black");
+    for(uint8_t r = 0; r < b.height; r++) {
+        for(uint8_t c = 0; c < b.width; c++) {
+            uint8_t move = 0;
+            for(size_t cd = 0; cd < coords->pointer; cd++) {
+                coord_t cord = coords->data[cd];
+                if(r == cord.row && c == cord.column) {
+                    printf("x");
+                    move = 1;
+                    break;
                 }
-                if(!move) printf("%c", board_get(b, r, c) + '0');
             }
-            printf("\n");
+            if(!move) printf("%c", board_get(b, r, c) + '0');
         }
         printf("\n");
     }
+    printf("\n");
 }
 
 
@@ -207,15 +203,14 @@ int main() {
 
     #pragma region Round nprocs to the correct number
     printf("Searching for at least %u boards\n", procs);
-    board b = create_board(1, BOARD_HEIGHT, BOARD_WIDTH);
+    board_t b = create_board(1, BOARD_HEIGHT, BOARD_WIDTH);
     
     // Setup the queue
-    Arraylist<void*>* search_queue = new Arraylist<void*>(procs + 1);
-    Arraylist<void*>* coord_buff = new Arraylist<void*>(65), *coord_cache = new Arraylist<void*>(1000);
-    for(size_t c = 0; c < 1000; c++) coord_cache->append(create_coord(0, 0));
+    Arraylist<board_t>* search_queue = new Arraylist<board_t>(procs + 1);
+    Arraylist<coord_t>* coord_buff = new Arraylist<coord_t>(65);
 
     // Account for reflections and symmetry by using 1 of the 4 possible starting moves
-    find_next_boards(b, coord_buff, coord_cache);
+    find_next_boards(b, coord_buff);
 
     #ifdef debug
         display_board(b);
@@ -223,12 +218,11 @@ int main() {
     #endif
 
     for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-        coord m = (coord)coord_buff->data[im];
+        coord_t m = coord_buff->data[im];
         uint16_t sm = coord_to_short(m);
-        board cb = clone_board(b);
-        board_place_piece(cb, m->row, m->column);
+        board_t cb = clone_board(b);
+        board_place_piece(&cb, m.row, m.column);
         search_queue->append(cb);
-        coord_cache->append(m);
         break;
     }
 
@@ -236,10 +230,10 @@ int main() {
 
     // Perform the BFS
     while(search_queue->pointer < procs) {
-        printf("\rCurrent board status: %lu/%u", search_queue->pointer, procs);
+        printf("\rCurrent board_t status: %lu/%u", search_queue->pointer, procs);
 
-        b = (board)search_queue->pop_front();
-        find_next_boards(b, coord_buff, coord_cache);
+        b = (board_t)search_queue->pop_front();
+        find_next_boards(b, coord_buff);
 
         #ifdef debug
             display_moves(b, coord_buff);
@@ -247,12 +241,11 @@ int main() {
         #endif
 
         for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-            coord m = (coord)coord_buff->data[im];
+            coord_t m = coord_buff->data[im];
             uint16_t sm = coord_to_short(m);
-            board cb = clone_board(b);
-            board_place_piece(cb, m->row, m->column);
+            board_t cb = clone_board(b);
+            board_place_piece(&cb, m.row, m.column);
             search_queue->append(cb);
-            coord_cache->append(m);
         }
 
         explored_count++;
@@ -261,7 +254,6 @@ int main() {
     }
 
     procs = search_queue->pointer;
-    while(coord_cache->pointer) free(coord_cache->pop_back());
 
     printf("\nRounded nprocs to %d threads\n", procs);
     #pragma endregion
@@ -315,42 +307,42 @@ int main() {
         free(*restore_filename);
 
         // De-allocate the stuff we did to round procs, because we don't need it now.
-        while(search_queue->pointer) destroy_board((board)search_queue->pop_front());
+        while(search_queue->pointer) destroy_board((board_t)search_queue->pop_front());
         delete search_queue;
 
         // Begin restore
         count = pf->found_counter;
         explored_count = pf->explored_counter;
 
-        Arraylist<void*>* stacks = pf->processor_stacks;
+        Arraylist<Arraylist<board_t>>* stacks = pf->processor_stacks;
         if(procs != pf->num_processors) {
             printf("Redistributing workload to match core count\n");
             // Redistribute workload
-            Arraylist<void*>* all_current_boards = new Arraylist<void*>(procs * 1000), *important_boards = new Arraylist<void*>(pf->num_processors + 1);
-            for(Arraylist<void*>** p = (Arraylist<void*>**)pf->processor_stacks->data; *p; p++) {
-                for(uint64_t pb = 0; pb < (*p)->pointer; pb++) {
-                    board b = (board)(*p)->data[pb];
+            Arraylist<board_t>* all_current_boards = new Arraylist<board_t>(procs * 1000), *important_boards = new Arraylist<board_t>(pf->num_processors + 1);
+            for(size_t i = 0; i < pf->processor_stacks->pointer; i++) {
+                Arraylist<board_t> p = pf->processor_stacks->data[i];
+                for(uint64_t pb = 0; pb < p.pointer; pb++) {
+                    board_t b = p.data[pb];
                     // printf("Collected\n"); display_board(b);
                     ((pb) ? all_current_boards : important_boards)->append(b);
                 }
-                delete *p;
             }
 
             while(stacks->pointer) stacks->pop_back();
 
             // printf("Distributing %lu boards\n", all_current_boards->pointer + important_boards->pointer);
             
-            for(uint64_t p = 0; p < procs; p++) stacks->append(new Arraylist<void*>(10000));
+            for(uint64_t p = 0; p < procs; p++) stacks->append(Arraylist<board_t>(10000));
 
             uint64_t p_ptr = 0;
 
             while(important_boards->pointer) {
-                ((Arraylist<void*>*)stacks->data[p_ptr++])->append(important_boards->pop_back());
+                (stacks->data[p_ptr++]).append(important_boards->pop_back());
                 if(p_ptr == procs) p_ptr = 0;
             }
 
             while(all_current_boards->pointer) {
-                ((Arraylist<void*>*)stacks->data[p_ptr++])->append(all_current_boards->pop_back());
+                (stacks->data[p_ptr++]).append(all_current_boards->pop_back());
                 if(p_ptr == procs) p_ptr = 0;
             }
         }
@@ -370,12 +362,13 @@ int main() {
                                                     ((Arraylist<void*>*)(stacks->data[t]))->pointer);
             #endif
 
-            processor_args args = create_processor_args(t, (board)stacks->data[t], pf->cache, 
+            processor_args args = create_processor_args(t, (board_t){0, 0, 0, 0}, pf->cache, 
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
                                                         &repeated_count, &repeated_lock,
                                                         &saving_counter, checkpoint_file, &file_lock,
                                                         &finished_count, &finished_lock);
+            args->stack = &stacks->data[t];
 
             // walker_processor(args);
             pthread_create(thread_id, 0, walker_processor_pre_stacked, (void*)args);
@@ -401,7 +394,7 @@ int main() {
             pthread_t* thread_id = (pthread_t*)malloc(sizeof(pthread_t));
             if(!thread_id) err(1, "Memory error while allocating thread id\n");
 
-            processor_args args = create_processor_args(t, (board)search_queue->data[t], cache, 
+            processor_args args = create_processor_args(t, (board_t)search_queue->data[t], cache, 
                                                         &count, &counter_lock,
                                                         &explored_count, &explored_lock,
                                                         &repeated_count, &repeated_lock,
@@ -495,7 +488,7 @@ int main() {
             printf("\r");
         #endif
         
-            printf("Found %'lu final board states. Explored %'lu boards with %'lu collisions @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d Disk usage: %.2f%% %s", 
+            printf("Found %'lu final board_t states. Explored %'lu boards with %'lu collisions @ %'lu b/s. Runtime: %0d:%02d:%02d:%02d CPU Time: %0d:%02d:%02d:%02d Disk usage: %.2f%% %s", 
                 count, explored_count, cache->collision_count, fps,
                 run_days, run_hours, run_minutes, run_seconds,
                 cpu_days, cpu_hours, cpu_minutes, cpu_seconds,
@@ -536,5 +529,5 @@ int main() {
     // save_progress_v2(checkpoint_file, &file_lock, checkpoint_filename, &saving_counter, cache, count, explored_count, repeated_count, procs - finished_count);
     destroy_heirarchy(cache);
 
-    printf("\nThere are %ld possible board states\n", count);
+    printf("\nThere are %ld possible board_t states\n", count);
 }

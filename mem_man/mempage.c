@@ -12,7 +12,7 @@
 #pragma region mempage
 
 mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
-    mempage mp = malloc(sizeof(mempage_str));
+    mempage mp = (mempage)malloc(sizeof(mempage_str));
     if(!mp) err(1, "Memory Error while allocating memory page manager\n");
 
     __uint128_t pages = (num_bins / page_max) + 1;
@@ -22,20 +22,20 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
     #endif
 
     // mp->pages = create_ll();
-    mp->pages = malloc(sizeof(__uint128_t**) * pages);
+    mp->pages = (__uint128_t***)malloc(sizeof(__uint128_t**) * pages);
     if(!mp->pages) err(1, "Memory error while allocating book for mempage\n");
 
-    mp->ptr_pages = malloc(sizeof(uint8_t***) * pages);
+    mp->ptr_pages = (uint8_t****)malloc(sizeof(uint8_t***) * pages);
     if(!mp->ptr_pages) err(1, "Memory error while allocating book for mempage\n");
 
-    mp->access_counts = calloc(pages, sizeof(size_t));
+    mp->access_counts = (size_t*)calloc(pages, sizeof(size_t));
     if(!mp->access_counts) err(1, "Memory error while allocating book for mempage\n");
 
-    mp->page_present = calloc(((pages >> 3) + 1), sizeof(uint8_t));
+    mp->page_present = (uint8_t*)calloc(((pages >> 3) + 1), sizeof(uint8_t));
     if(!mp->page_present) err(1, "Memory error while allocating book for mempage\n");
     // for(uint8_t b = 0; b < ((pages >> 3) + 1); b++) mp->page_present[b] = 255;
 
-    mp->bin_counts = malloc(sizeof(size_t*) * pages);
+    mp->bin_counts = (size_t**)malloc(sizeof(size_t*) * pages);
     if(!mp->bin_counts) err(1, "Memory error while allocating book for mempage\n");
 
     mp->page_count = pages;
@@ -46,16 +46,16 @@ mempage create_mempage(size_t page_max, __uint128_t num_bins, size_t bin_size) {
     mp->save_interv_counter = 0;
 
     for(__uint128_t p = 0; p < pages; p++) {
-        __uint128_t** bins = malloc(sizeof(__uint128_t*) * page_max);
-        uint8_t*** pbins = malloc(sizeof(uint8_t**) * page_max);
+        __uint128_t** bins = (__uint128_t**)malloc(sizeof(__uint128_t*) * page_max);
+        uint8_t*** pbins = (uint8_t***)malloc(sizeof(uint8_t**) * page_max);
         if(!(bins && pbins)) err(1, "Memory error while allocating array for mempage page\n");
 
-        size_t* sizes = malloc(sizeof(size_t) * page_max);
+        size_t* sizes = (size_t*)malloc(sizeof(size_t) * page_max);
         if(!sizes) err(1, "Memory error while allocating array for mempage page\n");
 
         for(size_t b = 0; b < page_max; b++) {
-            bins[b] = calloc(bin_size, sizeof(__uint128_t));
-            pbins[b] = malloc(sizeof(uint8_t*) * bin_size);
+            bins[b] = (__uint128_t*)calloc(bin_size, sizeof(__uint128_t));
+            pbins[b] = (uint8_t**)malloc(sizeof(uint8_t*) * bin_size);
             if(!(bins[b] && pbins[b])) err(1, "Memory error while allocating bin for mempage\n");
 
             sizes[b] = mp->bin_size;
@@ -203,7 +203,7 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t key, void
     for(size_t iter = 0;; iter++) {
         if(!bin[iter]) {
             bin[iter] = key;
-            pbin[iter] = value;
+            pbin[iter] = (uint8_t*)value;
             break;
         }
         else if(iter == bcount) {
@@ -212,8 +212,8 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t key, void
                 printf("Reallocating bin %lu %lu to %ld\n", ((uint64_t*)&bin_index)[1], ((uint64_t*)&bin_index)[0], bcount + 10);
             #endif
 
-            bin = realloc(bin, sizeof(__uint128_t) * (bcount + 10));
-            pbin = realloc(pbin, sizeof(uint8_t*) * (bcount + 10));
+            bin = (__uint128_t*)realloc(bin, sizeof(__uint128_t) * (bcount + 10));
+            pbin = (uint8_t**)realloc(pbin, sizeof(uint8_t*) * (bcount + 10));
 
             for(size_t b = bcount; b < (bcount + 10); b++) {
                 bin[b] = 0;
@@ -227,7 +227,7 @@ void mempage_append_bin(mempage mp, __uint128_t bin_index, __uint128_t key, void
             mp->bin_counts[page][page_index] = bcount;
 
             bin[iter] = key;
-            pbin[iter] = value;
+            pbin[iter] = (uint8_t*)value;
             break;
         }
     }
@@ -298,8 +298,8 @@ void mempage_clear_all(mempage mp) {
         for(size_t b = 0; b < mp->count_per_page; b++) {
             free(mp->pages[p][b]);
             free(mp->ptr_pages[p][b]);
-            mp->pages[p][b] = calloc(mp->bin_size, sizeof(__uint128_t));
-            mp->ptr_pages[p][b] = malloc(mp->bin_size * sizeof(uint8_t*));
+            mp->pages[p][b] = (__uint128_t*)calloc(mp->bin_size, sizeof(__uint128_t));
+            mp->ptr_pages[p][b] = (uint8_t**)malloc(mp->bin_size * sizeof(uint8_t*));
             if(!(mp->pages[p][b] && mp->ptr_pages[p][b])) err(1, "Memory error while allocating bin for mempage\n");
             mp->bin_counts[p][b] = mp->bin_size;
         }
@@ -316,28 +316,28 @@ void mempage_realloc(mempage mp, __uint128_t bin_count) {
 
     if(diff) {
         // mp->pages = create_ll();
-        mp->pages = realloc(mp->pages, sizeof(__uint128_t**) * pages);
-        mp->ptr_pages = realloc(mp->ptr_pages, sizeof(uint8_t***) * pages);
+        mp->pages = (__uint128_t***)realloc(mp->pages, sizeof(__uint128_t**) * pages);
+        mp->ptr_pages = (uint8_t****)realloc(mp->ptr_pages, sizeof(uint8_t***) * pages);
         if(!(mp->pages && mp->ptr_pages)) err(1, "Memory error while allocating book for mempage\n");
 
-        mp->access_counts = realloc(mp->access_counts, pages * sizeof(size_t));
+        mp->access_counts = (size_t*)realloc(mp->access_counts, pages * sizeof(size_t));
         if(!mp->access_counts) err(1, "Memory error while allocating book for mempage\n");
 
-        mp->page_present = realloc(mp->page_present, ((pages >> 3) + 1) * sizeof(uint8_t));
+        mp->page_present = (uint8_t*)realloc(mp->page_present, ((pages >> 3) + 1) * sizeof(uint8_t));
         if(!mp->page_present) err(1, "Memory error while allocating book for mempage\n");
 
-        mp->bin_counts = realloc(mp->bin_counts, sizeof(size_t**) * pages);
+        mp->bin_counts = (size_t**)realloc(mp->bin_counts, sizeof(size_t*) * pages);
         if(!mp->bin_counts) err(1, "Memory error while allocating book for mempage\n");
 
         for(size_t p = mp->page_count; p < pages; p++) {
-            __uint128_t** bins = malloc(sizeof(__uint128_t*) * mp->count_per_page);
+            __uint128_t** bins = (__uint128_t**)malloc(sizeof(__uint128_t*) * mp->count_per_page);
             if(!bins) err(1, "Memory error while allocating array for mempage page\n");
 
-            size_t* sizes = malloc(sizeof(size_t) * mp->count_per_page);
+            size_t* sizes = (size_t*)malloc(sizeof(size_t) * mp->count_per_page);
             if(!sizes) err(1, "Memory error while allocating array for mempage page\n");
 
             for(size_t b = 0; b < mp->count_per_page; b++) {
-                bins[b] = calloc(mp->bin_size, sizeof(__uint128_t));
+                bins[b] = (__uint128_t*)calloc(mp->bin_size, sizeof(__uint128_t));
                 if(!bins[b]) err(1, "Memory error while allocating bin for mempage\n");
                 sizes[b] = mp->bin_size;
             }
@@ -420,7 +420,7 @@ size_t mempage_buff_find_total_size(mempage_buff buff) {
 }
 
 mempage_buff create_mempage_buff(__uint128_t num_elements, size_t page_size) {
-    mempage_buff buff = malloc(sizeof(mempage_buff_str));
+    mempage_buff buff = (mempage_buff)malloc(sizeof(mempage_buff_str));
     if(!buff) err(1, "Memory error while allocating mempage buffer\n");
 
     buff->count_per_page = page_size;
@@ -429,12 +429,12 @@ mempage_buff create_mempage_buff(__uint128_t num_elements, size_t page_size) {
 
     size_t num_pages = num_elements / page_size + 1;
 
-    buff->pages = malloc(sizeof(__uint128_t*) * num_pages);
-    buff->page_present = calloc((num_pages >> 3) + 1, sizeof(uint8_t));
+    buff->pages = (__uint128_t**)malloc(sizeof(__uint128_t*) * num_pages);
+    buff->page_present = (uint8_t*)calloc((num_pages >> 3) + 1, sizeof(uint8_t));
     if(!buff->pages | !buff->page_present) err(1, "Memory error while allocating mempage pages\n");
 
     for(size_t p = 0; p < num_pages; p++) {
-        buff->pages[p] = calloc(page_size, sizeof(__uint128_t));
+        buff->pages[p] = (__uint128_t*)calloc(page_size, sizeof(__uint128_t));
         if(!buff->pages[p]) err(1, "Memory error while allocating mempage page\n");
 
         // Mark the page as present in memory
@@ -479,7 +479,7 @@ void mempage_buff_put(mempage_buff buff, __uint128_t index, __uint128_t k, void*
 
     __uint128_t* l = buff->pages[page];
     l[page_index] = k;
-    buff->ptr_pages[page][page_index] = value;
+    buff->ptr_pages[page][page_index] = (uint8_t*)value;
 
     // if(++buff->save_interv_counter == CHECK_SWAP_INTERV) {
     //     if(mempage_buff_find_total_size(buff) > MEMORY_THRESHOLD) {
@@ -505,7 +505,7 @@ map_tuple mempage_buff_get(mempage_buff buff, __uint128_t index) {
     //     else load_mempage_buff_page(buff, page, buff->swap_directory);
     // }
 
-    map_tuple tup = malloc(sizeof(map_tuple_t));
+    map_tuple tup = (map_tuple)malloc(sizeof(map_tuple_t));
     if(!tup) err(1, "Memory error while allocating map tuple\n");
 
     tup->k = buff->pages[page][page_index];
@@ -518,7 +518,7 @@ map_tuple mempage_buff_get(mempage_buff buff, __uint128_t index) {
 #pragma region bit mempage region
 
 bit_mempage create_bit_mempage(__uint128_t num_bits, size_t page_size) {
-    bit_mempage mp = malloc(sizeof(bit_mempage_str));
+    bit_mempage mp = (bit_mempage)malloc(sizeof(bit_mempage_str));
     if(!mp) err(1, "Memory error while allocating bit cache mempage\n");
 
     mp->count_per_page = page_size;
@@ -527,8 +527,8 @@ bit_mempage create_bit_mempage(__uint128_t num_bits, size_t page_size) {
 
     mp->mmap_directory = find_temp_directory();
 
-    mp->mpages = malloc(sizeof(mmap_page) * mp->page_count);
-    mp->pages = malloc(sizeof(uint8_t*) * mp->page_count);
+    mp->mpages = (mmap_page*)malloc(sizeof(mmap_page) * mp->page_count);
+    mp->pages = (uint8_t**)malloc(sizeof(uint8_t*) * mp->page_count);
     if(!mp->mpages || !mp->pages) err(1, "Memory error while allocating pages for bit cache mempage\n");
 
     for(size_t i = 0; i < mp->page_count; i++) {
@@ -574,7 +574,7 @@ uint8_t bit_mempage_get(bit_mempage buff, __uint128_t index) {
 
 void bit_mempage_append_page(bit_mempage mp) {
     mp->num_elements += mp->count_per_page;
-    mp->mpages = realloc(mp->mpages, sizeof(mmap_page) * ++mp->page_count);
+    mp->mpages = (mmap_page*)realloc(mp->mpages, sizeof(mmap_page) * ++mp->page_count);
     if(!mp->mpages) err(12, "Memory error while reallocating bit cache mempage\n");
 
     size_t new_index = mp->page_count - 1;
@@ -652,18 +652,18 @@ void load_mempage_page(mempage mp, size_t page_index, const char* swap_directory
     size_t page_size = 0;
     fread(&page_size, sizeof(page_size), 1, fp);
 
-    size_t *sizes = malloc(sizeof(size_t) * page_size);
+    size_t *sizes = (size_t*)malloc(sizeof(size_t) * page_size);
     if(!sizes) err(1, "Memory Error while allocating page from swap file\n");
 
     fread(sizes, sizeof(size_t), page_size, fp);
     mp->bin_counts[page_index] = sizes;
 
-    __uint128_t** bins = malloc(sizeof(__uint128_t*) * page_size);
+    __uint128_t** bins = (__uint128_t**)malloc(sizeof(__uint128_t*) * page_size);
     if(!bins) err(1, "Memory Error while allocating page from swap file\n");
     mp->pages[page_index] = bins;
 
     for(size_t b = 0; b < page_size; b++) {
-        __uint128_t* bin = malloc(sizeof(__uint128_t) * mp->bin_counts[page_index][b]);
+        __uint128_t* bin = (__uint128_t*)malloc(sizeof(__uint128_t) * mp->bin_counts[page_index][b]);
         if(!bin) err(1, "Memory Error while allocating bin from swap file\n");
         fread(bin, sizeof(__uint128_t), mp->bin_counts[page_index][b], fp);
         bins[b] = bin;
@@ -755,7 +755,7 @@ void load_mempage_buff_page(mempage_buff mp, size_t page_index, const char* swap
     size_t page_size = 0;
     fread(&page_size, sizeof(page_size), 1, fp);
 
-    __uint128_t* bins = malloc(sizeof(__uint128_t*) * page_size);
+    __uint128_t* bins = (__uint128_t*)malloc(sizeof(__uint128_t*) * page_size);
     if(!bins) err(1, "Memory Error while allocating page from swap file\n");
     mp->pages[page_index] = bins;
 

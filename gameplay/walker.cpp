@@ -335,8 +335,8 @@ void* walker_processor_pre_stacked(void* args) {
     return (void*)1;
 }
 
-uint16_t coord_to_short(coord c) {
-    return coord_to_short_ints(c->row, c->column);
+uint16_t coord_to_short(coord_t c) {
+    return coord_to_short_ints(c.row, c.column);
 }
 
 uint16_t coord_to_short_ints(uint8_t row, uint8_t column) {

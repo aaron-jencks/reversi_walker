@@ -42,7 +42,7 @@ typedef struct __processed_file_str {
     uint64_t explored_counter;
     uint64_t num_processors;
     heirarchy cache;
-    Arraylist<void*>* processor_stacks;
+    Arraylist<Arraylist<board_t>>* processor_stacks;
 } processed_file_str;
 
 /**

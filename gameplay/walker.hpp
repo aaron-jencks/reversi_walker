@@ -53,7 +53,7 @@ extern pthread_mutex_t saving_lock;
  * @param b 
  * @return coord* Returns a zero-terminated array of coordinates that represent valid moves from this board_t
  */
-void find_next_boards(board_t b, Arraylist<void*>* coord_buff, Arraylist<void*>* coord_cache);
+void find_next_boards(board_t b, Arraylist<coord_t>* coord_buff);
 
 // /**
 //  * @brief Finds the next set of boards that can be reached from this one,

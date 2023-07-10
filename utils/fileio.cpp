@@ -233,7 +233,7 @@ processed_file restore_progress_v2(char* filename) {
     fread(&result->found_counter, sizeof(result->found_counter), 1, fp);
     fread(&result->explored_counter, sizeof(result->explored_counter), 1, fp);
     fread(&result->num_processors, sizeof(result->num_processors), 1, fp);
-    result->processor_stacks = new Arraylist<void*>(result->num_processors + 1);
+    result->processor_stacks = new Arraylist<Arraylist<board_t>>(result->num_processors + 1);
     printf("Restored progress, %lu final boards found, %lu boards explored, %lu processors\n", 
            result->found_counter, result->explored_counter, result->num_processors);
 
@@ -242,7 +242,7 @@ processed_file restore_progress_v2(char* filename) {
     uint64_t board_upper, board_lower;
     __uint128_t board_key;
     for(uint64_t p = 0; p < result->num_processors; p++) {
-        Arraylist<board_t>* stack = new Arraylist<board_t>(1000);
+        Arraylist<board_t> stack(1000);
 
         while(1) {
             player = 0;
@@ -268,14 +268,14 @@ processed_file restore_progress_v2(char* filename) {
                     display_board_f(b);
                 #endif
 
-                stack->append(b);
+                stack.append(b);
             }
             else {
                 break;
             }
         }
 
-        printf("Read a processor with a stack of %lu elements\n", stack->pointer);
+        printf("Read a processor with a stack of %lu elements\n", stack.pointer);
         result->processor_stacks->append(stack);
     }
 
