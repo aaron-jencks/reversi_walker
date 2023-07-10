@@ -47,7 +47,7 @@ uint8_t is_valid_position(uint64_t b, uint8_t row, uint8_t column);
  * @param column 
  * @return uint64_t Returns the updated board int
  */
-uint64_t find_valid_positions_from_coord(uint64_t bi, board b, uint8_t row, uint8_t column);
+uint64_t find_valid_positions_from_coord(uint64_t bi, board_t b, uint8_t row, uint8_t column);
 
 /**
  * @brief Retrieves all of the positions in the board b that have 1s and returns their coordinates

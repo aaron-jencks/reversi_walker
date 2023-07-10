@@ -28,7 +28,7 @@ uint8_t is_valid_position(uint64_t b, uint8_t row, uint8_t column) {
     return r;
 }
 
-uint64_t find_valid_positions_from_coord(uint64_t bi, board b, uint8_t row, uint8_t column) {
+uint64_t find_valid_positions_from_coord(uint64_t bi, board_t b, uint8_t row, uint8_t column) {
     int8_t sr, sc, rd, cd;
     Arraylist<uint16_t>* edges = create_uint16_arraylist(9);
 
