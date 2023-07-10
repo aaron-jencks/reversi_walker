@@ -10,9 +10,9 @@ extern "C" {
 
 // __uint128_t board_hash(void* brd);
 
-__uint128_t board_spiral_hash(void* brd);
+__uint128_t board_spiral_hash(board_t b);
 
-__uint128_t board_fast_hash_6(board b);
+__uint128_t board_fast_hash_6(board_t b);
 
 #ifdef __cplusplus
 }

@@ -18,13 +18,13 @@
 //         // so on an 8x8 board, 
 //         // we end up only using 96 bits instead of the entire 128.
 //         // well
-//         for(uint8_t r = 0; r < b->height; r++) {
-//             for(uint8_t c = 0; c < b->width; c++) {
+//         for(uint8_t r = 0; r < b.height; r++) {
+//             for(uint8_t c = 0; c < b.width; c++) {
 //                 uint8_t s1 = board_get(b, r, c);
 
 //                 result += s1;
 
-//                 if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
+//                 if(c < (b.width - 1) || r < (b.height - 1)) result = result << 2;
 //             }
 //         }
 
@@ -47,69 +47,63 @@
 //     return 0;
 // }
 
-__uint128_t board_spiral_hash(void* brd) {
-    if(brd) {
-        board b = (board)brd;
+__uint128_t board_spiral_hash(board_t b) {
+    __uint128_t result = 0;
+    uint8_t r = b.height >> 1, c = b.width >> 1, spiral_dimension, iter, v, delta_dimension;
 
-        __uint128_t result = 0;
-        uint8_t r = b->height >> 1, c = b->width >> 1, spiral_dimension, iter, v, delta_dimension;
+    result += b.player << 4;
 
-        result += b->player << 4;
+    result += ((board_get(b, r, c) - 1) << 3) + 
+        ((board_get(b, r - 1, c) - 1) << 2) + 
+        ((board_get(b, r - 1, c - 1) - 1) << 1) + 
+        (board_get(b, r, c - 1) - 1);  // will never be zero
+    result = result << 2;
 
-        result += ((board_get(b, r, c) - 1) << 3) + 
-            ((board_get(b, r - 1, c) - 1) << 2) + 
-            ((board_get(b, r - 1, c - 1) - 1) << 1) + 
-            (board_get(b, r, c - 1) - 1);  // will never be zero
-        result = result << 2;
+    r++;
+    c++;
 
-        r++;
-        c++;
+    // uint8_t r = b.height >> 1, c = b.width >> 1, spiral_dimension, iter, v, delta_dimension;
+    for(uint8_t cb = 1; cb < (b.width >> 1); cb++) {
+        spiral_dimension = 2 * (cb + 1);
+        delta_dimension = spiral_dimension - 1;
 
-        // uint8_t r = b->height >> 1, c = b->width >> 1, spiral_dimension, iter, v, delta_dimension;
-        for(uint8_t cb = 1; cb < (b->width >> 1); cb++) {
-            spiral_dimension = 2 * (cb + 1);
-            delta_dimension = spiral_dimension - 1;
-
-            // Perform the box
-            for(iter = 0; iter < spiral_dimension; iter++) {
-                v = board_get(b, r - iter, c);
-                result += v;
-                result = result << 2;
-            }
-            for(iter = 1; iter < spiral_dimension; iter++) {
-                v = board_get(b, r - delta_dimension, c - iter);
-                result += v;
-                result = result << 2;
-            }
-            for(iter = 1; iter < spiral_dimension; iter++) {
-                v = board_get(b, r - delta_dimension + iter, c - delta_dimension);
-                result += v;
-                result = result << 2;
-            }
-            for(iter = 1; iter < (spiral_dimension - 1); iter++) {
-                v = board_get(b, r, c - delta_dimension + iter);
-                result += v;
-                if(iter < spiral_dimension - 2 || r < b->height - 1 && c < b->width - 1) result = result << 2;
-            }
-
-            // Move to the next spiral
-            r++;
-            c++;
+        // Perform the box
+        for(iter = 0; iter < spiral_dimension; iter++) {
+            v = board_get(b, r - iter, c);
+            result += v;
+            result = result << 2;
+        }
+        for(iter = 1; iter < spiral_dimension; iter++) {
+            v = board_get(b, r - delta_dimension, c - iter);
+            result += v;
+            result = result << 2;
+        }
+        for(iter = 1; iter < spiral_dimension; iter++) {
+            v = board_get(b, r - delta_dimension + iter, c - delta_dimension);
+            result += v;
+            result = result << 2;
+        }
+        for(iter = 1; iter < (spiral_dimension - 1); iter++) {
+            v = board_get(b, r, c - delta_dimension + iter);
+            result += v;
+            if(iter < spiral_dimension - 2 || r < b.height - 1 && c < b.width - 1) result = result << 2;
         }
 
-        return result;
+        // Move to the next spiral
+        r++;
+        c++;
     }
 
-    return 0;
+    return result;
 }
 
 const size_t r6[] = {4, 4, 4, 3, 2, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5};
 const size_t c6[] = {2, 3, 4, 4, 4, 4, 3, 2, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0};
 
-__uint128_t board_fast_hash_6(board b) {
-    uint8_t rc = b->height >> 1, cc = b->width >> 1;
+__uint128_t board_fast_hash_6(board_t b) {
+    uint8_t rc = b.height >> 1, cc = b.width >> 1;
 
-    __uint128_t result = ((b->player << 4) + 
+    __uint128_t result = ((b.player << 4) + 
         ((board_get(b, rc, cc) - 1) << 3) + 
         ((board_get(b, rc - 1, cc) - 1) << 2) + 
         ((board_get(b, rc - 1, cc - 1) - 1) << 1) + 
