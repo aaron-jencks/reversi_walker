@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "reversi_defs.h"
 
@@ -14,27 +15,27 @@ extern "C" {
  * @param starting_player 1 for white start, 0 for black start
  * @param height The height of the board in rows
  * @param width The width of the board in columns
- * @return board 
+ * @return board_t 
  */
-board create_board(uint8_t starting_player, uint8_t height, uint8_t width);
+board_t create_board(uint8_t starting_player, uint8_t height, uint8_t width);
 
 /**
  * @brief Create an 8x8 board object, unhashing from a uint128, must be an 8x8 board or smaller
  * 
  * @param starting_player 1 for white start, 0 for black start
  * @param key The key to unhash the board from
- * @return board 
+ * @return board_t 
  */
-board create_board_unhash_8(uint8_t starting_player, __uint128_t key);
+board_t create_board_unhash_8(uint8_t starting_player, __uint128_t key);
 
 /**
  * @brief Create a 6x6 board object, unhashing from a uint128, must be an 8x8 board or smaller
  * 
  * @param starting_player 1 for white start, 0 for black start
  * @param key The key to unhash the board from
- * @return board 
+ * @return board_t 
  */
-board create_board_unhash_6(uint8_t starting_player, __uint128_t key);
+board_t create_board_unhash_6(uint8_t starting_player, __uint128_t key);
 
 /**
  * @brief Create a board object, copying another board
@@ -42,7 +43,7 @@ board create_board_unhash_6(uint8_t starting_player, __uint128_t key);
  * @param board Board to clone
  * @return othelloboard 
  */
-board clone_board(board b);
+board_t clone_board(board_t b);
 
 /**
  * @brief Clones a board into a given already allocated board.
@@ -50,14 +51,14 @@ board clone_board(board b);
  * @param src 
  * @param dest 
  */
-void clone_into_board(board src, board dest);
+void clone_into_board(board_t src, board_t* dest);
 
 /**
  * @brief Destroys a given board
  * 
  * @param b 
  */
-void destroy_board(board b);
+void destroy_board(board_t b);
 
 // Transfer the boolean board values in and out of the bits in the struct
 
@@ -69,7 +70,7 @@ void destroy_board(board b);
  * @param column The column of the coordinate to retrieve the value of
  * @return uint8_t Returns 0 for empty, 1 for white, and 2 for black
  */
-uint8_t board_get(board b, uint8_t row, uint8_t column);
+uint8_t board_get(board_t b, uint8_t row, uint8_t column);
 
 /**
  * @brief Inserts a board space into the 16 byte chunk that stores the board
@@ -79,7 +80,7 @@ uint8_t board_get(board b, uint8_t row, uint8_t column);
  * @param column The column of the coordinate to place the value into
  * @param value 0 for empty, 1 for white, 2 for black
  */
-void board_put(board b, uint8_t row, uint8_t column, uint8_t value);
+void board_put(board_t b, uint8_t row, uint8_t column, uint8_t value);
 
 /**
  * @brief Determines if the move is legal, 
@@ -88,9 +89,9 @@ void board_put(board b, uint8_t row, uint8_t column, uint8_t value);
  * @param b Board to check
  * @param row Row of the coordinate to check
  * @param column Column of the coordinate to check
- * @return uint8_t Returns 1 if the move is legal and 0 otherwise
+ * @return bool returns true if the move is legal and false otherwise
  */
-uint8_t board_is_legal_move(board b, uint8_t row, uint8_t column);
+bool board_is_legal_move(board_t b, uint8_t row, uint8_t column);
 
 /**
  * @brief Places a piece on the board, does not check if it's legal
@@ -100,7 +101,7 @@ uint8_t board_is_legal_move(board b, uint8_t row, uint8_t column);
  * @param column The column to place the piece at
  * @return uint64_t Returns a struct representing how many pieces in each direction the move captured
  */
-uint64_t board_place_piece(board b, uint8_t row, uint8_t column);
+uint64_t board_place_piece(board_t* b, uint8_t row, uint8_t column);
 
 /**
  * @brief Finds the count for the given capture_count struct in the given direction, the directions are:

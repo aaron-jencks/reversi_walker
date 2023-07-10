@@ -178,7 +178,7 @@ void board_put(board_t b, uint8_t row, uint8_t column, uint8_t player) {
     if(player) b.board[byte] |= ((player == 1) ? 64 : 128) >> bit;
 }
 
-uint8_t board_is_legal_move(board_t b, uint8_t row, uint8_t column) {
+bool board_is_legal_move(board_t b, uint8_t row, uint8_t column) {
     if(row >= 0 && row < b.height && column >= 0 && column < b.width) {
         if(!board_get(b, row, column)) {
 
