@@ -4,15 +4,14 @@
 #include <err.h>
 #include <stdio.h>
 
-board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
-    board b = (board)calloc(1, sizeof(board_t));
-    if(!b) err(1, "Memory Error while allocating the board\n");
-    b->player = starting_player;
-    b->height = height;
-    b->width = width;
+board_t create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
+    board_t b;
+    b.player = starting_player;
+    b.height = height;
+    b.width = width;
 
-    b->board = (uint8_t*)calloc((height * width) >> 2, sizeof(uint8_t));
-    if(!b->board) err(1, "Memory Error while allocating board's board array\n");
+    b.board = (uint8_t*)calloc((height * width) >> 2, sizeof(uint8_t));
+    if(!b.board) err(1, "Memory Error while allocating board's board array\n");
 
     /* <1 byte> 
      * +-+-+-+-+-+-+-+-+
@@ -50,15 +49,14 @@ board create_board(uint8_t starting_player, uint8_t height, uint8_t width) {
     return b;
 }
 
-board create_board_unhash_8(uint8_t starting_player, __uint128_t key) {
-    board b = (board)calloc(1, sizeof(board_t));
-    if(!b) err(1, "Memory Error while allocating the board\n");
-    b->player = starting_player;
-    b->height = 8;
-    b->width = 8;
+board_t create_board_unhash_8(uint8_t starting_player, __uint128_t key) {
+    board_t b;
+    b.player = starting_player;
+    b.height = 8;
+    b.width = 8;
 
-    b->board = (uint8_t*)calloc(32, sizeof(uint8_t));
-    if(!b->board) err(1, "Memory Error while allocating board's board array\n");
+    b.board = (uint8_t*)calloc(32, sizeof(uint8_t));
+    if(!b.board) err(1, "Memory Error while allocating board's board array\n");
 
     uint8_t r = 0, c = 0;
     while(key) {
@@ -73,15 +71,14 @@ board create_board_unhash_8(uint8_t starting_player, __uint128_t key) {
     return b;
 }
 
-board create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
-    board b = (board)calloc(1, sizeof(board_t));
-    if(!b) err(1, "Memory Error while allocating the board\n");
-    b->player = starting_player;
-    b->height = 6;
-    b->width = 6;
+board_t create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
+    board_t b;
+    b.player = starting_player;
+    b.height = 6;
+    b.width = 6;
 
-    b->board = (uint8_t*)calloc(18, sizeof(uint8_t));
-    if(!b->board) err(1, "Memory Error while allocating board's board array\n");
+    b.board = (uint8_t*)calloc(18, sizeof(uint8_t));
+    if(!b.board) err(1, "Memory Error while allocating board's board array\n");
 
     uint8_t r = 5, c = 5;
     // key = key << 56;
@@ -104,14 +101,13 @@ board create_board_unhash_6(uint8_t starting_player, __uint128_t key) {
  * @param board Board to clone
  * @return othelloboard 
  */
-board clone_board(board b) {
-    board bc = (board)malloc(sizeof(board_t));
-    if(!bc) err(1, "Memory Error Occured while allocating a board.");
+board_t clone_board(board_t b) {
+    board_t bc;
 
-    bc->board = (uint8_t*)calloc((b->height * b->width) >> 2, sizeof(uint8_t));
-    if(!bc->board) err(1, "Memory Error Occured while allocating a board.");
+    bc.board = (uint8_t*)calloc((b.height * b.width) >> 2, sizeof(uint8_t));
+    if(!bc.board) err(1, "Memory Error Occured while allocating a board.");
 
-    clone_into_board(b, bc);
+    clone_into_board(b, &bc);
 
     return bc;
 }
@@ -122,24 +118,21 @@ board clone_board(board b) {
  * @param src 
  * @param dest 
  */
-void clone_into_board(board src, board dest) {
-    if(src && dest) {
-        dest->height = src->height;
-        dest->width = src->width;
-        dest->player = src->player;
-        for(uint8_t i = 0; i < ((src->height * src->width) >> 2); i++) dest->board[i] = src->board[i];
+void clone_into_board(board_t src, board_t* dest) {
+    if(dest) {
+        dest->height = src.height;
+        dest->width = src.width;
+        dest->player = src.player;
+        for(uint8_t i = 0; i < ((src.height * src.width) >> 2); i++) dest->board[i] = src.board[i];
     }
 }
 
-void destroy_board(board b) {
-    if(b) {
-        if(b->board) free(b->board);
-        free(b);
-    }
+void destroy_board(board_t b) {
+    if(b.board) free(b.board);
 }
 
 // Transfer the boolean board values in and out of the bits in the struct
-uint8_t board_get(board b, uint8_t row, uint8_t column) {
+uint8_t board_get(board_t b, uint8_t row, uint8_t column) {
     /* column: 0 1 2 3 4 5 6 7 
      *        +-+-+-+-+-+-+-+-+
      * row 0: | | | | | | | | | <-- Byte 0,1
@@ -160,37 +153,33 @@ uint8_t board_get(board b, uint8_t row, uint8_t column) {
      *        +-+-+-+-+-+-+-+-+
      */
 
-    if(b) {
-        uint8_t total_bit = (row * (b->width << 1)) + (column << 1), 
-                byte = total_bit >> 3, 
-                bit = total_bit & 7;
+    uint8_t total_bit = (row * (b.width << 1)) + (column << 1), 
+            byte = total_bit >> 3, 
+            bit = total_bit & 7;
 
-        // (b'11' >> bit & board_value) >> (6 - bit)
-        return ((192 >> bit) & b->board[byte]) >> (6 - bit);
-    }
+    // (b'11' >> bit & board_value) >> (6 - bit)
+    return ((192 >> bit) & b.board[byte]) >> (6 - bit);
     return 3;
 }
 
-void board_put(board b, uint8_t row, uint8_t column, uint8_t player) {
-    if(b) {
-        uint8_t total_bit = (row * (b->width << 1)) + (column << 1), 
-                byte = total_bit >> 3, 
-                bit = total_bit & 7, 
-                bph = 192 >> bit;
+void board_put(board_t b, uint8_t row, uint8_t column, uint8_t player) {
+    uint8_t total_bit = (row * (b.width << 1)) + (column << 1), 
+            byte = total_bit >> 3, 
+            bit = total_bit & 7, 
+            bph = 192 >> bit;
 
-        // Reset the value of the bits to 0
-        // byte (????????) | bph (00011000) = ????11???
-        // ???11??? ^ 00011000 = ???00???
-        b->board[byte] = (b->board[byte] | bph) ^ bph;
+    // Reset the value of the bits to 0
+    // byte (????????) | bph (00011000) = ????11???
+    // ???11??? ^ 00011000 = ???00???
+    b.board[byte] = (b.board[byte] | bph) ^ bph;
 
-        // Insert your new value
-        // byte (????????) | ((10|01)000000 >> bit) = ????(10|01)???
-        if(player) b->board[byte] |= ((player == 1) ? 64 : 128) >> bit;
-    }
+    // Insert your new value
+    // byte (????????) | ((10|01)000000 >> bit) = ????(10|01)???
+    if(player) b.board[byte] |= ((player == 1) ? 64 : 128) >> bit;
 }
 
-uint8_t board_is_legal_move(board b, uint8_t row, uint8_t column) {
-    if(b && row >= 0 && row < b->height && column >= 0 && column < b->width) {
+uint8_t board_is_legal_move(board_t b, uint8_t row, uint8_t column) {
+    if(row >= 0 && row < b.height && column >= 0 && column < b.width) {
         if(!board_get(b, row, column)) {
 
             // Check each of the 8 directions going out from the requested coordinate
@@ -206,9 +195,9 @@ uint8_t board_is_legal_move(board b, uint8_t row, uint8_t column) {
                     cc = column + cd;
 
                     count = 0;
-                    while(cr >= 0 && cr < b->height && cc >= 0 && cc < b->width) {
+                    while(cr >= 0 && cr < b.height && cc >= 0 && cc < b.width) {
                         bv = board_get(b, cr, cc);
-                        if(bv && bv != b->player) {
+                        if(bv && bv != b.player) {
                             // There is a possible capture
                             count++;
 
@@ -216,9 +205,9 @@ uint8_t board_is_legal_move(board b, uint8_t row, uint8_t column) {
                             cr += rd;
                             cc += cd;
 
-                            if((cr == b->height && rd) ||
+                            if((cr == b.height && rd) ||
                                (cr < 0 && rd == -1) ||
-                               (cc == b->width && cd) ||
+                               (cc == b.width && cd) ||
                                (cc < 0 && cd < 0)) {
                                    // We hit the edge of the board, this is not a capture
                                    count = 0;
@@ -245,14 +234,14 @@ uint8_t board_is_legal_move(board b, uint8_t row, uint8_t column) {
     return 0;
 }
 
-uint64_t board_place_piece(board b, uint8_t row, uint8_t column) {
+uint64_t board_place_piece(board_t* b, uint8_t row, uint8_t column) {
     if(b && row >= 0 && row < b->height && column >= 0 && column < b->width) {
         // Check each of the 8 directions going out from the requested coordinate
         // flip any captures found
         uint64_t counts = 0;
         // if(!counts) err(1, "Memory Error while allocating capture count struct\n");
 
-        board_put(b, row, column, b->player);
+        board_put(*b, row, column, b->player);
         int8_t cr, cc, bv;
         uint8_t capture_direction, count;
         for(int8_t rd = -1; rd < 2; rd++) {
@@ -267,7 +256,7 @@ uint64_t board_place_piece(board b, uint8_t row, uint8_t column) {
 
                 count = 0;
                 while(cr >= 0 && cr < b->height && cc >= 0 && cc < b->width) {
-                    bv = board_get(b, cr, cc);
+                    bv = board_get(*b, cr, cc);
                     if(bv && bv != b->player) {
                         // There is a possible capture
                         count++;
@@ -297,13 +286,13 @@ uint64_t board_place_piece(board b, uint8_t row, uint8_t column) {
                 if(count > 0) {
                     cr = row + rd;
                     cc = column + cd;
-                    bv = board_get(b, cr, cc);
+                    bv = board_get(*b, cr, cc);
 
                     while(bv && bv != b->player) {
-                        board_put(b, cr, cc, b->player);
+                        board_put(*b, cr, cc, b->player);
                         cr += rd;
                         cc += cd;
-                        bv = board_get(b, cr, cc);
+                        bv = board_get(*b, cr, cc);
                     }
                 }
             }

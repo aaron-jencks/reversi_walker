@@ -13,7 +13,7 @@ typedef struct _coord_str {
  */
 typedef coord_str* coord;
 
-typedef struct _board_str {
+typedef struct {
     uint8_t player;
     uint8_t width;
     uint8_t height;
@@ -22,7 +22,7 @@ typedef struct _board_str {
 
 typedef board_t* board;
 
-typedef struct _capture_count_str {
+typedef struct {
     uint8_t* counts;
 } capture_count_t;
 
