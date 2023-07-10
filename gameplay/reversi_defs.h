@@ -20,8 +20,6 @@ typedef struct {
     uint8_t* board;
 } board_t;
 
-typedef board_t* board;
-
 typedef struct {
     uint8_t* counts;
 } capture_count_t;
