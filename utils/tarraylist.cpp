@@ -47,3 +47,53 @@ template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop_front() {
 	}
 	return {0, 0, 0};
 }
+
+template<> board_t Arraylist<board_t>::pop(size_t index) {
+	if(size && index < size) {
+		board_t d = data[index];
+		for(size_t e = index + 1; e < pointer; e++) data[e - 1] = data[e];
+		pointer--;
+		return d;
+	}
+	return {0, 0, 0, 0};
+}
+
+template<> board_t Arraylist<board_t>::pop_back() {
+	if(size) { return data[--pointer]; }
+	return {0, 0, 0, 0};
+}
+
+template<> board_t Arraylist<board_t>::pop_front() {
+	if(size) {
+		board_t d = data[0];
+		for(size_t e = 0; e < pointer; e++) data[e] = data[e + 1];
+		pointer--;
+		return d;
+	}
+	return {0, 0, 0, 0};
+}
+
+template<> coord_t Arraylist<coord_t>::pop(size_t index) {
+	if(size && index < size) {
+		coord_t d = data[index];
+		for(size_t e = index + 1; e < pointer; e++) data[e - 1] = data[e];
+		pointer--;
+		return d;
+	}
+	return {0, 0};
+}
+
+template<> coord_t Arraylist<coord_t>::pop_back() {
+	if(size) { return data[--pointer]; }
+	return {0, 0};
+}
+
+template<> coord_t Arraylist<coord_t>::pop_front() {
+	if(size) {
+		coord_t d = data[0];
+		for(size_t e = 0; e < pointer; e++) data[e] = data[e + 1];
+		pointer--;
+		return d;
+	}
+	return {0, 0};
+}

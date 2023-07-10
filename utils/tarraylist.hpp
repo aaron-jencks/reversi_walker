@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dictionary/dict_def.h"
+#include "../gameplay/reversi_defs.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -97,3 +98,11 @@ template<> void Arraylist<dict_usage_pair_t>::insert(dict_usage_pair_t element, 
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop(size_t index);
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop_front();
 template<> dict_usage_pair_t Arraylist<dict_usage_pair_t>::pop_back();
+
+template<> board_t Arraylist<board_t>::pop(size_t index);
+template<> board_t Arraylist<board_t>::pop_front();
+template<> board_t Arraylist<board_t>::pop_back();
+
+template<> coord_t Arraylist<coord_t>::pop(size_t index);
+template<> coord_t Arraylist<coord_t>::pop_front();
+template<> coord_t Arraylist<coord_t>::pop_back();
