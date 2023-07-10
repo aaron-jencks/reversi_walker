@@ -2,16 +2,16 @@
 
 #include <stdint.h>
 
-typedef struct _coord_str {
+typedef struct {
     uint8_t row;
     uint8_t column;
-} coord_str;
+} coord_t;
 
 /**
  * @brief Represents a coordinate on the reversi board
  * 
  */
-typedef coord_str* coord;
+typedef coord_t* coord;
 
 typedef struct {
     uint8_t player;

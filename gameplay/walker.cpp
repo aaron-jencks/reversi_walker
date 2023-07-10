@@ -9,11 +9,11 @@
 #include <err.h>
 
 #ifdef debug
-void display_board_w(board b) {
+void display_board_w(board_t b) {
     if(b) {
-        printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
-        for(uint8_t r = 0; r < b->height; r++) {
-            for(uint8_t c = 0; c < b->width; c++) {
+        printf("%s's Turn\n", (b.player == 1) ? "White" : "Black");
+        for(uint8_t r = 0; r < b.height; r++) {
+            for(uint8_t c = 0; c < b.width; c++) {
                 printf("%c", board_get(b, r, c) + '0');
             }
             printf("\n");
@@ -22,11 +22,11 @@ void display_board_w(board b) {
     }
 }
 
-void display_moves_w(board b, Arraylist<void*>* coords) {
+void display_moves_w(board_t b, Arraylist<void*>* coords) {
     if(b) {
-        printf("%s's Turn\n", (b->player == 1) ? "White" : "Black");
-        for(uint8_t r = 0; r < b->height; r++) {
-            for(uint8_t c = 0; c < b->width; c++) {
+        printf("%s's Turn\n", (b.player == 1) ? "White" : "Black");
+        for(uint8_t r = 0; r < b.height; r++) {
+            for(uint8_t c = 0; c < b.width; c++) {
                 uint8_t move = 0;
                 for(size_t cd = 0; cd < coords->pointer; cd++) {
                     coord cord = (coord)coords->data[cd];
@@ -48,25 +48,25 @@ void display_moves_w(board b, Arraylist<void*>* coords) {
 uint8_t SAVING_FLAG = 0, WALKER_KILL_FLAG = 0;
 pthread_mutex_t saving_lock;
 
-coord create_coord(uint8_t row, uint8_t col) {
-    coord c = (coord)malloc(sizeof(coord_str));
-    if(!c) err(1, "Memory error while allocating a coordinate\n");
-    c->column = col;
-    c->row = row;
+coord_t create_coord(uint8_t row, uint8_t col) {
+    coord_t c;
+    c.column = col;
+    c.row = row;
     return c;
 }
 
-void find_next_boards(board b, Arraylist<void*>* edges, Arraylist<void*>* coord_cache) {
-    uint8_t sr = (b->height >> 1) - 1, sc = (b->width >> 1) - 1, visited[b->height][b->width];
+// TODO remove coord_cache, pass-by-value doesn't need it
+void find_next_boards(board_t b, Arraylist<coord_t>* edges) {
+    uint8_t sr = (b.height >> 1) - 1, sc = (b.width >> 1) - 1, visited[b.height][b.width];
     edges->pointer = 0;
 
     // 6 times faster
-    for(uint8_t i = 0; i < b->height; i++) {
-        for(uint8_t j = 0; j < b->width; j++) {
+    for(uint8_t i = 0; i < b.height; i++) {
+        for(uint8_t j = 0; j < b.width; j++) {
             if(board_is_legal_move(b, i, j)) {
-                coord c = ((coord_cache->pointer) ? (coord)coord_cache->pop_back() : create_coord(i, j));
-                c->column = j;
-                c->row = i;
+                coord_t c = create_coord(i, j);
+                c.column = j;
+                c.row = i;
                 edges->append(c);
             }
         }
@@ -76,7 +76,7 @@ void find_next_boards(board b, Arraylist<void*>* edges, Arraylist<void*>* coord_
 }
 
 
-// coord* find_next_boards_from_coord(board b, coord c) {
+// coord* find_next_boards_from_coord(board_t b, coord c) {
 //     uint8_t sr, sc;
 //     // TODO Use an arraylist here
 //     linkedlist edges = create_ll();
@@ -102,9 +102,9 @@ void find_next_boards(board b, Arraylist<void*>* edges, Arraylist<void*>* coord_
 //     return result;
 // }
 
-coord* find_next_boards_from_coord_opposing_player(board b, coord c) {
+Arraylist<coord_t> find_next_boards_from_coord_opposing_player(board_t b, coord_t c) {
     uint8_t sr, sc;
-    Arraylist<void*>* edges = new Arraylist<void*>(9);
+    Arraylist<coord_t> edges(9);
 
     uint8_t found, bv;
     for(int8_t rd = -1; rd < 2; rd++) {
@@ -112,30 +112,28 @@ coord* find_next_boards_from_coord_opposing_player(board b, coord c) {
             found = 0;
             if(!rd && !cd) continue;
             
-            sr = c->row + rd;
-            sc = c->column + cd;
+            sr = c.row + rd;
+            sc = c.column + cd;
 
-            if(sr >= 0 && sr < b->height && sc >= 0 && sc < b->width) {
-                bv = board_get(b, c->row, c->column);
-                if(bv == b->player) found = 1;
-                else if(!bv && found) edges->append(create_coord(sr, sc));
+            if(sr >= 0 && sr < b.height && sc >= 0 && sc < b.width) {
+                bv = board_get(b, c.row, c.column);
+                if(bv == b.player) found = 1;
+                else if(!bv && found) edges.append(create_coord(sr, sc));
                 else continue;
             }
         }
     }
 
-    coord* result = (coord*)edges->data;
-    free(edges);
-    return result;
+    return edges;
 }
 
 void* walker_processor(void* args) {
     // Unpack the arguments
     processor_args pargs = (processor_args)args;
-    if(pargs && pargs->starting_board) {
-        Arraylist<void*>* search_stack = new Arraylist<void*>(10000);
+    if(pargs) {
+        Arraylist<board_t>* search_stack = new Arraylist<board_t>(10000);
         search_stack->append(pargs->starting_board);
-        pargs->starting_board = (board)search_stack;
+        pargs->stack = search_stack;
         return walker_processor_pre_stacked(pargs);
     }
     return (void*)1;
@@ -144,7 +142,7 @@ void* walker_processor(void* args) {
 void* walker_processor_pre_stacked(void* args) {
     // Unpack the arguments
     processor_args pargs = (processor_args)args;
-    Arraylist<void*>* starting_stack = (Arraylist<void*>*)pargs->starting_board;
+    Arraylist<board_t>* starting_stack = (Arraylist<board_t>*)pargs->stack;
     heirarchy cache = pargs->cache;
     uint64_t* counter = pargs->counter, *explored = pargs->explored_counter, *repeated = pargs->repeated_counter;
     pthread_mutex_t* counter_lock = pargs->counter_lock, *explored_lock = pargs->explored_lock, *repeated_lock = pargs->repeated_lock;
@@ -154,18 +152,14 @@ void* walker_processor_pre_stacked(void* args) {
 
         // Setup the stacks
         uint64_t count = 0;
-        Arraylist<void*>* search_stack = starting_stack;
-        Arraylist<void*>* board_cache = new Arraylist<void*>(1000), *coord_cache = new Arraylist<void*>(1000), *coord_buff = new Arraylist<void*>(65);
-        for(size_t bc = 0; bc < 1000; bc++) {
-            board_cache->append(create_board(1, BOARD_HEIGHT, BOARD_WIDTH));
-            coord_cache->append(create_coord(0, 0));
-        }
+        Arraylist<board_t>* search_stack = starting_stack;
+        Arraylist<coord_t> *coord_buff = new Arraylist<coord_t>(65);
 
         // printf("Starting walk...\n");
 
         uint64_t iter = 0, intercap = 0;
         while(search_stack->pointer) {
-            board sb = (board)search_stack->pop_back(), bc;
+            board_t sb = (board_t)search_stack->pop_back(), bc;
 
             // #ifdef debug
             //     display_board(sb);
@@ -179,11 +173,11 @@ void* walker_processor_pre_stacked(void* args) {
 
             #endif
 
-                find_next_boards(sb, coord_buff, coord_cache);
+                find_next_boards(sb, coord_buff);
 
                 #ifdef debug
                     __uint128_t hash = board_spiral_hash(sb);
-                    printf("Board hashed to %lu %lu\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
+                    printf("board_t hashed to %lu %lu\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
                     display_moves_w(sb, coord_buff);
                 #endif
 
@@ -191,23 +185,17 @@ void* walker_processor_pre_stacked(void* args) {
                     uint8_t move_count = 0;
                     // If the move is legal, then append it to the search stack
                     for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-                        coord mm = (coord)coord_buff->data[im];
+                        coord_t mm = coord_buff->data[im];
                         
-                        if(board_cache->pointer) bc = (board)board_cache->pop_back();
-                        else bc = create_board(1, sb->height, sb->width);
+                        bc = create_board(1, sb.height, sb.width);
 
-                        clone_into_board(sb, bc);
+                        clone_into_board(sb, &bc);
 
-                        if(board_is_legal_move(bc, mm->row, mm->column)) {
-                            board_place_piece(bc, mm->row, mm->column);
+                        if(board_is_legal_move(bc, mm.row, mm.column)) {
+                            board_place_piece(&bc, mm.row, mm.column);
                             search_stack->append(bc);
                             move_count++;
                         }
-                        else {
-                            board_cache->append(bc);
-                        }
-
-                        coord_cache->append(mm);
                     }
 
                     #ifdef debug
@@ -219,31 +207,25 @@ void* walker_processor_pre_stacked(void* args) {
                     #ifdef debug
                         printf("No moves for opponent, switching back to the current player\n");
                     #endif
-                    sb->player = (sb->player == 1) ? 2 : 1;
+                    sb.player = (sb.player == 1) ? 2 : 1;
 
-                    find_next_boards(sb, coord_buff, coord_cache);
+                    find_next_boards(sb, coord_buff);
 
                     if(coord_buff->pointer) {
                         uint8_t move_count = 0;
                         // If the move is legal, then append it to the search stack
                         for(uint8_t im = 0; im < coord_buff->pointer; im++) {
-                            coord mm = (coord)coord_buff->data[im];
+                            coord_t mm = coord_buff->data[im];
                             
-                            if(board_cache->pointer) bc = (board)board_cache->pop_back();
-                            else bc = create_board(1, sb->height, sb->width);
+                            bc = create_board(1, sb.height, sb.width);
 
-                            clone_into_board(sb, bc);
+                            clone_into_board(sb, &bc);
 
-                            if(board_is_legal_move(bc, mm->row, mm->column)) {
-                                board_place_piece(bc, mm->row, mm->column);
+                            if(board_is_legal_move(bc, mm.row, mm.column)) {
+                                board_place_piece(&bc, mm.row, mm.column);
                                 search_stack->append(bc);
                                 move_count++;
                             }
-                            else {
-                                board_cache->append(bc);
-                            }
-
-                            coord_cache->append(mm);
                         }
                     }
                     else {
@@ -267,13 +249,13 @@ void* walker_processor_pre_stacked(void* args) {
                         // }
                         // else {
                         //     #ifdef debug
-                        //         printf("The given board is already counted\n");
+                        //         printf("The given board_t is already counted\n");
                         //     #endif
                         // }
 
                         if(heirarchy_insert(cache, board_fast_hash_6(sb))) {
 
-                            // printf("Found a new board to count\n");
+                            // printf("Found a new board_t to count\n");
                             while(pthread_mutex_trylock(counter_lock)) sched_yield();
                             *counter += 1;
                             // *explored += count;
@@ -303,13 +285,11 @@ void* walker_processor_pre_stacked(void* args) {
             else {
                 #ifdef debug
                     __uint128_t hash = board_spiral_hash(sb);
-                    printf("Board hashed to %lu %lu <-- REPEAT\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
+                    printf("board_t hashed to %lu %lu <-- REPEAT\n", ((uint64_t*)&hash)[1], ((uint64_t*)&hash)[0]);
                 #endif
             }
 
             #endif
-            
-            board_cache->append(sb);
 
             if(SAVING_FLAG) {
                 while(pthread_mutex_trylock(pargs->file_lock)) sched_yield();
@@ -345,18 +325,8 @@ void* walker_processor_pre_stacked(void* args) {
         pthread_mutex_unlock(pargs->finished_lock);
 
         free(pargs);
-        while(search_stack->pointer) destroy_board((board)search_stack->pop_back());
+        while(search_stack->pointer) destroy_board((board_t)search_stack->pop_back());
         delete search_stack;
-
-        while(board_cache->pointer) {
-            destroy_board((board)board_cache->pop_back());
-        }
-        delete board_cache;
-
-        while(coord_cache->pointer) {
-            free(coord_cache->pop_back());
-        }
-        delete coord_cache;
 
         return 0;
     }
@@ -376,12 +346,12 @@ uint16_t coord_to_short_ints(uint8_t row, uint8_t column) {
     return r;
 }
 
-coord short_to_coord(uint16_t s) {
-    coord r = create_coord(s >> 8, s);
+coord_t short_to_coord(uint16_t s) {
+    coord_t r = create_coord(s >> 8, s);
     return r;
 }
 
-processor_args create_processor_args(uint32_t identifier, board starting_board, heirarchy cache, 
+processor_args create_processor_args(uint32_t identifier, board_t starting_board, heirarchy cache, 
                                      uint64_t* counter, pthread_mutex_t* counter_lock,
                                      uint64_t* explored_counter, pthread_mutex_t* explored_lock,
                                      uint64_t* repeated_counter, pthread_mutex_t* repeated_lock,
@@ -408,7 +378,7 @@ processor_args create_processor_args(uint32_t identifier, board starting_board, 
     return args;
 }
 
-void walker_to_file(FILE* fp, Arraylist<void*>* search_stack) {
+void walker_to_file(FILE* fp, Arraylist<board_t>* search_stack) {
     if(search_stack) {
         __uint128_t result;
 
@@ -417,31 +387,31 @@ void walker_to_file(FILE* fp, Arraylist<void*>* search_stack) {
         #endif
 
         // fwrite(&search_stack->pointer, sizeof(search_stack->pointer), 1, fp);
-        for(board* ptr = (board*)search_stack->data; *ptr; ptr++) {
-            board b = *ptr;
+        for(size_t i = 0; i < search_stack->pointer; i++) {
+            board_t b = search_stack->data[i];
 
             result = 0;
 
-            if(!fwrite(&b->player, sizeof(uint8_t), 1, fp)) err(8, "Writing to the file failed\n");
+            if(!fwrite(&b.player, sizeof(uint8_t), 1, fp)) err(8, "Writing to the file failed\n");
             // result = result << 2;
 
             // NO YOU CAN'T, but luckily, I don't actually need the player
             // You can fit 2 spaces in 3 bits if you really try,
-            // so on an 8x8 board, 
+            // so on an 8x8 board_t, 
             // we end up only using 96 bits instead of the entire 128.
             // well
-            for(uint8_t r = 0; r < b->height; r++) {
-                for(uint8_t c = 0; c < b->width; c++) {
+            for(uint8_t r = 0; r < b.height; r++) {
+                for(uint8_t c = 0; c < b.width; c++) {
                     uint8_t s1 = board_get(b, r, c);
 
                     result += s1;
 
-                    if(c < (b->width - 1) || r < (b->height - 1)) result = result << 2;
+                    if(c < (b.width - 1) || r < (b.height - 1)) result = result << 2;
                 }
             }
 
             #ifdef filedebug
-                printf("Writing board %u: %lu %lu\n", b->player, ((uint64_t*)(&result))[1], ((uint64_t*)(&result))[0]);
+                printf("Writing board_t %u: %lu %lu\n", b.player, ((uint64_t*)(&result))[1], ((uint64_t*)(&result))[0]);
                 display_board_w(b);
             #endif
 

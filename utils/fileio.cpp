@@ -242,7 +242,7 @@ processed_file restore_progress_v2(char* filename) {
     uint64_t board_upper, board_lower;
     __uint128_t board_key;
     for(uint64_t p = 0; p < result->num_processors; p++) {
-        Arraylist<void*>* stack = new Arraylist<void*>(1000);
+        Arraylist<board_t>* stack = new Arraylist<board_t>(1000);
 
         while(1) {
             player = 0;
@@ -262,7 +262,7 @@ processed_file restore_progress_v2(char* filename) {
             // board_key += board_lower;
 
             if(player || board_key) {
-                board b = create_board_unhash_6(player, board_key);
+                board_t b = create_board_unhash_6(player, board_key);
 
                 #ifdef filedebug
                     display_board_f(b);
