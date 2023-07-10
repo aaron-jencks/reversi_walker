@@ -13,7 +13,7 @@
 #include <signal.h>
 #include <time.h>
 
-#include "./utils/tarraylist.hpp"
+#include "../utils/tarraylist.hpp"
 
 
 #define BUILD_PATH "/home/aaron/Workspace/github/mine/reversi_walker"
