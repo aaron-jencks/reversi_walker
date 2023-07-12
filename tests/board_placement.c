@@ -6,7 +6,7 @@
 #include "../gameplay/reversi.h"
 
 void board_placement_test() {
-    board b = create_board(1, 255, 255);
+    board_t b = create_board(1, 255, 255);
     for(uint8_t r = 0; r < 255; r++) {
         for(uint8_t c = 0; c < 255; c++) {
             for(uint8_t v = 1; v < 3; v++) {

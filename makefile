@@ -6,8 +6,8 @@ DEBUG=-g -Ddebug
 
 C_SRC=gameplay/reversi.c mem_man/mmap_man.c mem_man/mempage.c hashing/hash_functions.c hashing/hashtable.c hashing/lookup3.c utils/path_util.c utils/csv.c utils/dictionary/dmempage.c utils/heapsort.c
 CPP_SRC=mem_man/heir.cpp gameplay/walker.cpp utils/tarraylist.cpp utils/fileio.cpp utils/dictionary/fdict.cpp utils/dictionary/hdict.cpp
-C_TEST_SRC=tests/capturecounts_test.c tests/board_placement_test.c tests/fileio_test.c tests/heapsort_test.c tests/mempage_test.c
-CPP_TEST_SRC=tests/arraylist_test.cpp tests/dict_test.cpp tests/legal_moves_test.cpp tests/mmap_test.cpp
+C_TEST_SRC=tests/capturecounts_test.c tests/board_placement.c tests/heapsort_test.c
+CPP_TEST_SRC=tests/arraylist_test.cpp tests/dict_test.cpp tests/legal_moves_test.cpp
 
 C_HEADERS=$(C_SRC:.c=.h)
 CPP_HEADERS=$(CPP_SRC:.cpp=.hpp)

@@ -2,41 +2,41 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "legal_moves_test.hpp"
 #include "../gameplay/reversi.h"
 #include "../gameplay/walker.hpp"
 #include "../utils/tarraylist.hpp"
 
-uint8_t is_valid_coord(coord c, coord* accept) {
-    for(coord* ct = accept; *ct; ct++) if(c->row == (*ct)->row && c->column == (*ct)->column) return 1;
+bool is_valid_coord(coord_t c, coord_t* accept, size_t na) {
+    for(size_t ai = 0; ai < na; ai++) {
+        coord_t ct = accept[ai];
+        if(c.row == ct.row && c.column == ct.column) return 1;
+    }
     return 0;
 }
 
 void lm_test_initial() {
-    board b = create_board(1, 8, 8);
-    Arraylist<void*> coord_buff(65), coord_cache(1000);
+    board_t b = create_board(1, 8, 8);
+    Arraylist<coord_t> coord_buff(65);
 
-    for(size_t c = 0; c < 1000; c++) coord_cache.append(create_coord(0, 0));
-    find_next_boards(b, &coord_buff, &coord_cache);
-    coord* cs = (coord*)coord_buff.data;
-    coord acceptance[5] = {
+    find_next_boards(b, &coord_buff);
+    coord_t* cs = (coord_t*)coord_buff.data;
+    coord_t acceptance[4] = {
         create_coord(3, 2),
         create_coord(2, 3),
         create_coord(5, 4),
-        create_coord(4, 5),
-        0
+        create_coord(4, 5)
     };
 
-    for(coord* ct = cs; *ct; ct++) {
-        printf("Testing coordinate (%u, %u)\n", (*ct)->row, (*ct)->column);
-        assert(is_valid_coord(*ct, acceptance));
-        free(*ct);
+    for(size_t i = 0; i < coord_buff.pointer; i++) {
+        coord_t ct = coord_buff.data[i];
+        printf("Testing coordinate (%u, %u)\n", ct.row, ct.column);
+        assert(is_valid_coord(ct, acceptance, 4));
     }
 
     destroy_board(b);
-
-    for(coord* ct = acceptance; *ct; ct++) free(*ct);
 }
 
 // void lm_test_from_coord() {
