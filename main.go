@@ -24,13 +24,13 @@ func main() {
 	var procs uint = uint(runtime.NumCPU()) << 1
 	var ubsize uint = 8
 	var display_poll time.Duration = 100 * time.Millisecond
-	var walker_update_interval uint = 10000
+	var walker_update_interval uint = 100000
 
 	flag.StringVar(&checkpoint_path, "check", checkpoint_path, "indicates where to save checkpoints, defaults to ./checkpoint.bin")
 	flag.UintVar(&procs, "procs", procs, "specifies how many threads to use for processing, defaults to 2*cpu cores")
 	flag.UintVar(&ubsize, "size", ubsize, "specifies the size of the board to run the program on, defaults to 8")
 	flag.DurationVar(&display_poll, "display", display_poll, "specifies how often to update the statistics in the terminal, defaults to 100 ms")
-	flag.UintVar(&walker_update_interval, "walkupdate", walker_update_interval, "specifies how often the walkers should update the counters, defaults to every 10000 boards")
+	flag.UintVar(&walker_update_interval, "walkupdate", walker_update_interval, "specifies how often the walkers should update the counters, defaults to every 100000 boards")
 	flag.Parse()
 
 	if ubsize > 255 {
