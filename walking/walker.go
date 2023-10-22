@@ -15,11 +15,9 @@ type BoardWalker struct {
 	Identifier     uint32
 	Visited        visiting.VisitedCache
 	Counter        *uint64
-	Counter_lock   *sync.RWMutex
 	Explored       *uint64
-	Explored_lock  *sync.RWMutex
 	Repeated       *uint64
-	Repeated_lock  *sync.RWMutex
+	Counter_lock   *sync.RWMutex
 	Saving_counter *uint64
 	File_pointer   **os.File
 	File_lock      *sync.Mutex
@@ -31,11 +29,13 @@ type BoardWalker struct {
 var SAVING_FLAG bool
 var saving_lock sync.Mutex
 
-func (bw BoardWalker) Walk(ctx context.Context, save_chan chan bool, starting_board gameplay.Board) {
+func (bw BoardWalker) Walk(ctx context.Context, update_interval uint, starting_board gameplay.Board) {
 	// TODO make it so that we don't update the counters every board, but on an interval of boards
 	// this will reduce lock contention
 	stack := make([]gameplay.Board, 1, 1000)
 	stack[0] = starting_board
+
+	var counted, explored, repeated uint64 = 0, 0, 0
 
 	if len(stack) > 0 {
 		fmt.Printf("processor %d has started\n", bw.Identifier)
@@ -45,10 +45,10 @@ func (bw BoardWalker) Walk(ctx context.Context, save_chan chan bool, starting_bo
 			select {
 			case <-ctx.Done():
 				break SearchLoop
-			case <-save_chan:
-				saving_lock.Lock()
+			// case <-save_chan:
+			// 	saving_lock.Lock()
 
-				saving_lock.Unlock()
+			// 	saving_lock.Unlock()
 			default:
 				sb := stack[len(stack)-1]
 				stack = stack[:len(stack)-1]
@@ -83,23 +83,33 @@ func (bw BoardWalker) Walk(ctx context.Context, save_chan chan bool, starting_bo
 						bh := sb.Hash()
 						if bw.Visited.TryInsert(bh) {
 							// new board state was found
-							bw.Counter_lock.Lock()
-							*bw.Counter += 1
-							bw.Counter_lock.Unlock()
+							counted += 1
 						} else {
-							bw.Repeated_lock.Lock()
-							*bw.Repeated += 1
-							bw.Repeated_lock.Unlock()
+							repeated += 1
 						}
 					}
 				}
 
-				bw.Explored_lock.Lock()
-				*bw.Explored += 1
-				bw.Explored_lock.Unlock()
+				explored += 1
+				if explored == uint64(update_interval) {
+					bw.Counter_lock.Lock()
+					*bw.Counter += counted
+					*bw.Explored += explored
+					*bw.Repeated += repeated
+					bw.Counter_lock.Unlock()
+					counted = 0
+					explored = 0
+					repeated = 0
+				}
 			}
 		}
 	}
+
+	bw.Counter_lock.Lock()
+	*bw.Counter += counted
+	*bw.Explored += explored
+	*bw.Repeated += repeated
+	bw.Counter_lock.Unlock()
 
 	fmt.Printf("processor %d has exited\n", bw.Identifier)
 	bw.Finished_lock.Lock()
