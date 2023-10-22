@@ -157,6 +157,10 @@ func save_state(fname string, fchans []chan *os.File, rchans []chan bool, counte
 	if err != nil {
 		return err
 	}
+	// TODO there is no guarantee that the counters are accurate at this point
+	// we should find another way to do this,
+	// have the final walker return the counters when it reports as ready
+	// since all walkers have references to those globals
 	for wi, fchan := range fchans {
 		fchan <- fp
 		v := <-rchans[wi]
