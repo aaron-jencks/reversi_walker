@@ -52,3 +52,11 @@ Module.symvers
 Mkfile.old
 dkms.conf
 reversi
+report/report.aux
+report/report.bbl
+report/report.bcf
+report/report.blg
+report/report.log
+report/report.run.xml
+report/report.synctex.gz
+report/report.toc
