@@ -19,6 +19,7 @@ import (
 func main() {
 	p := message.NewPrinter(language.English)
 
+	// TODO implement saving daemon
 	var checkpoint_path string = "./checkpoint.bin"
 	var procs uint = uint(runtime.NumCPU()) << 1
 	var ubsize uint = 8
@@ -37,8 +38,8 @@ func main() {
 
 	bsize := uint8(ubsize)
 
-	var counter, explored, repeated uint64 = 0, 0, 0
-	var clock, elock, rlock sync.RWMutex = sync.RWMutex{}, sync.RWMutex{}, sync.RWMutex{}
+	var counter, explored, repeated, finished uint64 = 0, 0, 0, 0
+	var clock, elock, rlock, finlock sync.RWMutex = sync.RWMutex{}, sync.RWMutex{}, sync.RWMutex{}, sync.RWMutex{}
 
 	ctx, can := context.WithCancel(context.Background())
 
@@ -53,14 +54,16 @@ func main() {
 
 	for wi, ib := range initialBoards {
 		bw := walking.BoardWalker{
-			Identifier:    uint32(wi),
-			Counter:       &counter,
-			Counter_lock:  &clock,
-			Explored:      &explored,
-			Explored_lock: &elock,
-			Repeated:      &repeated,
-			Repeated_lock: &rlock,
-			Visited:       visiting.CreateSimpleVisitedCache(),
+			Identifier:     uint32(wi),
+			Counter:        &counter,
+			Counter_lock:   &clock,
+			Explored:       &explored,
+			Explored_lock:  &elock,
+			Repeated:       &repeated,
+			Repeated_lock:  &rlock,
+			Visited:        visiting.CreateSimpleVisitedCache(),
+			Finished_count: &finished,
+			Finished_lock:  &finlock,
 		}
 		go bw.Walk(ctx, save_chan, ib)
 	}
@@ -83,12 +86,19 @@ func main() {
 			clock.RLock()
 			elock.RLock()
 			rlock.RLock()
+			finlock.RLock()
 			erate := uint64(float64(explored-prev_explored) / display_poll.Seconds())
-			p.Printf("\r%d found %d explored %d repeated @ %d boards/sec", counter, explored, repeated, erate)
+			tfinished := finished
+			p.Printf("\r%d found %d explored %d repeated %d finished @ %d boards/sec", counter, explored, repeated, finished, erate)
 			prev_explored = explored
 			clock.RUnlock()
 			elock.RUnlock()
 			rlock.RUnlock()
+			finlock.RUnlock()
+			if uint(tfinished) == procs {
+				p.Printf("\nall walkers exited, quitting\n")
+				can()
+			}
 			time.Sleep(display_poll)
 		}
 	}

@@ -103,6 +103,11 @@ func (bw BoardWalker) Walk(ctx context.Context, save_chan chan bool, starting_bo
 			}
 		}
 	}
+
+	fmt.Printf("processor %d has exited\n", bw.Identifier)
+	bw.Finished_lock.Lock()
+	defer bw.Finished_lock.Unlock()
+	*bw.Finished_count++
 }
 
 func (bw BoardWalker) ToFile(stack []gameplay.Board) error {
