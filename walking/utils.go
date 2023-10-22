@@ -8,7 +8,10 @@ func findNextBoards(b gameplay.Board) []gameplay.Coord {
 	for i := uint8(0); i < b.Height; i++ {
 		for j := uint8(0); j < b.Width; j++ {
 			if b.IsLegalMove(i, j) {
-				result = append(result, gameplay.Coord{i, j})
+				result = append(result, gameplay.Coord{
+					Row:    i,
+					Column: j,
+				})
 			}
 		}
 	}
