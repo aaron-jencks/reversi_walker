@@ -18,16 +18,11 @@ type BoardWalker struct {
 	Explored       *uint64
 	Repeated       *uint64
 	Counter_lock   *sync.RWMutex
-	Saving_counter *uint64
-	File_pointer   **os.File
-	File_lock      *sync.Mutex
+	File_chan      <-chan *os.File
+	Ready_chan     chan<- bool
 	Finished_count *uint64
 	Finished_lock  *sync.RWMutex
 }
-
-// when set, causes the processors to save their work
-var SAVING_FLAG bool
-var saving_lock sync.Mutex
 
 func (bw BoardWalker) Walk(ctx context.Context, update_interval uint, starting_board gameplay.Board) {
 	// TODO make it so that we don't update the counters every board, but on an interval of boards
@@ -45,10 +40,15 @@ func (bw BoardWalker) Walk(ctx context.Context, update_interval uint, starting_b
 			select {
 			case <-ctx.Done():
 				break SearchLoop
-			// case <-save_chan:
-			// 	saving_lock.Lock()
-
-			// 	saving_lock.Unlock()
+			case fp := <-bw.File_chan:
+				err := bw.ToFile(fp, stack)
+				if err != nil {
+					fmt.Printf("failed to save walker %d: %s\n", bw.Identifier, err.Error())
+					bw.Ready_chan <- false
+					break SearchLoop
+				}
+				fmt.Printf("saved processor %d\n", bw.Identifier)
+				bw.Ready_chan <- true
 			default:
 				sb := stack[len(stack)-1]
 				stack = stack[:len(stack)-1]
@@ -117,9 +117,7 @@ func (bw BoardWalker) Walk(ctx context.Context, update_interval uint, starting_b
 	*bw.Finished_count++
 }
 
-func (bw BoardWalker) ToFile(stack []gameplay.Board) error {
-	saving_lock.Lock()
-	defer saving_lock.Unlock()
+func (bw BoardWalker) ToFile(fp *os.File, stack []gameplay.Board) error {
 	barr := make([]byte, 16)
 	for _, b := range stack {
 		bh := b.Hash()
@@ -139,7 +137,7 @@ func (bw BoardWalker) ToFile(stack []gameplay.Board) error {
 		barr[13] = byte(bh.L >> 16)
 		barr[14] = byte(bh.L >> 8)
 		barr[15] = byte(bh.L)
-		_, err := (*bw.File_pointer).Write(barr)
+		_, err := fp.Write(barr)
 		if err != nil {
 			return err
 		}
