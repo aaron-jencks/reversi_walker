@@ -67,13 +67,14 @@ func main() {
 	}
 
 	prev_explored := explored
+	tstart := time.Now()
 	for {
 		select {
 		case <-sigs:
 			can()
 		case <-ctx.Done():
 			clock.RLock()
-			p.Printf("\rfinal counts %d found %d explored %d repeated\n", counter, explored, repeated)
+			p.Printf("\r[%s] final counts %d found %d explored %d repeated\n", time.Since(tstart), counter, explored, repeated)
 			clock.RUnlock()
 			return
 		default:
@@ -81,7 +82,8 @@ func main() {
 			finlock.RLock()
 			erate := uint64(float64(explored-prev_explored) / display_poll.Seconds())
 			tfinished := finished
-			p.Printf("\r%d found %d explored %d repeated %d finished @ %d boards/sec", counter, explored, repeated, finished, erate)
+			p.Printf("\r[%s] %d found %d explored %d repeated %d finished @ %d boards/sec",
+				time.Since(tstart), counter, explored, repeated, finished, erate)
 			prev_explored = explored
 			clock.RUnlock()
 			finlock.RUnlock()
