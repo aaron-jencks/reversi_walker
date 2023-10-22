@@ -31,9 +31,6 @@ type BoardWalker struct {
 var SAVING_FLAG bool
 var saving_lock sync.Mutex
 
-// when set, causes the processors to terminate
-var WALKER_KILL_FLAG bool
-
 func (bw BoardWalker) Walk(ctx context.Context, save_chan chan bool, starting_board gameplay.Board) {
 	// TODO make it so that we don't update the counters every board, but on an interval of boards
 	// this will reduce lock contention
