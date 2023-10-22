@@ -90,15 +90,17 @@ func main() {
 			// execution ended
 			clock.RLock()
 			p.Printf("\r[%s] final counts %d found %d explored %d repeated\n", time.Since(tstart), counter, explored, repeated)
+			err := save_state(checkpoint_path, fchans, rchans, counter, explored, repeated, time.Since(tstart))
 			clock.RUnlock()
-			err := save_state(checkpoint_path, fchans, rchans)
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
 			return
 		case <-save_ticker.C:
 			// save progress
-			err := save_state(checkpoint_path, fchans, rchans)
+			clock.RLock()
+			err := save_state(checkpoint_path, fchans, rchans, counter, explored, repeated, time.Since(tstart))
+			clock.RUnlock()
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
@@ -121,8 +123,37 @@ func main() {
 	}
 }
 
-func save_state(fname string, fchans []chan *os.File, rchans []chan bool) error {
+func save_state(fname string, fchans []chan *os.File, rchans []chan bool, counted, explored, repeated uint64, elapsed time.Duration) error {
 	fp, err := os.OpenFile(fname, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0777)
+	if err != nil {
+		return err
+	}
+	defer fp.Close()
+	uint64ToBytes := func(i uint64) []byte {
+		return []byte{
+			byte(i >> 56),
+			byte(i >> 48),
+			byte(i >> 40),
+			byte(i >> 32),
+			byte(i >> 24),
+			byte(i >> 16),
+			byte(i >> 8),
+			byte(i),
+		}
+	}
+	_, err = fp.Write(uint64ToBytes(counted))
+	if err != nil {
+		return err
+	}
+	_, err = fp.Write(uint64ToBytes(explored))
+	if err != nil {
+		return err
+	}
+	_, err = fp.Write(uint64ToBytes(repeated))
+	if err != nil {
+		return err
+	}
+	_, err = fp.Write(uint64ToBytes(uint64(elapsed)))
 	if err != nil {
 		return err
 	}
