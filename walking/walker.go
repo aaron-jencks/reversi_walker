@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aaron-jencks/reversi/caching"
 	"github.com/aaron-jencks/reversi/gameplay"
 	"github.com/aaron-jencks/reversi/utils/uint128"
 	"github.com/aaron-jencks/reversi/visiting"
@@ -29,25 +30,24 @@ type BoardWalker struct {
 func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	// TODO make it so that we don't update the counters every board, but on an interval of boards
 	// this will reduce lock contention
-	stack := make([]gameplay.Board, 1, 1000)
-	stack[0] = starting_board
+	stack := caching.CreateArrayStack[gameplay.Board](1830)
+	stack.Push(starting_board)
 
 	var explored uint64 = 0
 
 	updater := time.NewTicker(bw.Update_interval)
-	// TODO update this so that we reuse the array instead of reallocating it
-	var update_buffer []uint128.Uint128
+	update_buffer := caching.CreateArrayStack[uint128.Uint128](int(bw.Update_interval.Seconds() * 1400000))
 
-	if len(stack) > 0 {
+	if stack.Len() > 0 {
 		fmt.Printf("processor %d has started\n", bw.Identifier)
 
 	SearchLoop:
-		for len(stack) > 0 {
+		for stack.Len() > 0 {
 			select {
 			case <-ctx.Done():
 				break SearchLoop
 			case fp := <-bw.File_chan:
-				err := bw.ToFile(fp, stack)
+				err := bw.ToFile(fp, &stack)
 				if err != nil {
 					fmt.Printf("failed to save walker %d: %s\n", bw.Identifier, err.Error())
 					bw.Ready_chan <- false
@@ -57,7 +57,8 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 				bw.Ready_chan <- true
 			case <-updater.C:
 				bw.Visited.Lock()
-				for _, bh := range update_buffer {
+				for update_buffer.Len() > 0 {
+					bh := update_buffer.Pop()
 					if bw.Visited.TryInsert(bh) {
 						// new board state was found
 						*bw.Counter += 1
@@ -68,11 +69,9 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 				*bw.Explored += explored
 				bw.Visited.Unlock()
 				explored = 0
-				update_buffer = nil
 				updater.Reset(bw.Update_interval)
 			default:
-				sb := stack[len(stack)-1]
-				stack = stack[:len(stack)-1]
+				sb := stack.Pop()
 
 				next_coords := findNextBoards(sb)
 
@@ -81,7 +80,7 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 					for _, mm := range next_coords {
 						bc := sb.Clone()
 						bc.PlacePiece(mm.Row, mm.Column)
-						stack = append(stack, bc)
+						stack.Push(bc)
 					}
 				} else {
 					// there are no legal moves, try the other player
@@ -97,12 +96,12 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 						for _, mm := range next_coords {
 							bc := sb.Clone()
 							bc.PlacePiece(mm.Row, mm.Column)
-							stack = append(stack, bc)
+							stack.Push(bc)
 						}
 					} else {
 						// there are no moves for anybody
 						bh := sb.Hash()
-						update_buffer = append(update_buffer, bh)
+						update_buffer.Push(bh)
 					}
 				}
 
@@ -111,10 +110,11 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 		}
 	}
 
+	// empty remaining boards
 	bw.Visited.Lock()
-	for _, bh := range update_buffer {
+	for update_buffer.Len() > 0 {
+		bh := update_buffer.Pop()
 		if bw.Visited.TryInsert(bh) {
-			// new board state was found
 			*bw.Counter += 1
 		} else {
 			*bw.Repeated += 1
@@ -130,9 +130,10 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	*bw.Finished_count++
 }
 
-func (bw BoardWalker) ToFile(fp *os.File, stack []gameplay.Board) error {
+func (bw BoardWalker) ToFile(fp *os.File, stack *caching.ArrayStack[gameplay.Board]) error {
 	barr := make([]byte, 16)
-	for _, b := range stack {
+	for bi := 0; bi < stack.Len(); bi++ {
+		b := stack.Index(bi)
 		bh := b.Hash()
 		barr[0] = byte(bh.H >> 56)
 		barr[1] = byte(bh.H >> 48)
