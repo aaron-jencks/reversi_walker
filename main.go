@@ -22,14 +22,14 @@ func main() {
 
 	// TODO implement saving daemon
 	var checkpoint_path string = "./checkpoint.bin"
-	var procs uint = uint(runtime.NumCPU()) << 1
+	var procs uint = uint(runtime.NumCPU())
 	var ubsize uint = 8
 	var display_poll time.Duration = 2 * time.Second
 	var save_interval time.Duration = 5 * time.Minute
 	var cache_update_interval time.Duration = time.Second
 
 	flag.StringVar(&checkpoint_path, "check", checkpoint_path, "indicates where to save checkpoints, defaults to ./checkpoint.bin")
-	flag.UintVar(&procs, "procs", procs, "specifies how many threads to use for processing, defaults to 2*cpu cores")
+	flag.UintVar(&procs, "procs", procs, "specifies how many threads to use for processing, defaults to the number of cpu cores")
 	flag.UintVar(&ubsize, "size", ubsize, "specifies the size of the board to run the program on, defaults to 8")
 	flag.DurationVar(&display_poll, "display", display_poll, "specifies how often to update the statistics in the terminal, defaults to 2s")
 	flag.DurationVar(&save_interval, "save", save_interval, "specifies how often to save the state of the walker, defaults to 5m")
