@@ -95,6 +95,7 @@ func main() {
 			vexplored := explored
 			vrepeated := repeated
 			cache.RUnlock()
+			p.Printf("\nSaving walkers\n")
 			err := save_state(checkpoint_path, fchans, rchans, vcounter, vexplored, vrepeated, time.Since(tstart))
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
@@ -103,9 +104,13 @@ func main() {
 		case <-save_ticker.C:
 			// save progress
 			walking.PauseWalkers(len(walkers))
+			p.Printf("\nSaving walkers\n")
 			cache.RLock()
-			err := save_state(checkpoint_path, fchans, rchans, counter, explored, repeated, time.Since(tstart))
+			vcounter := counter
+			vexplored := explored
+			vrepeated := repeated
 			cache.RUnlock()
+			err := save_state(checkpoint_path, fchans, rchans, vcounter, vexplored, vrepeated, time.Since(tstart))
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
