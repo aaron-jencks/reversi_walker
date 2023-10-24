@@ -139,6 +139,13 @@ func (b Board) Clone() Board {
 	return result
 }
 
+func (b Board) CloneInto(bt *Board) {
+	bt.Player = b.Player
+	bt.Height = b.Height
+	bt.Width = b.Width
+	copy(bt.Board, b.Board)
+}
+
 // IsLegalMove determines if a given position is legal for the current turn
 func (b Board) IsLegalMove(row, column uint8) bool {
 	if row >= b.Height || column >= b.Width || b.Get(row, column) != BOARD_EMPTY {

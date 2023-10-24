@@ -28,10 +28,10 @@ type BoardWalker struct {
 }
 
 func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
-	// TODO make it so that we don't update the counters every board, but on an interval of boards
-	// this will reduce lock contention
 	stack := caching.CreateArrayStack[gameplay.Board](1830)
 	stack.Push(starting_board)
+
+	// TODO find a way to cache boards so that we don't have to reallocate the array every time we clone one
 
 	var explored uint64 = 0
 
