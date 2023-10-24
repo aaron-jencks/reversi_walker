@@ -5,32 +5,38 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/aaron-jencks/reversi/gameplay"
+	"github.com/aaron-jencks/reversi/utils/uint128"
 	"github.com/aaron-jencks/reversi/visiting"
 )
 
 // represents a processor that walks the game tree
 type BoardWalker struct {
-	Identifier     uint32
-	Visited        visiting.VisitedCache
-	Counter        *uint64
-	Explored       *uint64
-	Repeated       *uint64
-	Counter_lock   *sync.RWMutex
-	File_chan      <-chan *os.File
-	Ready_chan     chan<- bool
-	Finished_count *uint64
-	Finished_lock  *sync.RWMutex
+	Identifier      uint32
+	Visited         visiting.VisitedCache
+	Counter         *uint64
+	Explored        *uint64
+	Repeated        *uint64
+	File_chan       <-chan *os.File
+	Ready_chan      chan<- bool
+	Finished_count  *uint64
+	Finished_lock   *sync.RWMutex
+	Update_interval time.Duration
 }
 
-func (bw BoardWalker) Walk(ctx context.Context, update_interval uint, starting_board gameplay.Board) {
+func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	// TODO make it so that we don't update the counters every board, but on an interval of boards
 	// this will reduce lock contention
 	stack := make([]gameplay.Board, 1, 1000)
 	stack[0] = starting_board
 
-	var counted, explored, repeated uint64 = 0, 0, 0
+	var explored uint64 = 0
+
+	updater := time.NewTicker(bw.Update_interval)
+	// TODO update this so that we reuse the array instead of reallocating it
+	var update_buffer []uint128.Uint128
 
 	if len(stack) > 0 {
 		fmt.Printf("processor %d has started\n", bw.Identifier)
@@ -49,6 +55,21 @@ func (bw BoardWalker) Walk(ctx context.Context, update_interval uint, starting_b
 				}
 				fmt.Printf("saved processor %d\n", bw.Identifier)
 				bw.Ready_chan <- true
+			case <-updater.C:
+				bw.Visited.Lock()
+				for _, bh := range update_buffer {
+					if bw.Visited.TryInsert(bh) {
+						// new board state was found
+						*bw.Counter += 1
+					} else {
+						*bw.Repeated += 1
+					}
+				}
+				*bw.Explored += explored
+				bw.Visited.Unlock()
+				explored = 0
+				update_buffer = nil
+				updater.Reset(bw.Update_interval)
 			default:
 				sb := stack[len(stack)-1]
 				stack = stack[:len(stack)-1]
@@ -81,35 +102,27 @@ func (bw BoardWalker) Walk(ctx context.Context, update_interval uint, starting_b
 					} else {
 						// there are no moves for anybody
 						bh := sb.Hash()
-						if bw.Visited.TryInsert(bh) {
-							// new board state was found
-							counted += 1
-						} else {
-							repeated += 1
-						}
+						update_buffer = append(update_buffer, bh)
 					}
 				}
 
 				explored += 1
-				if explored == uint64(update_interval) {
-					bw.Counter_lock.Lock()
-					*bw.Counter += counted
-					*bw.Explored += explored
-					*bw.Repeated += repeated
-					bw.Counter_lock.Unlock()
-					counted = 0
-					explored = 0
-					repeated = 0
-				}
 			}
 		}
 	}
 
-	bw.Counter_lock.Lock()
-	*bw.Counter += counted
+	bw.Visited.Lock()
+	for _, bh := range update_buffer {
+		if bw.Visited.TryInsert(bh) {
+			// new board state was found
+			*bw.Counter += 1
+		} else {
+			*bw.Repeated += 1
+		}
+	}
 	*bw.Explored += explored
-	*bw.Repeated += repeated
-	bw.Counter_lock.Unlock()
+	bw.Visited.Unlock()
+	explored = 0
 
 	fmt.Printf("processor %d has exited\n", bw.Identifier)
 	bw.Finished_lock.Lock()

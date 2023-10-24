@@ -10,4 +10,11 @@ type VisitedCache interface {
 	//
 	// returns if the key was successfully inserted
 	TryInsert(uint128.Uint128) bool
+
+	// Lock locks the cache for the current user
+	//
+	// asynchronous behavior is undefined if TryInsert is called
+	// before this is called
+	Lock()
+	Unlock()
 }

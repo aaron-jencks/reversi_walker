@@ -24,16 +24,16 @@ func main() {
 	var checkpoint_path string = "./checkpoint.bin"
 	var procs uint = uint(runtime.NumCPU()) << 1
 	var ubsize uint = 8
-	var display_poll time.Duration = 100 * time.Millisecond
-	var walker_update_interval uint = 100000
+	var display_poll time.Duration = 2 * time.Second
 	var save_interval time.Duration = 5 * time.Minute
+	var cache_update_interval time.Duration = time.Second
 
 	flag.StringVar(&checkpoint_path, "check", checkpoint_path, "indicates where to save checkpoints, defaults to ./checkpoint.bin")
 	flag.UintVar(&procs, "procs", procs, "specifies how many threads to use for processing, defaults to 2*cpu cores")
 	flag.UintVar(&ubsize, "size", ubsize, "specifies the size of the board to run the program on, defaults to 8")
-	flag.DurationVar(&display_poll, "display", display_poll, "specifies how often to update the statistics in the terminal, defaults to 100 ms")
-	flag.UintVar(&walker_update_interval, "walkupdate", walker_update_interval, "specifies how often the walkers should update the counters, defaults to every 100000 boards")
+	flag.DurationVar(&display_poll, "display", display_poll, "specifies how often to update the statistics in the terminal, defaults to 2s")
 	flag.DurationVar(&save_interval, "save", save_interval, "specifies how often to save the state of the walker, defaults to 5m")
+	flag.DurationVar(&cache_update_interval, "walkupdate", cache_update_interval, "specifies how often the walkers should take their cached data and sync it with the cache, defaults to 1s")
 	flag.Parse()
 
 	if ubsize > 255 {
@@ -44,7 +44,7 @@ func main() {
 	bsize := uint8(ubsize)
 
 	var counter, explored, repeated, finished uint64 = 0, 0, 0, 0
-	var clock, finlock sync.RWMutex = sync.RWMutex{}, sync.RWMutex{}
+	var finlock sync.RWMutex = sync.RWMutex{}
 
 	ctx, can := context.WithCancel(context.Background())
 
@@ -65,18 +65,18 @@ func main() {
 		fchans[wi] = make(chan *os.File)
 		rchans[wi] = make(chan bool)
 		walkers[wi] = &walking.BoardWalker{
-			Identifier:     uint32(wi),
-			Counter:        &counter,
-			Counter_lock:   &clock,
-			Explored:       &explored,
-			Repeated:       &repeated,
-			Visited:        cache,
-			Finished_count: &finished,
-			Finished_lock:  &finlock,
-			File_chan:      fchans[wi],
-			Ready_chan:     rchans[wi],
+			Identifier:      uint32(wi),
+			Counter:         &counter,
+			Explored:        &explored,
+			Repeated:        &repeated,
+			Visited:         cache,
+			Finished_count:  &finished,
+			Finished_lock:   &finlock,
+			File_chan:       fchans[wi],
+			Ready_chan:      rchans[wi],
+			Update_interval: cache_update_interval,
 		}
-		go walkers[wi].Walk(ctx, walker_update_interval, ib)
+		go walkers[wi].Walk(ctx, ib)
 	}
 
 	prev_explored := explored
@@ -88,31 +88,31 @@ func main() {
 			can()
 		case <-ctx.Done():
 			// execution ended
-			clock.RLock()
+			cache.RLock()
 			p.Printf("\r[%s] final counts %d found %d explored %d repeated\n", time.Since(tstart), counter, explored, repeated)
 			err := save_state(checkpoint_path, fchans, rchans, counter, explored, repeated, time.Since(tstart))
-			clock.RUnlock()
+			cache.RUnlock()
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
 			return
 		case <-save_ticker.C:
 			// save progress
-			clock.RLock()
+			cache.RLock()
 			err := save_state(checkpoint_path, fchans, rchans, counter, explored, repeated, time.Since(tstart))
-			clock.RUnlock()
+			cache.RUnlock()
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
 		default:
-			clock.RLock()
+			cache.RLock()
 			finlock.RLock()
 			erate := uint64(float64(explored-prev_explored) / display_poll.Seconds())
 			tfinished := finished
 			p.Printf("\r[%s] %d found %d explored %d repeated %d finished @ %d boards/sec",
 				time.Since(tstart), counter, explored, repeated, finished, erate)
 			prev_explored = explored
-			clock.RUnlock()
+			cache.RUnlock()
 			finlock.RUnlock()
 			if uint(tfinished) == procs {
 				p.Printf("\nall walkers exited, quitting\n")
