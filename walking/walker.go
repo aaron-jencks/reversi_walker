@@ -27,6 +27,33 @@ type BoardWalker struct {
 	Update_interval time.Duration
 }
 
+var SAVING bool = false
+var PAUSED_COUNT int = 0
+var SAVING_LOCK sync.RWMutex = sync.RWMutex{}
+
+func PauseWalkers(wc int) {
+	SAVING_LOCK.Lock()
+	SAVING = true
+	PAUSED_COUNT = 0
+	SAVING_LOCK.Unlock()
+	for {
+		SAVING_LOCK.RLock()
+		pc := PAUSED_COUNT
+		SAVING_LOCK.RUnlock()
+		if pc == wc {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func UnpauseWalkers() {
+	SAVING_LOCK.Lock()
+	SAVING = false
+	PAUSED_COUNT = 0
+	SAVING_LOCK.Unlock()
+}
+
 func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	stack := caching.CreateArrayStack[gameplay.Board](1830)
 	stack.Push(starting_board)
@@ -34,9 +61,15 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	// TODO find a way to cache boards so that we don't have to reallocate the array every time we clone one
 
 	var explored uint64 = 0
+	SAVING_LOCK.RLock()
+	saving := SAVING
+	SAVING_LOCK.RUnlock()
 
 	updater := time.NewTicker(bw.Update_interval)
 	update_buffer := caching.CreateArrayStack[uint128.Uint128](int(bw.Update_interval.Seconds() * 1400000))
+
+	saving_poll := time.NewTicker(1000 * time.Millisecond)
+	exit_on_save := false
 
 	if stack.Len() > 0 {
 		fmt.Printf("processor %d has started\n", bw.Identifier)
@@ -45,7 +78,8 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 		for stack.Len() > 0 {
 			select {
 			case <-ctx.Done():
-				break SearchLoop
+				exit_on_save = true
+				saving = true
 			case fp := <-bw.File_chan:
 				err := bw.ToFile(fp, &stack)
 				if err != nil {
@@ -55,6 +89,9 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 				}
 				fmt.Printf("saved processor %d\n", bw.Identifier)
 				bw.Ready_chan <- true
+				if exit_on_save {
+					break SearchLoop
+				}
 			case <-updater.C:
 				bw.Visited.Lock()
 				for update_buffer.Len() > 0 {
@@ -70,7 +107,20 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 				bw.Visited.Unlock()
 				explored = 0
 				updater.Reset(bw.Update_interval)
+			case <-saving_poll.C:
+				SAVING_LOCK.RLock()
+				saving = SAVING
+				SAVING_LOCK.RUnlock()
+				if saving {
+					SAVING_LOCK.Lock()
+					PAUSED_COUNT++
+					SAVING_LOCK.Unlock()
+				}
 			default:
+				if saving {
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
 				sb := stack.Pop()
 
 				next_coords := findNextBoards(sb)
@@ -110,6 +160,8 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 		}
 	}
 
+	fmt.Printf("processor %d is exiting\n", bw.Identifier)
+
 	// empty remaining boards
 	bw.Visited.Lock()
 	for update_buffer.Len() > 0 {
@@ -122,12 +174,11 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	}
 	*bw.Explored += explored
 	bw.Visited.Unlock()
-	explored = 0
 
-	fmt.Printf("processor %d has exited\n", bw.Identifier)
 	bw.Finished_lock.Lock()
 	defer bw.Finished_lock.Unlock()
 	*bw.Finished_count++
+	fmt.Printf("processor %d has exited\n", bw.Identifier)
 }
 
 func (bw BoardWalker) ToFile(fp *os.File, stack *caching.ArrayStack[gameplay.Board]) error {

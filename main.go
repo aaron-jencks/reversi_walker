@@ -88,22 +88,28 @@ func main() {
 			can()
 		case <-ctx.Done():
 			// execution ended
+			walking.PauseWalkers(len(walkers))
 			cache.RLock()
 			p.Printf("\r[%s] final counts %d found %d explored %d repeated\n", time.Since(tstart), counter, explored, repeated)
-			err := save_state(checkpoint_path, fchans, rchans, counter, explored, repeated, time.Since(tstart))
+			vcounter := counter
+			vexplored := explored
+			vrepeated := repeated
 			cache.RUnlock()
+			err := save_state(checkpoint_path, fchans, rchans, vcounter, vexplored, vrepeated, time.Since(tstart))
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
 			return
 		case <-save_ticker.C:
 			// save progress
+			walking.PauseWalkers(len(walkers))
 			cache.RLock()
 			err := save_state(checkpoint_path, fchans, rchans, counter, explored, repeated, time.Since(tstart))
 			cache.RUnlock()
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
+			walking.UnpauseWalkers()
 		default:
 			cache.RLock()
 			finlock.RLock()
