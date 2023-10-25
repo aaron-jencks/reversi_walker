@@ -54,9 +54,24 @@ func UnpauseWalkers() {
 	SAVING_LOCK.Unlock()
 }
 
+type walkerBoardWIndex struct {
+	Board *gameplay.Board
+	Index int
+}
+
 func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
-	stack := caching.CreateArrayStack[gameplay.Board](1830)
-	stack.Push(starting_board)
+	board_cache := caching.CreatePointerCache[gameplay.Board](5000, func() gameplay.Board {
+		return gameplay.CreateBoard(gameplay.BOARD_BLACK, starting_board.Height, starting_board.Width)
+	})
+
+	sbi, sb := board_cache.Get()
+	starting_board.CloneInto(sb)
+
+	stack := caching.CreateArrayStack[walkerBoardWIndex](1830)
+	stack.Push(walkerBoardWIndex{
+		Board: sb,
+		Index: sbi,
+	})
 
 	// TODO find a way to cache boards so that we don't have to reallocate the array every time we clone one
 
@@ -123,37 +138,47 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 				}
 				sb := stack.Pop()
 
-				next_coords := findNextBoards(sb)
+				next_coords := findNextBoards(*sb.Board)
 
 				if len(next_coords) > 0 {
 					// If move is legal, then append it to the search stack
 					for _, mm := range next_coords {
-						bc := sb.Clone()
+						bci, bc := board_cache.Get()
+						sb.Board.CloneInto(bc)
 						bc.PlacePiece(mm.Row, mm.Column)
-						stack.Push(bc)
+						stack.Push(walkerBoardWIndex{
+							Board: bc,
+							Index: bci,
+						})
 					}
 				} else {
 					// there are no legal moves, try the other player
-					if sb.Player == gameplay.BOARD_WHITE {
-						sb.Player = gameplay.BOARD_BLACK
+					if sb.Board.Player == gameplay.BOARD_WHITE {
+						sb.Board.Player = gameplay.BOARD_BLACK
 					} else {
-						sb.Player = gameplay.BOARD_WHITE
+						sb.Board.Player = gameplay.BOARD_WHITE
 					}
 
-					next_coords = findNextBoards(sb)
+					next_coords = findNextBoards(*sb.Board)
 
 					if len(next_coords) > 0 {
 						for _, mm := range next_coords {
-							bc := sb.Clone()
+							bci, bc := board_cache.Get()
+							sb.Board.CloneInto(bc)
 							bc.PlacePiece(mm.Row, mm.Column)
-							stack.Push(bc)
+							stack.Push(walkerBoardWIndex{
+								Board: bc,
+								Index: bci,
+							})
 						}
 					} else {
 						// there are no moves for anybody
-						bh := sb.Hash()
+						bh := sb.Board.Hash()
 						update_buffer.Push(bh)
 					}
 				}
+
+				board_cache.Free(sb.Index)
 
 				explored += 1
 			}
@@ -181,11 +206,11 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	fmt.Printf("processor %d has exited\n", bw.Identifier)
 }
 
-func (bw BoardWalker) ToFile(fp *os.File, stack *caching.ArrayStack[gameplay.Board]) error {
+func (bw BoardWalker) ToFile(fp *os.File, stack *caching.ArrayStack[walkerBoardWIndex]) error {
 	barr := make([]byte, 16)
 	for bi := 0; bi < stack.Len(); bi++ {
 		b := stack.Index(bi)
-		bh := b.Hash()
+		bh := b.Board.Hash()
 		barr[0] = byte(bh.H >> 56)
 		barr[1] = byte(bh.H >> 48)
 		barr[2] = byte(bh.H >> 40)
