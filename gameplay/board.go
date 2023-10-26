@@ -1,5 +1,8 @@
 package gameplay
 
+// TODO switch board to a 2d array implementation to compare performance of
+// get and put calls
+
 import (
 	"fmt"
 
@@ -15,9 +18,11 @@ type Board struct {
 }
 
 // Hash hashes the board into a 128 bit integer of the format
-//      |-|----|---...---|
-//       ^ ^            ^
-//  Player Center 4     Rest of the board
+//
+//	    |-|----|---...---|
+//	     ^ ^            ^
+//	Player Center 4     Rest of the board
+//
 // we only need 1 bit for the player as well as the center 4 squares
 // this is because the center squares will never be empty
 //

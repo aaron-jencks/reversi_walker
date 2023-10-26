@@ -83,12 +83,16 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	updater := time.NewTicker(bw.Update_interval)
 	update_buffer := caching.CreateArrayStack[uint128.Uint128](int(bw.Update_interval.Seconds() * 1400000))
 
+	neighbor_stack := caching.CreateArrayStack[gameplay.Coord](100)
+
 	saving_poll := time.NewTicker(1000 * time.Millisecond)
 	exit_on_save := false
 
 	if stack.Len() > 0 {
 		fmt.Printf("processor %d has started\n", bw.Identifier)
 
+		// TODO reduce the number of channels to get rid of lock contention
+		// or put channels into a different loop so that they aren't checked every iteration
 	SearchLoop:
 		for stack.Len() > 0 {
 			select {
@@ -138,11 +142,12 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 				}
 				sb := stack.Pop()
 
-				next_coords := findNextBoards(*sb.Board)
+				findNextBoards(*sb.Board, &neighbor_stack)
 
-				if len(next_coords) > 0 {
+				if neighbor_stack.Len() > 0 {
 					// If move is legal, then append it to the search stack
-					for _, mm := range next_coords {
+					for neighbor_stack.Len() > 0 {
+						mm := neighbor_stack.Pop()
 						bci, bc := board_cache.Get()
 						sb.Board.CloneInto(bc)
 						bc.PlacePiece(mm.Row, mm.Column)
@@ -159,10 +164,11 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 						sb.Board.Player = gameplay.BOARD_WHITE
 					}
 
-					next_coords = findNextBoards(*sb.Board)
+					findNextBoards(*sb.Board, &neighbor_stack)
 
-					if len(next_coords) > 0 {
-						for _, mm := range next_coords {
+					if neighbor_stack.Len() > 0 {
+						for neighbor_stack.Len() > 0 {
+							mm := neighbor_stack.Pop()
 							bci, bc := board_cache.Get()
 							sb.Board.CloneInto(bc)
 							bc.PlacePiece(mm.Row, mm.Column)

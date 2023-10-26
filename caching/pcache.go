@@ -5,6 +5,7 @@ type PCacheInitializer[T any] func() T
 type PointerCache[T any] struct {
 	buff        []T
 	available   []int
+	apointer    int
 	initializer PCacheInitializer[T]
 }
 
@@ -13,6 +14,7 @@ func CreatePointerCache[T any](capacity int, initializer PCacheInitializer[T]) P
 		buff:        make([]T, capacity),
 		available:   make([]int, capacity),
 		initializer: initializer,
+		apointer:    capacity,
 	}
 	for bi := 0; bi < capacity; bi++ {
 		cache.buff[bi] = initializer()
@@ -26,14 +28,13 @@ func CreatePointerCache[T any](capacity int, initializer PCacheInitializer[T]) P
 // If there are no elements available in the cache,
 // then a new one is allocated and initialized
 func (pc *PointerCache[T]) Get() (int, *T) {
-	if len(pc.available) == 0 {
+	if pc.apointer == 0 {
 		pc.buff = append(pc.buff, pc.initializer())
 		lbuff := len(pc.buff) - 1
 		return lbuff, &pc.buff[lbuff]
 	}
-	last := len(pc.available) - 1
-	index := pc.available[last]
-	pc.available = pc.available[:last]
+	pc.apointer--
+	index := pc.available[pc.apointer]
 	return index, &pc.buff[index]
 }
 
@@ -45,11 +46,18 @@ func (pc *PointerCache[T]) Free(index int) {
 		return
 	}
 
-	for _, i := range pc.available {
-		if i == index {
-			return
-		}
+	// // TODO this can be removed as long as we know what we're doing
+	// for _, i := range pc.available {
+	// 	if i == index {
+	// 		return
+	// 	}
+	// }
+
+	if pc.apointer == len(pc.available) {
+		pc.available = append(pc.available, index)
+	} else {
+		pc.available[pc.apointer] = index
 	}
 
-	pc.available = append(pc.available, index)
+	pc.apointer++
 }
