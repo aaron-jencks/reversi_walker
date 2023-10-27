@@ -96,22 +96,35 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	SearchLoop:
 		for stack.Len() > 0 {
 			select {
-			case <-ctx.Done():
-				exit_on_save = true
-				saving = true
-			case fp := <-bw.File_chan:
-				err := bw.ToFile(fp, &stack)
-				if err != nil {
-					fmt.Printf("failed to save walker %d: %s\n", bw.Identifier, err.Error())
-					bw.Ready_chan <- false
-					break SearchLoop
-				}
-				fmt.Printf("saved processor %d\n", bw.Identifier)
-				bw.Ready_chan <- true
-				if exit_on_save {
-					break SearchLoop
-				}
 			case <-updater.C:
+				// putting these channels here reduces lock contention
+				select {
+				case <-ctx.Done():
+					exit_on_save = true
+					saving = true
+				case fp := <-bw.File_chan:
+					err := bw.ToFile(fp, &stack)
+					if err != nil {
+						fmt.Printf("failed to save walker %d: %s\n", bw.Identifier, err.Error())
+						bw.Ready_chan <- false
+						break SearchLoop
+					}
+					fmt.Printf("saved processor %d\n", bw.Identifier)
+					bw.Ready_chan <- true
+					if exit_on_save {
+						break SearchLoop
+					}
+				case <-saving_poll.C:
+					SAVING_LOCK.RLock()
+					saving = SAVING
+					SAVING_LOCK.RUnlock()
+					if saving {
+						SAVING_LOCK.Lock()
+						PAUSED_COUNT++
+						SAVING_LOCK.Unlock()
+					}
+				default:
+				}
 				bw.Visited.Lock()
 				for update_buffer.Len() > 0 {
 					bh := update_buffer.Pop()
@@ -126,15 +139,6 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 				bw.Visited.Unlock()
 				explored = 0
 				updater.Reset(bw.Update_interval)
-			case <-saving_poll.C:
-				SAVING_LOCK.RLock()
-				saving = SAVING
-				SAVING_LOCK.RUnlock()
-				if saving {
-					SAVING_LOCK.Lock()
-					PAUSED_COUNT++
-					SAVING_LOCK.Unlock()
-				}
 			default:
 				if saving {
 					time.Sleep(100 * time.Millisecond)
