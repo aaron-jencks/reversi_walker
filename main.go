@@ -30,6 +30,7 @@ func main() {
 	var cache_update_interval time.Duration = time.Second
 	var cpu_profile_file string = ""
 	var mem_profile_file string = ""
+	var restore_file string = ""
 
 	flag.StringVar(&checkpoint_path, "check", checkpoint_path, "indicates where to save checkpoints, defaults to ./checkpoint.bin")
 	flag.UintVar(&procs, "procs", procs, "specifies how many threads to use for processing, defaults to the number of cpu cores")
@@ -39,6 +40,7 @@ func main() {
 	flag.DurationVar(&cache_update_interval, "walkupdate", cache_update_interval, "specifies how often the walkers should take their cached data and sync it with the cache, defaults to 1s")
 	flag.StringVar(&cpu_profile_file, "cpuprofile", cpu_profile_file, "specifies where to save pprof data to if supplied, leave empty to disable")
 	flag.StringVar(&mem_profile_file, "memprofile", mem_profile_file, "specifies where to save the pprof memory data to if supplied, leave empty to disable")
+	flag.StringVar(&restore_file, "restore", restore_file, "specifies where to restore the simulation from if supplied, leave empty to start fresh")
 	flag.Parse()
 
 	if ubsize > 255 {
@@ -73,16 +75,6 @@ func main() {
 			}
 			pprof.StopCPUProfile()
 		}()
-	}
-
-	if mem_profile_file != "" {
-		f, err := os.Create(mem_profile_file)
-		if err != nil {
-			p.Printf("failed to start memory profiling: %s\n", err.Error())
-			return
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
 	}
 
 	bsize := uint8(ubsize)
