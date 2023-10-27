@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
@@ -12,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aaron-jencks/reversi/checkpoints"
 	"github.com/aaron-jencks/reversi/visiting"
 	"github.com/aaron-jencks/reversi/walking"
 	"golang.org/x/text/language"
@@ -133,7 +133,7 @@ func main() {
 			vrepeated := repeated
 			cache.RUnlock()
 			p.Printf("\nSaving walkers\n")
-			err := save_state(checkpoint_path, fchans, rchans, vcounter, vexplored, vrepeated, time.Since(tstart))
+			err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, tstart)
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
@@ -147,7 +147,7 @@ func main() {
 			vexplored := explored
 			vrepeated := repeated
 			cache.RUnlock()
-			err := save_state(checkpoint_path, fchans, rchans, vcounter, vexplored, vrepeated, time.Since(tstart))
+			err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, tstart)
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
@@ -169,52 +169,4 @@ func main() {
 			time.Sleep(display_poll)
 		}
 	}
-}
-
-func save_state(fname string, fchans []chan *os.File, rchans []chan bool, counted, explored, repeated uint64, elapsed time.Duration) error {
-	fp, err := os.OpenFile(fname, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0777)
-	if err != nil {
-		return err
-	}
-	defer fp.Close()
-	uint64ToBytes := func(i uint64) []byte {
-		return []byte{
-			byte(i >> 56),
-			byte(i >> 48),
-			byte(i >> 40),
-			byte(i >> 32),
-			byte(i >> 24),
-			byte(i >> 16),
-			byte(i >> 8),
-			byte(i),
-		}
-	}
-	_, err = fp.Write(uint64ToBytes(counted))
-	if err != nil {
-		return err
-	}
-	_, err = fp.Write(uint64ToBytes(explored))
-	if err != nil {
-		return err
-	}
-	_, err = fp.Write(uint64ToBytes(repeated))
-	if err != nil {
-		return err
-	}
-	_, err = fp.Write(uint64ToBytes(uint64(elapsed)))
-	if err != nil {
-		return err
-	}
-	// TODO there is no guarantee that the counters are accurate at this point
-	// we should find another way to do this,
-	// have the final walker return the counters when it reports as ready
-	// since all walkers have references to those globals
-	for wi, fchan := range fchans {
-		fchan <- fp
-		v := <-rchans[wi]
-		if !v {
-			return fmt.Errorf("failed to save writer %d", wi)
-		}
-	}
-	return nil
 }
