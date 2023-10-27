@@ -82,7 +82,12 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 		Index: sbi,
 	})
 
-	// TODO find a way to cache boards so that we don't have to reallocate the array every time we clone one
+	bw.WalkPrestacked(ctx, &board_cache, &stack, starting_board.Height)
+}
+
+func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.PointerCache[gameplay.Board], stack *caching.ArrayStack[walkerBoardWIndex], bsize uint8) {
+	// TODO can add a local visited cache to speed up repeated finds
+	// will make search much more efficient
 
 	var explored uint64 = 0
 	SAVING_LOCK.RLock()
@@ -99,8 +104,6 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	if stack.Len() > 0 {
 		fmt.Printf("processor %d has started\n", bw.Identifier)
 
-		// TODO reduce the number of channels to get rid of lock contention
-		// or put channels into a different loop so that they aren't checked every iteration
 	SearchLoop:
 		for stack.Len() > 0 {
 			select {
@@ -110,7 +113,7 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 				case <-ctx.Done():
 					exit_on_save = true
 				case fp := <-bw.File_chan:
-					err := bw.ToFile(fp, &stack)
+					err := bw.ToFile(fp, stack)
 					if err != nil {
 						fmt.Printf("failed to save walker %d: %s\n", bw.Identifier, err.Error())
 						bw.Ready_chan <- false
