@@ -12,7 +12,13 @@ import (
 	"github.com/aaron-jencks/reversi/walking"
 )
 
-func RestoreSimulation(ctx context.Context, filename string, size uint8, procs int, meta walking.WalkerMetaData, tstart *time.Time) ([]walking.BoardWalker, error) {
+type WalkerWChan struct {
+	Walker walking.BoardWalker
+	Fchan  chan *os.File
+	Rchan  chan bool
+}
+
+func RestoreSimulation(ctx context.Context, filename string, size uint8, procs int, meta walking.WalkerMetaData, tstart *time.Time) ([]WalkerWChan, error) {
 	fmt.Printf("Starting restore from %s\n", filename)
 	fp, err := os.OpenFile(filename, os.O_RDONLY, 0777)
 	if err != nil {
@@ -77,10 +83,14 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs i
 	}
 
 	fmt.Println("\nFinished restoring boards, creating walkers")
-	walkers := make([]walking.BoardWalker, procs)
+	walkers := make([]WalkerWChan, procs)
 
 	for wi := range walkers {
-		walkers[wi] = walking.CreateWalkerFromMeta(uint32(wi), meta)
+		fc := make(chan *os.File)
+		rc := make(chan bool)
+		walkers[wi].Walker = walking.CreateWalkerFromMeta(uint32(wi), fc, rc, meta)
+		walkers[wi].Fchan = fc
+		walkers[wi].Rchan = rc
 	}
 
 	fmt.Println("Created walkers, distributing boards")
@@ -117,7 +127,7 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs i
 			boff++
 		}
 
-		go walkers[wi].WalkPrestacked(ctx, &board_cache, &stack, size)
+		go walkers[wi].Walker.WalkPrestacked(ctx, &board_cache, &stack, size)
 	}
 
 	fmt.Println("Finished restoring state")

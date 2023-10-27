@@ -18,7 +18,6 @@ type WalkerMetaData struct {
 	Counter         *uint64
 	Explored        *uint64
 	Repeated        *uint64
-	File_chan       <-chan *os.File
 	Finished_count  *uint64
 	Finished_lock   *sync.RWMutex
 	Update_interval time.Duration
@@ -38,15 +37,15 @@ type BoardWalker struct {
 	Update_interval time.Duration
 }
 
-func CreateWalkerFromMeta(identifier uint32, meta WalkerMetaData) BoardWalker {
+func CreateWalkerFromMeta(identifier uint32, file_chan <-chan *os.File, ready_chan chan<- bool, meta WalkerMetaData) BoardWalker {
 	return BoardWalker{
 		Identifier:      identifier,
 		Visited:         meta.Visited,
 		Counter:         meta.Counter,
 		Explored:        meta.Explored,
 		Repeated:        meta.Repeated,
-		File_chan:       meta.File_chan,
-		Ready_chan:      make(chan bool),
+		File_chan:       file_chan,
+		Ready_chan:      ready_chan,
 		Finished_count:  meta.Finished_count,
 		Finished_lock:   meta.Finished_lock,
 		Update_interval: meta.Update_interval,
