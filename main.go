@@ -132,6 +132,7 @@ func main() {
 			can()
 		case <-ctx.Done():
 			// execution ended
+			p.Printf("\nTermination signal received\n")
 			walking.PauseWalkers(len(walkers))
 			cache.RLock()
 			p.Printf("\r[%s] final counts %d found %d explored %d repeated\n", time.Since(tstart), counter, explored, repeated)

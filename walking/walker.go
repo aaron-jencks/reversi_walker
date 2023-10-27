@@ -32,26 +32,32 @@ var PAUSED_COUNT int = 0
 var SAVING_LOCK sync.RWMutex = sync.RWMutex{}
 
 func PauseWalkers(wc int) {
+	fmt.Println("Pausing walkers")
 	SAVING_LOCK.Lock()
 	SAVING = true
 	PAUSED_COUNT = 0
 	SAVING_LOCK.Unlock()
+	fmt.Println("Set saving flag")
 	for {
 		SAVING_LOCK.RLock()
 		pc := PAUSED_COUNT
 		SAVING_LOCK.RUnlock()
+		fmt.Printf("\rWaiting for walkers to pause %d/%d", pc, wc)
 		if pc == wc {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+	fmt.Println("\nFinished pausing walkers")
 }
 
 func UnpauseWalkers() {
+	fmt.Println("Unpausing walkers")
 	SAVING_LOCK.Lock()
 	SAVING = false
 	PAUSED_COUNT = 0
 	SAVING_LOCK.Unlock()
+	fmt.Println("Finished unpausing walkers")
 }
 
 type walkerBoardWIndex struct {
@@ -85,7 +91,6 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 
 	neighbor_stack := caching.CreateArrayStack[gameplay.Coord](100)
 
-	saving_poll := time.NewTicker(1000 * time.Millisecond)
 	exit_on_save := false
 
 	if stack.Len() > 0 {
@@ -101,7 +106,6 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 				select {
 				case <-ctx.Done():
 					exit_on_save = true
-					saving = true
 				case fp := <-bw.File_chan:
 					err := bw.ToFile(fp, &stack)
 					if err != nil {
@@ -114,17 +118,19 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 					if exit_on_save {
 						break SearchLoop
 					}
-				case <-saving_poll.C:
-					SAVING_LOCK.RLock()
-					saving = SAVING
-					SAVING_LOCK.RUnlock()
-					if saving {
-						SAVING_LOCK.Lock()
-						PAUSED_COUNT++
-						SAVING_LOCK.Unlock()
-					}
 				default:
 				}
+
+				psaving := saving
+				SAVING_LOCK.RLock()
+				saving = SAVING
+				SAVING_LOCK.RUnlock()
+				if saving != psaving {
+					SAVING_LOCK.Lock()
+					PAUSED_COUNT++
+					SAVING_LOCK.Unlock()
+				}
+
 				bw.Visited.Lock()
 				for update_buffer.Len() > 0 {
 					bh := update_buffer.Pop()
