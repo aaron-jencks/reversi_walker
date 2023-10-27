@@ -13,6 +13,17 @@ import (
 	"github.com/aaron-jencks/reversi/visiting"
 )
 
+type WalkerMetaData struct {
+	Visited         visiting.VisitedCache
+	Counter         *uint64
+	Explored        *uint64
+	Repeated        *uint64
+	File_chan       <-chan *os.File
+	Finished_count  *uint64
+	Finished_lock   *sync.RWMutex
+	Update_interval time.Duration
+}
+
 // represents a processor that walks the game tree
 type BoardWalker struct {
 	Identifier      uint32
@@ -25,6 +36,21 @@ type BoardWalker struct {
 	Finished_count  *uint64
 	Finished_lock   *sync.RWMutex
 	Update_interval time.Duration
+}
+
+func CreateWalkerFromMeta(identifier uint32, meta WalkerMetaData) BoardWalker {
+	return BoardWalker{
+		Identifier:      identifier,
+		Visited:         meta.Visited,
+		Counter:         meta.Counter,
+		Explored:        meta.Explored,
+		Repeated:        meta.Repeated,
+		File_chan:       meta.File_chan,
+		Ready_chan:      make(chan bool),
+		Finished_count:  meta.Finished_count,
+		Finished_lock:   meta.Finished_lock,
+		Update_interval: meta.Update_interval,
+	}
 }
 
 var SAVING bool = false
@@ -60,7 +86,7 @@ func UnpauseWalkers() {
 	fmt.Println("Finished unpausing walkers")
 }
 
-type walkerBoardWIndex struct {
+type WalkerBoardWIndex struct {
 	Board *gameplay.Board
 	Index int
 }
@@ -76,8 +102,8 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	sbi, sb := board_cache.Get()
 	starting_board.CloneInto(sb)
 
-	stack := caching.CreateArrayStack[walkerBoardWIndex](1830)
-	stack.Push(walkerBoardWIndex{
+	stack := caching.CreateArrayStack[WalkerBoardWIndex](1830)
+	stack.Push(WalkerBoardWIndex{
 		Board: sb,
 		Index: sbi,
 	})
@@ -85,7 +111,7 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	bw.WalkPrestacked(ctx, &board_cache, &stack, starting_board.Height)
 }
 
-func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.PointerCache[gameplay.Board], stack *caching.ArrayStack[walkerBoardWIndex], bsize uint8) {
+func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.PointerCache[gameplay.Board], stack *caching.ArrayStack[WalkerBoardWIndex], bsize uint8) {
 	// TODO can add a local visited cache to speed up repeated finds
 	// will make search much more efficient
 
@@ -167,7 +193,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 						bci, bc := board_cache.Get()
 						sb.Board.CloneInto(bc)
 						bc.PlacePiece(mm.Row, mm.Column)
-						stack.Push(walkerBoardWIndex{
+						stack.Push(WalkerBoardWIndex{
 							Board: bc,
 							Index: bci,
 						})
@@ -188,7 +214,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 							bci, bc := board_cache.Get()
 							sb.Board.CloneInto(bc)
 							bc.PlacePiece(mm.Row, mm.Column)
-							stack.Push(walkerBoardWIndex{
+							stack.Push(WalkerBoardWIndex{
 								Board: bc,
 								Index: bci,
 							})
@@ -228,7 +254,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 	fmt.Printf("processor %d has exited\n", bw.Identifier)
 }
 
-func (bw BoardWalker) ToFile(fp *os.File, stack *caching.ArrayStack[walkerBoardWIndex]) error {
+func (bw BoardWalker) ToFile(fp *os.File, stack *caching.ArrayStack[WalkerBoardWIndex]) error {
 	barr := make([]byte, 16)
 	for bi := 0; bi < stack.Len(); bi++ {
 		b := stack.Index(bi)

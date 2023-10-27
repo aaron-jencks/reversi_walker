@@ -1,77 +1,125 @@
 package checkpoints
 
-// import (
-// 	"fmt"
-// 	"os"
-// 	"time"
+import (
+	"context"
+	"fmt"
+	"os"
+	"time"
 
-// 	"github.com/aaron-jencks/reversi/walking"
-// )
+	"github.com/aaron-jencks/reversi/caching"
+	"github.com/aaron-jencks/reversi/gameplay"
+	"github.com/aaron-jencks/reversi/utils"
+	"github.com/aaron-jencks/reversi/walking"
+)
 
-// func RestoreSimulation(filename string, size uint8, counter, explored, repeated *uint64, tstart *time.Time) ([]walking.BoardWalker, error) {
-// 	fmt.Printf("Starting restore from %s\n", filename)
-// 	fp, err := os.OpenFile(filename, os.O_RDONLY, 0777)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer fp.Close()
+func RestoreSimulation(ctx context.Context, filename string, size uint8, procs int, meta walking.WalkerMetaData, tstart *time.Time) ([]walking.BoardWalker, error) {
+	fmt.Printf("Starting restore from %s\n", filename)
+	fp, err := os.OpenFile(filename, os.O_RDONLY, 0777)
+	if err != nil {
+		return nil, err
+	}
+	defer fp.Close()
 
-// 	uint64FromBytes := func(b []byte) uint64 {
-// 		result := uint64(0)
-// 		result |= uint64(b[0]) << 56
-// 		result |= uint64(b[1]) << 48
-// 		result |= uint64(b[2]) << 40
-// 		result |= uint64(b[3]) << 32
-// 		result |= uint64(b[4]) << 24
-// 		result |= uint64(b[5]) << 16
-// 		result |= uint64(b[6]) << 8
-// 		result |= uint64(b[7])
-// 		return result
-// 	}
+	// reusable buffer for reading uint64 data
+	i64buff := make([]byte, 8)
 
-// 	// reusable buffer for reading uint64 data
-// 	i64buff := make([]byte, 8)
+	_, err = fp.Read(i64buff)
+	if err != nil {
+		return nil, err
+	}
+	*meta.Counter = utils.Uint64FromBytes(i64buff)
 
-// 	_, err = fp.Read(i64buff)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	*counter = uint64FromBytes(i64buff)
+	_, err = fp.Read(i64buff)
+	if err != nil {
+		return nil, err
+	}
+	*meta.Explored = utils.Uint64FromBytes(i64buff)
 
-// 	_, err = fp.Read(i64buff)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	*explored = uint64FromBytes(i64buff)
+	_, err = fp.Read(i64buff)
+	if err != nil {
+		return nil, err
+	}
+	*meta.Repeated = utils.Uint64FromBytes(i64buff)
 
-// 	_, err = fp.Read(i64buff)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	*repeated = uint64FromBytes(i64buff)
+	// read start time
+	_, err = fp.Read(i64buff)
+	if err != nil {
+		return nil, err
+	}
+	tbinlen := utils.Uint64FromBytes(i64buff)
+	tbinbuff := make([]byte, tbinlen)
+	_, err = fp.Read(tbinbuff)
+	if err != nil {
+		return nil, err
+	}
+	err = tstart.UnmarshalBinary(tbinbuff)
+	if err != nil {
+		return nil, err
+	}
 
-// 	// read start time
-// 	_, err = fp.Read(i64buff)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	tbinlen := uint64FromBytes(i64buff)
-// 	tbinbuff := make([]byte, tbinlen)
-// 	_, err = fp.Read(tbinbuff)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	err = tstart.UnmarshalBinary(tbinbuff)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	err = meta.Visited.FromFile(fp)
+	if err != nil {
+		return nil, err
+	}
 
-// 	fmt.Println("Restored counters and start time, reading boards...")
-// 	// the rest of the file is boards
-// 	i128buff := make([]byte, 16)
-// 	_, err = fp.Read(i128buff)
-// 	for err == nil {
+	fmt.Println("Restored counters, start time and cache, reading boards...")
+	// the rest of the file is boards
+	var boards []gameplay.Board
+	count := 0
+	i128buff := make([]byte, 16)
+	_, err = fp.Read(i128buff)
+	for err == nil {
+		bh := utils.Uint128FromBytes(i128buff)
+		b := gameplay.CreateUnhashBoard(size, bh)
+		boards = append(boards, b)
+		count++
+		fmt.Printf("\rLoaded %d boards", count)
+	}
 
-// 	}
+	fmt.Println("\nFinished restoring boards, creating walkers")
+	walkers := make([]walking.BoardWalker, procs)
 
-// }
+	for wi := range walkers {
+		walkers[wi] = walking.CreateWalkerFromMeta(uint32(wi), meta)
+	}
+
+	fmt.Println("Created walkers, distributing boards")
+
+	bpw := len(boards) / procs
+	eb := len(boards) % procs
+	fmt.Printf("With %d walkers and %d boards, that's %d boards per walker with %d extra", procs, len(boards), bpw, eb)
+
+	boff := 0
+	for wi := range walkers {
+		board_cache := caching.CreatePointerCache[gameplay.Board](5000, func() gameplay.Board {
+			return gameplay.CreateBoard(gameplay.BOARD_BLACK, size, size)
+		})
+
+		stack := caching.CreateArrayStack[walking.WalkerBoardWIndex](1830)
+
+		for wb := 0; wb < bpw; wb++ {
+			sbi, sb := board_cache.Get()
+			boards[boff+wb].CloneInto(sb)
+			stack.Push(walking.WalkerBoardWIndex{
+				Board: sb,
+				Index: sbi,
+			})
+		}
+
+		boff += bpw
+		if wi < eb {
+			sbi, sb := board_cache.Get()
+			boards[boff].CloneInto(sb)
+			stack.Push(walking.WalkerBoardWIndex{
+				Board: sb,
+				Index: sbi,
+			})
+			boff++
+		}
+
+		go walkers[wi].WalkPrestacked(ctx, &board_cache, &stack, size)
+	}
+
+	fmt.Println("Finished restoring state")
+	return walkers, nil
+}
