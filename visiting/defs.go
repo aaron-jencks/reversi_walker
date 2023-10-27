@@ -1,6 +1,10 @@
 package visiting
 
-import "github.com/aaron-jencks/reversi/utils/uint128"
+import (
+	"os"
+
+	"github.com/aaron-jencks/reversi/utils/uint128"
+)
 
 // represents a cache for final board states
 //
@@ -17,4 +21,10 @@ type VisitedCache interface {
 	// before this is called
 	Lock()
 	Unlock()
+
+	// ToFile stores the cache to the given file pointer
+	ToFile(*os.File) error
+
+	// FromFile Overwrites the current struct with data from the given file
+	FromFile(*os.File) error
 }
