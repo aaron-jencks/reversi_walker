@@ -81,7 +81,7 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	SAVING_LOCK.RUnlock()
 
 	updater := time.NewTicker(bw.Update_interval)
-	update_buffer := caching.CreateArrayStack[uint128.Uint128](int(bw.Update_interval.Seconds() * 1400000))
+	update_buffer := caching.CreateArrayStack[uint128.Uint128](int(bw.Update_interval.Seconds() * 8000000))
 
 	neighbor_stack := caching.CreateArrayStack[gameplay.Coord](100)
 
