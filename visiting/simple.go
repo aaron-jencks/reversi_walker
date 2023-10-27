@@ -45,6 +45,10 @@ func (sc *SimpleVisitedCache) Len() int {
 	return result
 }
 
+func (sc *SimpleVisitedCache) Clear() {
+	sc.m = map[uint64]map[uint64]bool{}
+}
+
 func (sc *SimpleVisitedCache) ToFile(fp *os.File) error {
 	mlen := sc.Len()
 
@@ -79,5 +83,31 @@ func (sc *SimpleVisitedCache) ToFile(fp *os.File) error {
 
 func (sc *SimpleVisitedCache) FromFile(fp *os.File) error {
 	fmt.Println("Loading cache from file...")
+
+	// reusable uint64 buffer
+	i64buff := make([]byte, 8)
+
+	_, err := fp.Read(i64buff)
+	if err != nil {
+		return err
+	}
+
+	count := utils.Uint64FromBytes(i64buff)
+
+	sc.Clear()
+
+	// reusable uint128 buff
+	i128buff := make([]byte, 16)
+	for bi := uint64(0); bi < count; bi++ {
+		_, err := fp.Read(i128buff)
+		if err != nil {
+			return err
+		}
+		sc.TryInsert(utils.Uint128FromBytes(i128buff))
+		fmt.Printf("\rLoaded %d/%d", bi+1, count)
+	}
+
+	fmt.Println("\nFinished loading cache")
+
 	return nil
 }
