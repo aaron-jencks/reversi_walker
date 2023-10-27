@@ -70,6 +70,9 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 		return gameplay.CreateBoard(gameplay.BOARD_BLACK, starting_board.Height, starting_board.Width)
 	})
 
+	// TODO can add a local visited cache to speed up repeated finds
+	// will make search much more efficient
+
 	sbi, sb := board_cache.Get()
 	starting_board.CloneInto(sb)
 
