@@ -87,36 +87,73 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	initialBoards := walking.FindInitialBoards(procs, bsize)
-
-	p.Printf("Created %d boards for %d processors\n", len(initialBoards), procs)
+	tstart := time.Now()
 
 	cache := visiting.CreateSimpleVisitedCache()
 
-	walkers := make([]*walking.BoardWalker, len(initialBoards))
-	fchans := make([]chan *os.File, len(initialBoards))
-	rchans := make([]chan bool, len(initialBoards))
+	var walkers []*walking.BoardWalker
+	var fchans []chan *os.File
+	var rchans []chan bool
 
-	for wi, ib := range initialBoards {
-		fchans[wi] = make(chan *os.File)
-		rchans[wi] = make(chan bool)
-		walkers[wi] = &walking.BoardWalker{
-			Identifier:      uint32(wi),
+	// check if we need to restore the state and do so now
+	if restore_file != "" {
+		p.Printf("Restoring from checkpoint %s", restore_file)
+
+		meta := walking.WalkerMetaData{
+			Visited:         cache,
 			Counter:         &counter,
 			Explored:        &explored,
 			Repeated:        &repeated,
-			Visited:         cache,
 			Finished_count:  &finished,
 			Finished_lock:   &finlock,
-			File_chan:       fchans[wi],
-			Ready_chan:      rchans[wi],
 			Update_interval: cache_update_interval,
 		}
-		go walkers[wi].Walk(ctx, ib)
+		walker_data, err := checkpoints.RestoreSimulation(ctx, restore_file, bsize, procs, meta, &tstart)
+		if err != nil {
+			p.Printf("Failed to restore state from checkpoint %s: %s\n", restore_file, err.Error())
+			return
+		}
+
+		walkers = make([]*walking.BoardWalker, len(walker_data))
+		fchans = make([]chan *os.File, len(walker_data))
+		rchans = make([]chan bool, len(walker_data))
+
+		for wi, w := range walker_data {
+			walkers[wi] = &w.Walker
+			fchans[wi] = w.Fchan
+			rchans[wi] = w.Rchan
+		}
+
+		p.Printf("Restoring from checkpoint %s complete", restore_file)
+	} else {
+		initialBoards := walking.FindInitialBoards(procs, bsize)
+
+		p.Printf("Created %d boards for %d processors\n", len(initialBoards), procs)
+
+		walkers = make([]*walking.BoardWalker, len(initialBoards))
+		fchans = make([]chan *os.File, len(initialBoards))
+		rchans = make([]chan bool, len(initialBoards))
+
+		for wi, ib := range initialBoards {
+			fchans[wi] = make(chan *os.File)
+			rchans[wi] = make(chan bool)
+			walkers[wi] = &walking.BoardWalker{
+				Identifier:      uint32(wi),
+				Counter:         &counter,
+				Explored:        &explored,
+				Repeated:        &repeated,
+				Visited:         cache,
+				Finished_count:  &finished,
+				Finished_lock:   &finlock,
+				File_chan:       fchans[wi],
+				Ready_chan:      rchans[wi],
+				Update_interval: cache_update_interval,
+			}
+			go walkers[wi].Walk(ctx, ib)
+		}
 	}
 
 	prev_explored := explored
-	tstart := time.Now()
 	save_ticker := time.NewTicker(save_interval)
 	for {
 		select {
