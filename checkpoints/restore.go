@@ -95,6 +95,7 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs u
 	bsize := stats.Size()
 	board_count := (bsize - noff) / 16
 
+	// now read in the boards
 	var boards []gameplay.Board = make([]gameplay.Board, board_count)
 	i128buff := make([]byte, 16)
 	_, err = fp.Read(i128buff)
