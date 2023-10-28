@@ -84,9 +84,6 @@ func main() {
 
 	ctx, can := context.WithCancel(context.Background())
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
 	tstart := time.Now()
 
 	cache := visiting.CreateSimpleVisitedCache()
@@ -126,6 +123,8 @@ func main() {
 
 		p.Printf("Restoring from checkpoint %s complete", restore_file)
 	} else {
+		// no restore point supplied, begin as normal
+
 		initialBoards := walking.FindInitialBoards(procs, bsize)
 
 		p.Printf("Created %d boards for %d processors\n", len(initialBoards), procs)
@@ -152,6 +151,9 @@ func main() {
 			go walkers[wi].Walk(ctx, ib)
 		}
 	}
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	prev_explored := explored
 	save_ticker := time.NewTicker(save_interval)
