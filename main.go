@@ -26,7 +26,7 @@ func main() {
 	var procs uint = uint(runtime.NumCPU())
 	var ubsize uint = 8
 	var display_poll time.Duration = 2 * time.Second
-	var save_interval time.Duration = 5 * time.Minute
+	var save_interval time.Duration = 30 * time.Minute
 	var cache_update_interval time.Duration = time.Second
 	var cpu_profile_file string = ""
 	var mem_profile_file string = ""
@@ -36,7 +36,7 @@ func main() {
 	flag.UintVar(&procs, "procs", procs, "specifies how many threads to use for processing, defaults to the number of cpu cores")
 	flag.UintVar(&ubsize, "size", ubsize, "specifies the size of the board to run the program on, defaults to 8")
 	flag.DurationVar(&display_poll, "display", display_poll, "specifies how often to update the statistics in the terminal, defaults to 2s")
-	flag.DurationVar(&save_interval, "save", save_interval, "specifies how often to save the state of the walker, defaults to 5m")
+	flag.DurationVar(&save_interval, "save", save_interval, "specifies how often to save the state of the walker, defaults to 30m")
 	flag.DurationVar(&cache_update_interval, "walkupdate", cache_update_interval, "specifies how often the walkers should take their cached data and sync it with the cache, defaults to 1s")
 	flag.StringVar(&cpu_profile_file, "cpuprofile", cpu_profile_file, "specifies where to save pprof data to if supplied, leave empty to disable")
 	flag.StringVar(&mem_profile_file, "memprofile", mem_profile_file, "specifies where to save the pprof memory data to if supplied, leave empty to disable")
