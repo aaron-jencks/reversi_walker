@@ -82,16 +82,27 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs u
 
 	fmt.Println("Restored counters, start time and cache, reading boards...")
 	// the rest of the file is boards
-	var boards []gameplay.Board
-	count := 0
+
+	// first figure out how many boards there are
+	noff, err := fp.Seek(0, 1)
+	if err != nil {
+		return nil, err
+	}
+	stats, err := fp.Stat()
+	if err != nil {
+		return nil, err
+	}
+	bsize := stats.Size()
+	board_count := (bsize - noff) / 16
+
+	var boards []gameplay.Board = make([]gameplay.Board, board_count)
 	i128buff := make([]byte, 16)
 	_, err = fp.Read(i128buff)
-	for err == nil {
+	for bi := int64(0); bi < board_count && err == nil; bi++ {
 		bh := utils.Uint128FromBytes(i128buff)
 		b := gameplay.CreateUnhashBoard(size, bh)
-		boards = append(boards, b)
-		count++
-		fmt.Printf("\rLoaded %d boards", count)
+		boards[bi] = b
+		fmt.Printf("\rLoaded %d/%d boards", bi+1, board_count)
 	}
 
 	fmt.Println("\nFinished restoring boards, creating walkers")
