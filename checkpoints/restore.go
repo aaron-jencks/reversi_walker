@@ -18,7 +18,7 @@ type WalkerWChan struct {
 	Rchan  chan bool
 }
 
-func RestoreSimulation(ctx context.Context, filename string, size uint8, procs int, meta walking.WalkerMetaData, tstart *time.Time) ([]WalkerWChan, error) {
+func RestoreSimulation(ctx context.Context, filename string, size uint8, procs uint, meta walking.WalkerMetaData, tstart *time.Time) ([]WalkerWChan, error) {
 	fmt.Printf("Starting restore from %s\n", filename)
 	fp, err := os.OpenFile(filename, os.O_RDONLY, 0777)
 	if err != nil {
@@ -95,11 +95,11 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs i
 
 	fmt.Println("Created walkers, distributing boards")
 
-	bpw := len(boards) / procs
-	eb := len(boards) % procs
+	bpw := uint(len(boards)) / procs
+	eb := uint(len(boards)) % procs
 	fmt.Printf("With %d walkers and %d boards, that's %d boards per walker with %d extra", procs, len(boards), bpw, eb)
 
-	boff := 0
+	boff := uint(0)
 	for wi := range walkers {
 		board_cache := caching.CreatePointerCache[gameplay.Board](5000, func() gameplay.Board {
 			return gameplay.CreateBoard(gameplay.BOARD_BLACK, size, size)
@@ -107,7 +107,7 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs i
 
 		stack := caching.CreateArrayStack[walking.WalkerBoardWIndex](1830)
 
-		for wb := 0; wb < bpw; wb++ {
+		for wb := uint(0); wb < bpw; wb++ {
 			sbi, sb := board_cache.Get()
 			boards[boff+wb].CloneInto(sb)
 			stack.Push(walking.WalkerBoardWIndex{
@@ -117,7 +117,7 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs i
 		}
 
 		boff += bpw
-		if wi < eb {
+		if uint(wi) < eb {
 			sbi, sb := board_cache.Get()
 			boards[boff].CloneInto(sb)
 			stack.Push(walking.WalkerBoardWIndex{
