@@ -33,6 +33,18 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs u
 	if err != nil {
 		return nil, err
 	}
+	vlen := utils.Uint64FromBytes(i64buff)
+	vbuff := make([]byte, vlen)
+	_, err = fp.Read(vbuff)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("Checkpoint version %s\n", string(vbuff))
+
+	_, err = fp.Read(i64buff)
+	if err != nil {
+		return nil, err
+	}
 	*meta.Counter = utils.Uint64FromBytes(i64buff)
 
 	_, err = fp.Read(i64buff)

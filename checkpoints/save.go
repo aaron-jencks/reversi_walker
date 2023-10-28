@@ -16,6 +16,16 @@ func SaveSimulation(fname string, fchans []chan *os.File, rchans []chan bool, ca
 	}
 	defer fp.Close()
 
+	const versionString = "v1"
+	_, err = fp.Write(utils.Uint64ToBytes(uint64(len(versionString))))
+	if err != nil {
+		return err
+	}
+	_, err = fp.Write([]byte(versionString))
+	if err != nil {
+		return err
+	}
+
 	_, err = fp.Write(utils.Uint64ToBytes(counted))
 	if err != nil {
 		return err
