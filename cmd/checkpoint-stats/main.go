@@ -8,9 +8,9 @@ import (
 	"golang.org/x/text/message"
 )
 
-func Main() {
+func main() {
 	p := message.NewPrinter(language.English)
-	restore_file := flag.String("file", "../checkpoint.bin", "specifies the file to parse, defaults to ../checkpoint.bin")
+	restore_file := flag.String("file", "../../checkpoint.bin", "specifies the file to parse, defaults to ../../checkpoint.bin")
 	flag.Parse()
 	stats, err := checkpoints.CheckpointStats(*restore_file)
 	if err != nil {

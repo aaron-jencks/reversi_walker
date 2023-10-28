@@ -97,8 +97,6 @@ func CheckpointStats(filename string) (FileStats, error) {
 	}
 	bsize := stats.Size()
 	rfs := bsize - noff
-	fmt.Printf("After reading in other data there are %d bytes left\n", rfs)
-	fmt.Printf("This means %d boards with %d bytes left over\n", rfs/16, rfs%16)
 	result.WalkerBoards = uint64(rfs / 16)
 
 	return result, nil
