@@ -67,3 +67,4 @@ report/report.toc
 *.prof
 *.mprof
 cmd/checkpoint-stats/checkpoint-stats
+cmd/checkpoint-convert/checkpoint-convert
