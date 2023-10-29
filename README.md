@@ -36,6 +36,13 @@ Too low and the walking speed and efficiency will be hindered.
 This slows down responsiveness but massively increases performance. This also means that all other durations should be in increments of `-walkupdate`
 to maximize responsiveness.
 
+**Note** on accurate execution speeds: The `-display` duration should be:
+1. In increments of `-walkupdate`, see above
+
+In addition, the longer this update, the more averaged your execution speed is going to be, but also reduces lock contention.
+The smaller this value is, the more realistic the speeds will be, but the more lock contention there will be.
+The suggestion would be to always have this value be 2x the walker update duration.
+
 ## Utility Functions
 
 You can find a couple of utility functions that can help with checkpoint files:
