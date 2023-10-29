@@ -43,6 +43,9 @@ In addition, the longer this update, the more averaged your execution speed is g
 The smaller this value is, the more realistic the speeds will be, but the more lock contention there will be.
 The suggestion would be to always have this value be 2x the walker update duration.
 
+**Note** on saving frequency: Saving the state of the program is no easy task, since the entire cache must be written to disk. Running on an 7200 RPM I've clocked it at taking about 4m.
+If you want to make meaningful progress between saves, this should be set to a high but not astronomical value, lest you want to risk losing progress if the process runs out of memory.
+
 ## Utility Functions
 
 You can find a couple of utility functions that can help with checkpoint files:
