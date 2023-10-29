@@ -143,6 +143,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 				// putting these channels here reduces lock contention
 				select {
 				case <-purger.C:
+					fmt.Printf("purging local cache from walker %d\n", bw.Identifier)
 					local_cache.Clear()
 				case <-ctx.Done():
 					exit_on_save = true
@@ -209,6 +210,8 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 								Board: bc,
 								Index: bci,
 							})
+						} else {
+							board_cache.Free(bci)
 						}
 					}
 				} else {
@@ -233,6 +236,8 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 									Board: bc,
 									Index: bci,
 								})
+							} else {
+								board_cache.Free(bci)
 							}
 						}
 					} else {
