@@ -203,10 +203,13 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 						bci, bc := board_cache.Get()
 						sb.Board.CloneInto(bc)
 						bc.PlacePiece(mm.Row, mm.Column)
-						stack.Push(WalkerBoardWIndex{
-							Board: bc,
-							Index: bci,
-						})
+						bh := bc.Hash()
+						if local_cache.TryInsert(bh) {
+							stack.Push(WalkerBoardWIndex{
+								Board: bc,
+								Index: bci,
+							})
+						}
 					}
 				} else {
 					// there are no legal moves, try the other player
@@ -224,10 +227,13 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 							bci, bc := board_cache.Get()
 							sb.Board.CloneInto(bc)
 							bc.PlacePiece(mm.Row, mm.Column)
-							stack.Push(WalkerBoardWIndex{
-								Board: bc,
-								Index: bci,
-							})
+							bh := bc.Hash()
+							if local_cache.TryInsert(bh) {
+								stack.Push(WalkerBoardWIndex{
+									Board: bc,
+									Index: bci,
+								})
+							}
 						}
 					} else {
 						// there are no moves for anybody
@@ -263,6 +269,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 		}
 	}
 	*bw.Explored += explored
+	*bw.Repeated += local_repeated
 	bw.Visited.Unlock()
 
 	bw.Finished_lock.Lock()
