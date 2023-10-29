@@ -45,10 +45,26 @@
 *.pdb
 
 # Kernel Module Compile Results
-*.mod*
 *.cmd
 .tmp_versions/
 modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+reversi
+report/report.aux
+report/report.bbl
+report/report.bcf
+report/report.blg
+report/report.log
+report/report.run.xml
+report/report.synctex.gz
+report/report.toc
+*/*.bin
+*.bin
+
+# profile files
+*.prof
+*.mprof
+cmd/checkpoint-stats/checkpoint-stats
+cmd/checkpoint-convert/checkpoint-convert
