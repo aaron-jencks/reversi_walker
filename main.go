@@ -18,6 +18,10 @@ import (
 	"golang.org/x/text/message"
 )
 
+// TODO using tstart in the checkpoint doesn't work
+// need to store the actual elapsed time
+// then store a duration offset that can be used to display the actual durrent time
+
 func main() {
 	p := message.NewPrinter(language.English)
 

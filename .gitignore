@@ -66,3 +66,4 @@ report/report.toc
 # profile files
 *.prof
 *.mprof
+cmd/checkpoint-stats/checkpoint-stats
