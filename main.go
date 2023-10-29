@@ -30,7 +30,7 @@ func main() {
 	var cpu_profile_file string = ""
 	var mem_profile_file string = ""
 	var restore_file string = ""
-	var local_cache_purge_interval time.Duration = 30 * time.Second
+	var local_cache_purge_interval time.Duration = 5 * time.Minute
 
 	flag.StringVar(&checkpoint_path, "check", checkpoint_path, "indicates where to save checkpoints, defaults to ./checkpoint.bin")
 	flag.UintVar(&procs, "procs", procs, "specifies how many threads to use for processing, defaults to the number of cpu cores")
@@ -41,7 +41,7 @@ func main() {
 	flag.StringVar(&cpu_profile_file, "cpuprofile", cpu_profile_file, "specifies where to save pprof data to if supplied, leave empty to disable")
 	flag.StringVar(&mem_profile_file, "memprofile", mem_profile_file, "specifies where to save the pprof memory data to if supplied, leave empty to disable")
 	flag.StringVar(&restore_file, "restore", restore_file, "specifies where to restore the simulation from if supplied, leave empty to start fresh")
-	flag.DurationVar(&local_cache_purge_interval, "visitpurge", local_cache_purge_interval, "specifies how often to purge the thread local visited cache for DFS, defaults to 30s")
+	flag.DurationVar(&local_cache_purge_interval, "visitpurge", local_cache_purge_interval, "specifies how often to purge the thread local visited cache for DFS, defaults to 5min")
 	flag.Parse()
 
 	if ubsize > 255 {
@@ -75,6 +75,19 @@ func main() {
 				}
 			}
 			pprof.StopCPUProfile()
+		}()
+	} else if mem_profile_file != "" {
+		defer func() {
+			f, err := os.Create(mem_profile_file)
+			if err != nil {
+				p.Printf("failed to start memory profiling: %s\n", err.Error())
+				return
+			}
+			pprof.WriteHeapProfile(f)
+			err = f.Close()
+			if err != nil {
+				p.Printf("failed to close memory profile file: %s\n", err.Error())
+			}
 		}()
 	}
 
