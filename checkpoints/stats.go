@@ -10,10 +10,12 @@ import (
 
 // represents the values stored in a checkpoint file
 type FileStats struct {
+	VLen         uint64
 	Version      string
 	Counter      uint64
 	Explored     uint64
 	Repeated     uint64
+	TimeSize     uint64
 	StartTime    time.Time
 	CacheSize    uint64
 	WalkerBoards uint64
@@ -38,6 +40,7 @@ func CheckpointStats(filename string) (FileStats, error) {
 		return result, err
 	}
 	vlen := utils.Uint64FromBytes(i64buff)
+	result.VLen = vlen
 	vbuff := make([]byte, vlen)
 	_, err = fp.Read(vbuff)
 	if err != nil {
@@ -70,6 +73,7 @@ func CheckpointStats(filename string) (FileStats, error) {
 		return result, err
 	}
 	tbinlen := utils.Uint64FromBytes(i64buff)
+	result.TimeSize = tbinlen
 	tbinbuff := make([]byte, tbinlen)
 	_, err = fp.Read(tbinbuff)
 	if err != nil {
