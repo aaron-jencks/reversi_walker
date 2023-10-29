@@ -60,7 +60,8 @@ report/report.log
 report/report.run.xml
 report/report.synctex.gz
 report/report.toc
-checkpoint.bin
+*/*.bin
+*.bin
 
 # profile files
 *.prof
