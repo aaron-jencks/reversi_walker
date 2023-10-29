@@ -22,6 +22,11 @@ import (
 // need to store the actual elapsed time
 // then store a duration offset that can be used to display the actual durrent time
 
+// TODO a single threaded 4x4 does not report the same count as a multithreaded 4x4
+// this means the spiral hash function must not be unique.
+// create a function to collect all of the boards from the single and multithreaded
+// and verify that the hash function returns a unique value for each one
+
 func main() {
 	p := message.NewPrinter(language.English)
 
@@ -179,6 +184,7 @@ func main() {
 	prev_explored := explored
 	prev_repeated := repeated
 	save_ticker := time.NewTicker(save_interval)
+	isfinished := false
 	for {
 		select {
 		case <-sigs:
@@ -186,17 +192,21 @@ func main() {
 		case <-ctx.Done():
 			// execution ended
 			p.Printf("\nTermination signal received\n")
-			walking.PauseWalkers(len(walkers))
+			if !isfinished {
+				walking.PauseWalkers(len(walkers))
+			}
 			cache.RLock()
 			p.Printf("\r[%s] final counts %d found %d explored %d repeated\n", time.Since(tstart), counter, explored, repeated)
 			vcounter := counter
 			vexplored := explored
 			vrepeated := repeated
 			cache.RUnlock()
-			p.Printf("\nSaving walkers\n")
-			err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, tstart)
-			if err != nil {
-				p.Printf("failed to save state: %s\n", err.Error())
+			if !isfinished {
+				p.Printf("\nSaving walkers\n")
+				err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, tstart)
+				if err != nil {
+					p.Printf("failed to save state: %s\n", err.Error())
+				}
 			}
 			return
 		case <-save_ticker.C:
@@ -227,8 +237,9 @@ func main() {
 			prev_repeated = repeated
 			cache.RUnlock()
 			finlock.RUnlock()
-			if uint(tfinished) == procs {
+			if uint(tfinished) >= procs {
 				p.Printf("\nall walkers exited, quitting\n")
+				isfinished = true
 				can()
 			}
 			time.Sleep(display_poll)

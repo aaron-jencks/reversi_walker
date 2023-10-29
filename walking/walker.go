@@ -270,6 +270,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 	for update_buffer.Len() > 0 {
 		bh := update_buffer.Pop()
 		if bw.Visited.TryInsert(bh) {
+			// new board state was found
 			*bw.Counter += 1
 		} else {
 			*bw.Repeated += 1
