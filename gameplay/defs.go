@@ -1,5 +1,7 @@
 package gameplay
 
+import "github.com/aaron-jencks/reversi/utils/uint128"
+
 type BoardValue uint8
 
 const (
@@ -33,3 +35,9 @@ type Coord struct {
 type CaptureCounts struct {
 	Counts []uint8
 }
+
+// Function that transforms a board into a uint128
+type BoardHashFunc func(Board) uint128.Uint128
+
+// Function that transforms a uint128 into a board with the given size
+type BoardUnhashFunc func(uint8, uint128.Uint128) Board
