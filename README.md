@@ -28,6 +28,14 @@ Usage of ./reversi:
         specifies how often the walkers should take their cached data and sync it with the cache (default 1s)
 ```
 
+**Note** about memory usage: With the implementation of the local thread cache this programs consumes **LOTS** of memory.
+You'll want to tweak `-visitpurge` until you find a balance with the garbage collector. If this interval is too high, then it'll run out of memory.
+Too low and the walking speed and efficiency will be hindered.
+
+**Note** on durations and updates: To aleviate lock contention, this program uses the `-walkupdate` to limit how often channels are checked.
+This slows down responsiveness but massively increases performance. This also means that all other durations should be in increments of `-walkupdate`
+to maximize responsiveness.
+
 ## Utility Functions
 
 You can find a couple of utility functions that can help with checkpoint files:
