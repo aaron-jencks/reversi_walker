@@ -1,16 +1,13 @@
 package gameplay
 
-// TODO switch board to a 2d array implementation to compare performance of
-// get and put calls
-
 import (
 	"fmt"
 
 	"github.com/aaron-jencks/reversi/utils/uint128"
 )
 
-var boardHash BoardHashFunc = SimpleHash
-var boardUnhash BoardUnhashFunc = SimpleUnhashBoard
+var boardHash BoardHashFunc = SpiralHash
+var boardUnhash BoardUnhashFunc = SpiralUnhashBoard
 
 // Represents a reversi board
 type Board struct {
