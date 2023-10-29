@@ -21,6 +21,7 @@ type WalkerMetaData struct {
 	Finished_count  *uint64
 	Finished_lock   *sync.RWMutex
 	Update_interval time.Duration
+	Purge_interval  time.Duration
 }
 
 // represents a processor that walks the game tree
@@ -35,6 +36,7 @@ type BoardWalker struct {
 	Finished_count  *uint64
 	Finished_lock   *sync.RWMutex
 	Update_interval time.Duration
+	Purge_interval  time.Duration
 }
 
 func CreateWalkerFromMeta(identifier uint32, file_chan <-chan *os.File, ready_chan chan<- bool, meta WalkerMetaData) BoardWalker {
@@ -49,6 +51,7 @@ func CreateWalkerFromMeta(identifier uint32, file_chan <-chan *os.File, ready_ch
 		Finished_count:  meta.Finished_count,
 		Finished_lock:   meta.Finished_lock,
 		Update_interval: meta.Update_interval,
+		Purge_interval:  meta.Purge_interval,
 	}
 }
 
@@ -120,9 +123,13 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 	SAVING_LOCK.RUnlock()
 
 	updater := time.NewTicker(bw.Update_interval)
+	purger := time.NewTicker(bw.Purge_interval)
 	update_buffer := caching.CreateArrayStack[uint128.Uint128](int(bw.Update_interval.Seconds() * 8000000))
 
 	neighbor_stack := caching.CreateArrayStack[gameplay.Coord](100)
+
+	local_cache := visiting.CreateSimpleVisitedCache()
+	var local_repeated uint64 = 0
 
 	exit_on_save := false
 
@@ -135,6 +142,8 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 			case <-updater.C:
 				// putting these channels here reduces lock contention
 				select {
+				case <-purger.C:
+					local_cache.Clear()
 				case <-ctx.Done():
 					exit_on_save = true
 				case fp := <-bw.File_chan:
@@ -173,8 +182,10 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 					}
 				}
 				*bw.Explored += explored
+				*bw.Repeated += local_repeated
 				bw.Visited.Unlock()
 				explored = 0
+				local_repeated = 0
 				updater.Reset(bw.Update_interval)
 			default:
 				if saving {
@@ -221,7 +232,14 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 					} else {
 						// there are no moves for anybody
 						bh := sb.Board.Hash()
-						update_buffer.Push(bh)
+
+						// the local cache reduces the overall speed by 3mil/sec
+						// but the repeated speed decreases by 19mil/update
+						if local_cache.TryInsert(bh) {
+							update_buffer.Push(bh)
+						} else {
+							local_repeated++
+						}
 					}
 				}
 
