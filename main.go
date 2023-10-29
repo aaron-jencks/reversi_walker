@@ -21,7 +21,6 @@ import (
 func main() {
 	p := message.NewPrinter(language.English)
 
-	// TODO implement checkpoint restoration
 	var checkpoint_path string = "./checkpoint.bin"
 	var procs uint = uint(runtime.NumCPU())
 	var ubsize uint = 8
