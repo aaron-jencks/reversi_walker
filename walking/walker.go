@@ -129,6 +129,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 	neighbor_stack := caching.CreateArrayStack[gameplay.Coord](100)
 
 	local_cache := visiting.CreateSimpleVisitedCache()
+	local_final_cache := visiting.CreateSimpleVisitedCache()
 	var local_repeated uint64 = 0
 
 	exit_on_save := false
@@ -146,6 +147,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 					if !saving {
 						fmt.Printf("purging local cache from walker %d\n", bw.Identifier)
 						local_cache.Clear()
+						local_final_cache.Clear()
 					}
 				case <-ctx.Done():
 					exit_on_save = true
@@ -248,7 +250,11 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 
 						// the local cache reduces the overall speed by 3mil/sec
 						// but the repeated speed decreases by 19mil/update
-						if local_cache.TryInsert(bh) {
+
+						// because we check for visitation before we push the boards onto the stack
+						// we can't use the same local cache here, otherwise boards that were neighbors
+						// to previous boards would already be in the cache.
+						if local_final_cache.TryInsert(bh) {
 							update_buffer.Push(bh)
 						} else {
 							local_repeated++
