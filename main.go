@@ -203,7 +203,7 @@ func main() {
 			cache.RUnlock()
 			if !isfinished {
 				p.Printf("\nSaving walkers\n")
-				err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, tstart)
+				err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, time.Since(tstart))
 				if err != nil {
 					p.Printf("failed to save state: %s\n", err.Error())
 				}
@@ -218,7 +218,7 @@ func main() {
 			vexplored := explored
 			vrepeated := repeated
 			cache.RUnlock()
-			err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, tstart)
+			err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, time.Since(tstart))
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}

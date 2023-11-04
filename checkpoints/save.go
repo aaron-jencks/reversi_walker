@@ -9,7 +9,9 @@ import (
 	"github.com/aaron-jencks/reversi/visiting"
 )
 
-func SaveSimulation(fname string, fchans []chan *os.File, rchans []chan bool, cache visiting.VisitedCache, counted, explored, repeated uint64, tstart time.Time) error {
+func SaveSimulation(fname string, fchans []chan *os.File, rchans []chan bool, cache visiting.VisitedCache, counted, explored, repeated uint64,
+	elapsed time.Duration) error {
+
 	fp, err := os.OpenFile(fname, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0777)
 	if err != nil {
 		return err
@@ -38,15 +40,7 @@ func SaveSimulation(fname string, fchans []chan *os.File, rchans []chan bool, ca
 	if err != nil {
 		return err
 	}
-	tbin, err := tstart.MarshalBinary()
-	if err != nil {
-		return err
-	}
-	_, err = fp.Write(utils.Uint64ToBytes(uint64(len(tbin))))
-	if err != nil {
-		return err
-	}
-	_, err = fp.Write(tbin)
+	_, err = fp.Write(utils.Uint64ToBytes(uint64(elapsed)))
 	if err != nil {
 		return err
 	}
