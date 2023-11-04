@@ -237,7 +237,7 @@ func main() {
 			rrate := uint64(float64(repeated-prev_repeated) / display_poll.Seconds())
 			tfinished := finished
 			p.Printf("\r[%s] %d @ %d b/s found %d @ %d b/s explored %d @ %d b/s repeated %d finished",
-				time.Since(tstart), counter, crate, explored, erate, repeated, rrate, finished)
+				prev_elapsed+time.Since(tstart), counter, crate, explored, erate, repeated, rrate, finished)
 			prev_counter = counter
 			prev_explored = explored
 			prev_repeated = repeated
