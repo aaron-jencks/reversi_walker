@@ -14,7 +14,7 @@ func main() {
 	flag.Parse()
 	stats, err := checkpoints.CheckpointStats(*restore_file)
 	if err != nil {
-		p.Printf("Failed to read %s: %s\n", restore_file, err.Error())
+		p.Printf("Failed to read %s: %s\n", *restore_file, err.Error())
 		return
 	}
 	p.Println(stats)
