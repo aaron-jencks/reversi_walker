@@ -67,7 +67,7 @@ func main() {
 	i128buff := make([]byte, 16)
 
 	// the file offset where the boards begin
-	bstart := int64(stats.VLen) + int64(stats.TimeSize) + 48
+	bstart := int64(stats.VLen) + 56
 
 	// move to start of boards
 	_, err = fp.Seek(bstart, 0)

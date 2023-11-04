@@ -15,8 +15,7 @@ type FileStats struct {
 	Counter      uint64
 	Explored     uint64
 	Repeated     uint64
-	TimeSize     uint64
-	StartTime    time.Time
+	Elapsed      time.Duration
 	CacheSize    uint64
 	WalkerBoards uint64
 }
@@ -72,17 +71,7 @@ func CheckpointStats(filename string) (FileStats, error) {
 	if err != nil {
 		return result, err
 	}
-	tbinlen := utils.Uint64FromBytes(i64buff)
-	result.TimeSize = tbinlen
-	tbinbuff := make([]byte, tbinlen)
-	_, err = fp.Read(tbinbuff)
-	if err != nil {
-		return result, err
-	}
-	err = result.StartTime.UnmarshalBinary(tbinbuff)
-	if err != nil {
-		return result, err
-	}
+	result.Elapsed = time.Duration(utils.Uint64FromBytes(i64buff))
 
 	_, err = fp.Read(i64buff)
 	if err != nil {

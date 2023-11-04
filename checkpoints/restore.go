@@ -18,7 +18,7 @@ type WalkerWChan struct {
 	Rchan  chan bool
 }
 
-func RestoreSimulation(ctx context.Context, filename string, size uint8, procs uint, meta walking.WalkerMetaData, tstart *time.Time) ([]WalkerWChan, error) {
+func RestoreSimulation(ctx context.Context, filename string, size uint8, procs uint, meta walking.WalkerMetaData, elapsed *time.Duration) ([]WalkerWChan, error) {
 	fmt.Printf("Starting restore from %s\n", filename)
 	fp, err := os.OpenFile(filename, os.O_RDONLY, 0777)
 	if err != nil {
@@ -64,16 +64,7 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs u
 	if err != nil {
 		return nil, err
 	}
-	tbinlen := utils.Uint64FromBytes(i64buff)
-	tbinbuff := make([]byte, tbinlen)
-	_, err = fp.Read(tbinbuff)
-	if err != nil {
-		return nil, err
-	}
-	err = tstart.UnmarshalBinary(tbinbuff)
-	if err != nil {
-		return nil, err
-	}
+	*elapsed = time.Duration(utils.Uint64FromBytes(i64buff))
 
 	err = meta.Visited.FromFile(fp)
 	if err != nil {

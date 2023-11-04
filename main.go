@@ -108,6 +108,7 @@ func main() {
 	ctx, can := context.WithCancel(context.Background())
 
 	tstart := time.Now()
+	prev_elapsed := time.Duration(0)
 
 	cache := visiting.CreateSimpleVisitedCache()
 
@@ -129,7 +130,7 @@ func main() {
 			Update_interval: cache_update_interval,
 			Purge_interval:  local_cache_purge_interval,
 		}
-		walker_data, err := checkpoints.RestoreSimulation(ctx, restore_file, bsize, procs, meta, &tstart)
+		walker_data, err := checkpoints.RestoreSimulation(ctx, restore_file, bsize, procs, meta, &prev_elapsed)
 		if err != nil {
 			p.Printf("Failed to restore state from checkpoint %s: %s\n", restore_file, err.Error())
 			return
@@ -203,7 +204,8 @@ func main() {
 			cache.RUnlock()
 			if !isfinished {
 				p.Printf("\nSaving walkers\n")
-				err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, time.Since(tstart))
+				err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache,
+					vcounter, vexplored, vrepeated, prev_elapsed+time.Since(tstart))
 				if err != nil {
 					p.Printf("failed to save state: %s\n", err.Error())
 				}
@@ -218,11 +220,15 @@ func main() {
 			vexplored := explored
 			vrepeated := repeated
 			cache.RUnlock()
-			err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache, vcounter, vexplored, vrepeated, time.Since(tstart))
+			prev_elapsed += time.Since(tstart)
+			err := checkpoints.SaveSimulation(checkpoint_path, fchans, rchans, cache,
+				vcounter, vexplored, vrepeated, prev_elapsed)
 			if err != nil {
 				p.Printf("failed to save state: %s\n", err.Error())
 			}
 			walking.UnpauseWalkers()
+			// restart time tracker after every save to get a more accurate representation of elapsed time
+			tstart = time.Now()
 		default:
 			cache.RLock()
 			finlock.RLock()
