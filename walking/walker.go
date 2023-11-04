@@ -253,7 +253,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 
 						// because we check for visitation before we push the boards onto the stack
 						// we can't use the same local cache here, otherwise boards that were neighbors
-						// to previous boards would already be in the cache.
+						// to previous boards would already be in the cache and thus, would not get counted.
 						if local_final_cache.TryInsert(bh) {
 							update_buffer.Push(bh)
 						} else {
