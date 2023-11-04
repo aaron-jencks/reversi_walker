@@ -148,6 +148,40 @@ Because there are going to be several board running at any given time, care must
 
 There is additional care that must be taken to hash the boards, since not only do the piece locations matter when comparing boards, but also which player's turn it is. To get the board state to fit within a single integer, additional optimizations were used. This optimization was to reduce the bits used for the center 4 squares. Since the center 4 squares can never be empty, they only need 1 bit each, this eliminates 4 bits from the overall requirement. If we assume that we're using an 8x8 board, then our bit requirement comes down to $2*60$ bits for the non-center cells plus 4 bits for the center cells plus 1 bit for a player indicator. This comes to 125 bits. To fit in a standard integer size, this is rounded up to 128 bits.
 
+\paragraph{Spiral Hashing}
+
+To increase locality amongst the cache, to reduce memory bandwidth usage. A spiral hash was used. This hash starts with the center 4 squares, then spirals in a counter-clockwise fashion outward towards the outer edge of the board. This helps keep similar boards close to each other in hash value, so that they can be placed in closer bins, hopefully in the same page of memory.
+
+\newpage
+
+\subsubsection{Checkpoint Files}
+
+Because the simulation can take multiple days to finish for anything bigger than a 4x4 board, a checkpoint system was implemented. This stores binary data that can be restored from so that the simulation can be stopped and started without losing progress. The layout of the file is as follows:
+
+\vspace{0.5cm}
+
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+	\hline
+	\multicolumn{16}{|c|}{Checkpoint File V1} \\
+	\hline
+	0 &&&&&&&&&&&&&&& 15 \\
+	\hline
+	\multicolumn{8}{|c|}{$L_{version}$} & \multicolumn{8}{|c|}{ $L_{version}$ bytes Version String} \\
+	\hline
+	\multicolumn{8}{|c|}{Counted} & \multicolumn{8}{|c|}{Explored} \\
+	\hline
+	\multicolumn{8}{|c|}{Repeated} & \multicolumn{8}{|c|}{Elapsed Time} \\
+	\hline
+	\multicolumn{8}{|c|}{$L_{cache}$} & \multicolumn{8}{|c|}{$L_{cache}*16$ bytes Cache Contents} \\
+	\hline
+	\multicolumn{16}{|c|}{Rest of file: Walker Stack Contents} \\
+	\hline
+\end{tabular}
+
+\paragraph{Additional Checkpoint Notes}
+
+The contents of the last two sections of the diagram above contains board hashes, these are 16 byte representations of boards. You can see the section on Hashing Boards for more information. The first section (the cache contents) has a length parameter given before it, this specifies how many uint128 values belong to the cache before the rest of the file is dedicated to the walker stack contents (the boards waiting to be explored for DFS).
+
 \newpage
 
 \section{Conclusions}
