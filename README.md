@@ -12,6 +12,8 @@ Usage of ./reversi:
         specifies where to save pprof data to if supplied, leave empty to disable
   -display duration
         specifies how often to update the statistics in the terminal (default 2s)
+  -help
+        displays this printout and exits
   -memprofile string
         specifies where to save the pprof memory data to if supplied, leave empty to disable
   -procs uint
