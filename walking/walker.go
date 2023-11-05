@@ -176,6 +176,7 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 					SAVING_LOCK.Unlock()
 				}
 
+				// TODO you could sort these entries to make inserting them possibly faster
 				bw.Visited.Lock()
 				for update_buffer.Len() > 0 {
 					bh := update_buffer.Pop()
