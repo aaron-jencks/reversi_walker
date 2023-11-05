@@ -55,6 +55,6 @@ func BuildCSVReport(writer io.Writer, cache visiting.VisitedCache, size uint8) e
 			return err
 		}
 	}
-	p.Println()
+	p.Println("\nFinished generating report")
 	return nil
 }

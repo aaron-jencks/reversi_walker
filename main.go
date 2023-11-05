@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aaron-jencks/reversi/checkpoints"
+	"github.com/aaron-jencks/reversi/reportbuilding"
 	"github.com/aaron-jencks/reversi/visiting"
 	"github.com/aaron-jencks/reversi/walking"
 	"golang.org/x/text/language"
@@ -31,6 +32,7 @@ func main() {
 	var mem_profile_file string = ""
 	var restore_file string = ""
 	var local_cache_purge_interval time.Duration = 2 * time.Minute
+	var report_filename string = "final.csv"
 
 	flag.StringVar(&checkpoint_path, "check", checkpoint_path, "indicates where to save checkpoints")
 	flag.UintVar(&procs, "procs", procs, "specifies how many threads to use for processing")
@@ -42,6 +44,7 @@ func main() {
 	flag.StringVar(&mem_profile_file, "memprofile", mem_profile_file, "specifies where to save the pprof memory data to if supplied, leave empty to disable")
 	flag.StringVar(&restore_file, "restore", restore_file, "specifies where to restore the simulation from if supplied, leave empty to start fresh")
 	flag.DurationVar(&local_cache_purge_interval, "visitpurge", local_cache_purge_interval, "specifies how often to purge the thread local visited cache for DFS")
+	flag.StringVar(&report_filename, "report", report_filename, "specifies where to save the final board state report list to")
 	flag.Parse()
 
 	if ubsize > 255 {
@@ -177,6 +180,7 @@ func main() {
 	prev_repeated := repeated
 	save_ticker := time.NewTicker(save_interval)
 	isfinished := false
+	doreport := false
 	for {
 		select {
 		case <-sigs:
@@ -199,6 +203,17 @@ func main() {
 					vcounter, vexplored, vrepeated, prev_elapsed+time.Since(tstart))
 				if err != nil {
 					p.Printf("failed to save state: %s\n", err.Error())
+				}
+			}
+			if doreport {
+				fp, err := os.OpenFile(report_filename, os.O_CREATE|os.O_WRONLY, 0777)
+				if err != nil {
+					p.Printf("failed to open report file: %s\n", err.Error())
+					return
+				}
+				err = reportbuilding.CurrentReportBuilder(fp, cache, bsize)
+				if err != nil {
+					p.Printf("failed to generate report file: %s\n", err.Error())
 				}
 			}
 			return
@@ -237,6 +252,7 @@ func main() {
 			if uint(tfinished) >= procs {
 				p.Printf("\nall walkers exited, quitting\n")
 				isfinished = true
+				doreport = true
 				can()
 			}
 			time.Sleep(display_poll)

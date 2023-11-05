@@ -63,8 +63,13 @@ report/report.toc
 */*.bin
 *.bin
 
+# final reports (too big for github)
+*.csv
+
 # profile files
 *.prof
 *.mprof
+*.pprof
+
 cmd/checkpoint-stats/checkpoint-stats
 cmd/checkpoint-convert/checkpoint-convert
