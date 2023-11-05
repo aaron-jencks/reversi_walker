@@ -320,3 +320,37 @@ func TestHashing(t *testing.T) {
 		}
 	}
 }
+
+func TestHashing4(t *testing.T) {
+	const iterCount = 10000
+	const bsize uint8 = 4
+	const bcenter uint8 = bsize >> 1
+	for i := 0; i < iterCount; i++ {
+		pb := CreateBoard(BoardValue(rand.Intn(2))+1, bsize, bsize)
+		for r := uint8(0); r < 4; r++ {
+			for c := uint8(0); c < 4; c++ {
+				if (r == bcenter && c == bcenter) ||
+					(r == bcenter-1 && c == bcenter-1) ||
+					(r == bcenter-1 && c == bcenter) ||
+					(r == bcenter && c == bcenter-1) {
+					// if it's one of the center squares, skip it for now
+					continue
+				}
+				pb.Put(r, c, BoardValue(rand.Intn(3)))
+			}
+		}
+
+		pb.Put(bcenter, bcenter, BoardValue(rand.Intn(2)+1))
+		pb.Put(bcenter-1, bcenter-1, BoardValue(rand.Intn(2)+1))
+		pb.Put(bcenter, bcenter-1, BoardValue(rand.Intn(2)+1))
+		pb.Put(bcenter-1, bcenter, BoardValue(rand.Intn(2)+1))
+
+		bh := pb.Hash()
+
+		nb := CreateUnhashBoard(bsize, bh)
+
+		if !assert.Equal(t, pb, nb, "expected pre-hash and post-hash boards to be the same") {
+			break
+		}
+	}
+}
