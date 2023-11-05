@@ -111,3 +111,16 @@ func (sc *SimpleVisitedCache) FromFile(fp *os.File) error {
 
 	return nil
 }
+
+func (sc *SimpleVisitedCache) Keys() []uint128.Uint128 {
+	result := make([]uint128.Uint128, sc.Len())
+	ri := 0
+	for h, hm := range sc.m {
+		for l := range hm {
+			result[ri].H = h
+			result[ri].L = l
+			ri++
+		}
+	}
+	return result
+}

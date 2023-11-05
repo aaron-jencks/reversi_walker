@@ -27,4 +27,7 @@ type VisitedCache interface {
 
 	// FromFile Overwrites the current struct with data from the given file
 	FromFile(*os.File) error
+
+	// Keys returns a list containing all of the entries in this map
+	Keys() []uint128.Uint128
 }
