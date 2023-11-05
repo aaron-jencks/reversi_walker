@@ -18,15 +18,6 @@ import (
 	"golang.org/x/text/message"
 )
 
-// TODO using tstart in the checkpoint doesn't work
-// need to store the actual elapsed time
-// then store a duration offset that can be used to display the actual durrent time
-
-// TODO a single threaded 4x4 does not report the same count as a multithreaded 4x4
-// this means the spiral hash function must not be unique.
-// create a function to collect all of the boards from the single and multithreaded
-// and verify that the hash function returns a unique value for each one
-
 func main() {
 	p := message.NewPrinter(language.English)
 
