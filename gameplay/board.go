@@ -6,8 +6,8 @@ import (
 	"github.com/aaron-jencks/reversi/utils/uint128"
 )
 
-var boardHash BoardHashFunc = LinearHash
-var boardUnhash BoardUnhashFunc = LinearUnhashBoard
+var boardHash BoardHashFunc = SpiralHash
+var boardUnhash BoardUnhashFunc = SpiralUnhashBoard
 
 // Represents a reversi board
 type Board struct {
