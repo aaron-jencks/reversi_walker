@@ -112,7 +112,7 @@ func main() {
 
 	// check if we need to restore the state and do so now
 	if restore_file != "" {
-		p.Printf("Restoring from checkpoint %s", restore_file)
+		p.Printf("Restoring from checkpoint %s\n", restore_file)
 
 		meta := walking.WalkerMetaData{
 			Visited:         cache,
