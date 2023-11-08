@@ -17,8 +17,8 @@ func generatePossibleBoards(size, r, c uint8) []Board {
 		nr++
 		if nr == size {
 			children = []Board{
-				CreateEmptyBoard(BOARD_BLACK, size, size),
-				CreateEmptyBoard(BOARD_WHITE, size, size),
+				CreateEmptyBoard(BOARD_BLACK, size),
+				CreateEmptyBoard(BOARD_WHITE, size),
 			}
 		}
 		nc = 0

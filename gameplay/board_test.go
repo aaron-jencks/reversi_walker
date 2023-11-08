@@ -9,17 +9,17 @@ import (
 )
 
 func TestCreation(t *testing.T) {
-	b := CreateBoard(BOARD_WHITE, 8, 8)
+	b := CreateBoard(BOARD_WHITE, 8)
 	assert.Equal(t, BOARD_BLACK, b.Get(3, 3), "size 8: expected player two in upper left")
 	assert.Equal(t, BOARD_BLACK, b.Get(4, 4), "size 8: expected player two in lower right")
 	assert.Equal(t, BOARD_WHITE, b.Get(3, 4), "size 8: expected player one in upper right")
 	assert.Equal(t, BOARD_WHITE, b.Get(4, 3), "size 8: expected player one in lower left")
-	b = CreateBoard(BOARD_WHITE, 6, 6)
+	b = CreateBoard(BOARD_WHITE, 6)
 	assert.Equal(t, BOARD_BLACK, b.Get(2, 2), "size 6: expected player two in upper left")
 	assert.Equal(t, BOARD_BLACK, b.Get(3, 3), "size 6: expected player two in lower right")
 	assert.Equal(t, BOARD_WHITE, b.Get(2, 3), "size 6: expected player one in upper right")
 	assert.Equal(t, BOARD_WHITE, b.Get(3, 2), "size 6: expected player one in lower left")
-	b = CreateBoard(BOARD_WHITE, 4, 4)
+	b = CreateBoard(BOARD_WHITE, 4)
 	assert.Equal(t, BOARD_BLACK, b.Get(1, 1), "size 4: expected player two in upper left")
 	assert.Equal(t, BOARD_BLACK, b.Get(2, 2), "size 4: expected player two in lower right")
 	assert.Equal(t, BOARD_WHITE, b.Get(1, 2), "size 4: expected player one in upper right")
@@ -28,7 +28,7 @@ func TestCreation(t *testing.T) {
 
 func TestBoardPutGet(t *testing.T) {
 	for _, size := range []uint8{4, 6, 8} {
-		b := CreateBoard(BOARD_WHITE, size, size)
+		b := CreateBoard(BOARD_WHITE, size)
 		for i := uint8(0); i < size; i++ {
 			for j := uint8(0); j < size; j++ {
 				b.Put(i, j, BOARD_WHITE)
@@ -171,7 +171,7 @@ func TestLegality(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("TestLegality: %s", tc.name), func(tt *testing.T) {
-			b := CreateBoard(tc.player, 8, 8)
+			b := CreateBoard(tc.player, 8)
 			for _, p := range tc.pieces {
 				b.Put(p.Row, p.Column, p.Value)
 			}
@@ -182,7 +182,7 @@ func TestLegality(t *testing.T) {
 }
 
 func TestPlacePiece(t *testing.T) {
-	b := CreateBoard(BOARD_WHITE, 8, 8)
+	b := CreateBoard(BOARD_WHITE, 8)
 	b.Put(3, 3, BOARD_EMPTY)
 	b.Put(3, 4, BOARD_EMPTY)
 	b.Put(4, 3, BOARD_EMPTY)
@@ -233,7 +233,7 @@ func TestPlacePiece(t *testing.T) {
 func TestBoardPlaceFlipping(t *testing.T) {
 	createBoardFromPieces := func(player BoardValue, height, width uint8,
 		white []Coord, black []Coord) Board {
-		b := CreateEmptyBoard(player, height, width)
+		b := CreateEmptyBoard(player, height)
 		for _, w := range white {
 			b.Put(w.Row, w.Column, BOARD_WHITE)
 		}
@@ -292,7 +292,7 @@ func TestHashing(t *testing.T) {
 	const bsize uint8 = 8
 	const bcenter uint8 = bsize >> 1
 	for i := 0; i < iterCount; i++ {
-		pb := CreateBoard(BoardValue(rand.Intn(2))+1, bsize, bsize)
+		pb := CreateBoard(BoardValue(rand.Intn(2))+1, bsize)
 		for r := uint8(0); r < 4; r++ {
 			for c := uint8(0); c < 4; c++ {
 				if (r == bcenter && c == bcenter) ||
@@ -326,7 +326,7 @@ func TestHashing4(t *testing.T) {
 	const bsize uint8 = 4
 	const bcenter uint8 = bsize >> 1
 	for i := 0; i < iterCount; i++ {
-		pb := CreateBoard(BoardValue(rand.Intn(2))+1, bsize, bsize)
+		pb := CreateBoard(BoardValue(rand.Intn(2))+1, bsize)
 		for r := uint8(0); r < 4; r++ {
 			for c := uint8(0); c < 4; c++ {
 				if (r == bcenter && c == bcenter) ||

@@ -42,7 +42,7 @@ var spiralColArr []int8 = []int8{
 // 00000000
 // 00000000
 func SpiralHash(b Board) uint128.Uint128 {
-	var rc, cc uint8 = b.Height >> 1, b.Width >> 1
+	var rc, cc uint8 = b.Size >> 1, b.Size >> 1
 	var header uint8 = uint8(b.Player-1) << 4
 	header += uint8(b.Get(rc-1, cc-1)-1) << 3
 	header += uint8(b.Get(rc, cc-1)-1) << 2
@@ -54,7 +54,7 @@ func SpiralHash(b Board) uint128.Uint128 {
 		L: uint64(header),
 	}
 
-	scount := b.Height*b.Width - 4
+	scount := b.Size*b.Size - 4
 
 	for ci := uint8(0); ci < scount; ci++ {
 		r := uint8(int8(rc) + spiralRowArr[ci])
@@ -74,9 +74,8 @@ func SpiralHash(b Board) uint128.Uint128 {
 // SpiralUnhashBoard unhashes a board from the given hash key and board size
 func SpiralUnhashBoard(size uint8, key uint128.Uint128) Board {
 	result := Board{
-		Height: size,
-		Width:  size,
-		Board:  make([]uint8, (size*size)>>2),
+		Size:  size,
+		Board: make([]uint8, (size*size)>>2),
 	}
 
 	center := int8(size >> 1)

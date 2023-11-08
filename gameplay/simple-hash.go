@@ -15,7 +15,7 @@ import (
 //
 // The rest of the squares require 2 bits per square
 func SimpleHash(b Board) uint128.Uint128 {
-	var rc, cc uint8 = b.Height >> 1, b.Width >> 1
+	var rc, cc uint8 = b.Size >> 1, b.Size >> 1
 	var header uint8 = uint8(b.Player-1) << 4
 	header += uint8(b.Get(rc, cc)-1) << 3
 	header += uint8(b.Get(rc-1, cc)-1) << 2
@@ -27,8 +27,8 @@ func SimpleHash(b Board) uint128.Uint128 {
 		L: uint64(header),
 	}
 
-	for i := uint8(0); i < b.Height; i++ {
-		for j := uint8(0); j < b.Width; j++ {
+	for i := uint8(0); i < b.Size; i++ {
+		for j := uint8(0); j < b.Size; j++ {
 			if (i == rc && j == cc) ||
 				(i == rc-1 && j == cc-1) ||
 				(i == rc-1 && j == cc) ||
@@ -38,7 +38,7 @@ func SimpleHash(b Board) uint128.Uint128 {
 			}
 			bv := b.Get(i, j)
 			result.L += uint64(bv)
-			if i == b.Height-1 && j == b.Width-1 {
+			if i == b.Size-1 && j == b.Size-1 {
 				// don't need to bitshift
 				continue
 			}
@@ -52,9 +52,8 @@ func SimpleHash(b Board) uint128.Uint128 {
 // SimpleUnhashBoard unhashes a board from the given hash key and board size
 func SimpleUnhashBoard(size uint8, key uint128.Uint128) Board {
 	result := Board{
-		Height: size,
-		Width:  size,
-		Board:  make([]uint8, (size*size)>>2),
+		Size:  size,
+		Board: make([]uint8, (size*size)>>2),
 	}
 
 	center := size >> 1

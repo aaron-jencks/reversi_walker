@@ -12,8 +12,7 @@ var boardUnhash BoardUnhashFunc = SpiralUnhashBoard
 // Represents a reversi board
 type Board struct {
 	Player BoardValue // the current player
-	Width  uint8      // the width of the board
-	Height uint8      // the height of the board
+	Size   uint8      // the width/height of the board
 	Board  []uint8    // a compressed version of the board
 }
 
@@ -32,16 +31,13 @@ func (b Board) Hash() uint128.Uint128 {
 }
 
 func (b Board) Equal(o Board) bool {
-	if b.Player != o.Player ||
-		b.Height != o.Height || b.Width != o.Width {
+	if b.Player != o.Player || b.Size != o.Size {
 		return false
 	}
 
-	for i := uint8(0); i < b.Height; i++ {
-		for j := uint8(0); j < b.Width; j++ {
-			if b.Get(i, j) != o.Get(i, j) {
-				return false
-			}
+	for bi, by := range b.Board {
+		if o.Board[bi] != by {
+			return false
 		}
 	}
 
@@ -50,63 +46,23 @@ func (b Board) Equal(o Board) bool {
 
 // Get retrieves the value of the board at the given position
 func (b Board) Get(row, column uint8) BoardValue {
-	/* column: 0 1 2 3 4 5 6 7
-	 *        +-+-+-+-+-+-+-+-+
-	 * row 0: | | | | | | | | | <-- Byte 0,1
-	 *        +-+-+-+-+-+-+-+-+
-	 * row 1: | | | | | | | | | <-- Byte 2,3
-	 *        +-+-+-+-+-+-+-+-+
-	 * row 2: | | | | | | | | | <-- Byte 4,5
-	 *        +-+-+-+-+-+-+-+-+
-	 * row 3: | | | |2|1| | | | <-- Byte 6,7
-	 *        +-+-+-+-+-+-+-+-+
-	 * row 4: | | | |1|2| | | | <-- Byte 8,9
-	 *        +-+-+-+-+-+-+-+-+
-	 * row 5: | | | | | | | | | <-- Byte 10,11
-	 *        +-+-+-+-+-+-+-+-+
-	 * row 6: | | | | | | | | | <-- Byte 12,13
-	 *        +-+-+-+-+-+-+-+-+
-	 * row 7: | | | | | | | | | <-- Byte 14,15
-	 *        +-+-+-+-+-+-+-+-+
-	 */
-
-	var total_bit uint8 = (row * (b.Width << 1)) + (column << 1)
-	var sel_byte uint8 = total_bit >> 3
-	var bit uint8 = total_bit & 7
-
-	bv := BoardValue(((192 >> bit) & b.Board[sel_byte]) >> (6 - bit))
+	// (0, 0) (0, 1) (0, 2) ... (0, w) (1, 0) ... (h, w)
+	index := row*b.Size + column
+	bv := BoardValue(b.Board[index])
 	return bv
 }
 
 // Put places a piece onto the board at the given row and column
 func (b *Board) Put(row, column uint8, value BoardValue) {
-	var total_bit uint8 = (row * (b.Width << 1)) + (column << 1)
-	var sel_byte uint8 = total_bit >> 3
-	var bit uint8 = total_bit & 7
-	var bph uint8 = 192 >> bit
-
-	// Reset the value of the bits to 0
-	// byte (????????) | bph (00011000) = ????11???
-	// ???11??? ^ 00011000 = ???00???
-	b.Board[sel_byte] = (b.Board[sel_byte] | bph) ^ bph
-
-	// Insert your new value
-	// byte (????????) | ((10|01)000000 >> bit) = ????(10|01)???
-	if value > BOARD_EMPTY {
-		var nv uint8 = 64
-		if value == BOARD_BLACK {
-			nv = 128
-		}
-		b.Board[sel_byte] |= nv >> bit
-	}
+	index := row*b.Size + column
+	b.Board[index] = uint8(value)
 }
 
 // Clone clones the current board
 func (b Board) Clone() Board {
 	result := Board{
 		Player: b.Player,
-		Height: b.Height,
-		Width:  b.Width,
+		Size:   b.Size,
 		Board:  make([]uint8, len(b.Board)),
 	}
 	copy(result.Board, b.Board)
@@ -115,14 +71,13 @@ func (b Board) Clone() Board {
 
 func (b Board) CloneInto(bt *Board) {
 	bt.Player = b.Player
-	bt.Height = b.Height
-	bt.Width = b.Width
+	bt.Size = b.Size
 	copy(bt.Board, b.Board)
 }
 
 // IsLegalMove determines if a given position is legal for the current turn
 func (b Board) IsLegalMove(row, column uint8) bool {
-	if row >= b.Height || column >= b.Width || b.Get(row, column) != BOARD_EMPTY {
+	if row >= b.Size || column >= b.Size || b.Get(row, column) != BOARD_EMPTY {
 		return false
 	}
 
@@ -140,7 +95,7 @@ func (b Board) IsLegalMove(row, column uint8) bool {
 			cc = uint8(int8(column) + cd)
 
 			count = 0
-			for cr < b.Height && cc < b.Width {
+			for cr < b.Size && cc < b.Size {
 				bv = b.Get(cr, cc)
 				if bv > BOARD_EMPTY && bv != b.Player {
 					// there is a possible capture
@@ -150,7 +105,7 @@ func (b Board) IsLegalMove(row, column uint8) bool {
 					cr = uint8(int8(cr) + rd)
 					cc = uint8(int8(cc) + cd)
 
-					if cr >= b.Height || cc >= b.Width {
+					if cr >= b.Size || cc >= b.Size {
 						// we hit the edge of the board, this is not a capture
 						count = 0
 						break
@@ -174,7 +129,7 @@ func (b Board) IsLegalMove(row, column uint8) bool {
 // PlacePiece places a piece at the given position and flips
 // the correct pieces
 func (b *Board) PlacePiece(row, column uint8) {
-	if row >= b.Height || column >= b.Width || b.Get(row, column) != BOARD_EMPTY {
+	if row >= b.Size || column >= b.Size || b.Get(row, column) != BOARD_EMPTY {
 		return
 	}
 
@@ -193,7 +148,7 @@ func (b *Board) PlacePiece(row, column uint8) {
 			cr = uint8(int8(row) + rd)
 			cc = uint8(int8(column) + cd)
 
-			if cr >= b.Height || cc >= b.Width {
+			if cr >= b.Size || cc >= b.Size {
 				continue
 			}
 
@@ -214,7 +169,7 @@ func (b *Board) PlacePiece(row, column uint8) {
 				ccr = uint8(int8(ccr) + rd)
 				ccc = uint8(int8(ccc) + cd)
 
-				if ccr >= b.Height || ccc >= b.Width {
+				if ccr >= b.Size || ccc >= b.Size {
 					count = 0
 					break
 				}
@@ -252,31 +207,30 @@ func (b *Board) PlacePiece(row, column uint8) {
 
 func (b Board) Display() {
 	fmt.Printf("player: %d\n  ", b.Player)
-	for i := uint8(0); i < b.Width; i++ {
+	for i := uint8(0); i < b.Size; i++ {
 		fmt.Printf("%d ", i)
 	}
 	fmt.Println("")
-	for i := uint8(0); i < b.Height; i++ {
+	for i := uint8(0); i < b.Size; i++ {
 		fmt.Printf("%d ", i)
-		for j := uint8(0); j < b.Width; j++ {
+		for j := uint8(0); j < b.Size; j++ {
 			fmt.Printf("%d ", b.Get(i, j))
 		}
 		fmt.Println("")
 	}
 }
 
-func CreateEmptyBoard(starting_player BoardValue, height, width uint8) Board {
+func CreateEmptyBoard(starting_player BoardValue, size uint8) Board {
 	return Board{
 		Player: starting_player,
-		Height: height,
-		Width:  width,
-		Board:  make([]uint8, (height*width)>>2),
+		Size:   size,
+		Board:  make([]uint8, size*size),
 	}
 }
 
 // CreateBoard creates a board with the given starting player, height, and width
-func CreateBoard(starting_player BoardValue, height, width uint8) Board {
-	result := CreateEmptyBoard(starting_player, height, width)
+func CreateBoard(starting_player BoardValue, size uint8) Board {
+	result := CreateEmptyBoard(starting_player, size)
 
 	/* <1 byte>
 	 * +-+-+-+-+-+-+-+-+
@@ -306,10 +260,13 @@ func CreateBoard(starting_player BoardValue, height, width uint8) Board {
 	 * +--+--+--+--+--+--+--+--+
 	 */
 
-	result.Put((height>>1)-1, (width>>1)-1, BOARD_BLACK)
-	result.Put((height>>1)-1, width>>1, BOARD_WHITE)
-	result.Put(height>>1, (width>>1)-1, BOARD_WHITE)
-	result.Put(height>>1, width>>1, BOARD_BLACK)
+	cc := size >> 1
+	occ := cc - 1
+
+	result.Put(occ, occ, BOARD_BLACK)
+	result.Put(occ, cc, BOARD_WHITE)
+	result.Put(cc, occ, BOARD_WHITE)
+	result.Put(cc, cc, BOARD_BLACK)
 
 	return result
 }

@@ -12,7 +12,7 @@ import (
 func FindInitialBoards(count uint, size uint8) []gameplay.Board {
 	neighbor_stack := caching.CreateArrayStack[gameplay.Coord](100)
 	q := make([]gameplay.Board, 0, size)
-	q = append(q, gameplay.CreateBoard(gameplay.BOARD_WHITE, size, size))
+	q = append(q, gameplay.CreateBoard(gameplay.BOARD_WHITE, size))
 	for len(q) < int(count) {
 		qe := q[0]
 		q = q[1:]

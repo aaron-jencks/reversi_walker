@@ -19,7 +19,7 @@ func (tw *testWriter) Write(p []byte) (n int, err error) {
 }
 
 func TestCSVOutput(t *testing.T) {
-	b := gameplay.CreateBoard(gameplay.BOARD_BLACK, 4, 4)
+	b := gameplay.CreateBoard(gameplay.BOARD_BLACK, 4)
 	values := []uint8{0, 1, 2, 2, 1, 2, 1, 2, 1, 1, 2, 2, 0, 0, 1, 2}
 
 	for r := uint8(0); r < 4; r++ {

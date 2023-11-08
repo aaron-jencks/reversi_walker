@@ -55,7 +55,7 @@ func main() {
 		}
 
 		// parse board
-		b := gameplay.CreateEmptyBoard(pbv, bsize, bsize)
+		b := gameplay.CreateEmptyBoard(pbv, bsize)
 		for ci := range columns[1:] {
 			row := uint8(ci / int(bsize))
 			col := uint8(ci % int(bsize))

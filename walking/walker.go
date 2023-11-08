@@ -95,7 +95,7 @@ type WalkerBoardWIndex struct {
 
 func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 	board_cache := caching.CreatePointerCache[gameplay.Board](5000, func() gameplay.Board {
-		return gameplay.CreateBoard(gameplay.BOARD_BLACK, starting_board.Height, starting_board.Width)
+		return gameplay.CreateBoard(gameplay.BOARD_BLACK, starting_board.Size)
 	})
 
 	// TODO can add a local visited cache to speed up repeated finds
@@ -110,7 +110,7 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 		Index: sbi,
 	})
 
-	bw.WalkPrestacked(ctx, &board_cache, &stack, starting_board.Height)
+	bw.WalkPrestacked(ctx, &board_cache, &stack, starting_board.Size)
 }
 
 func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.PointerCache[gameplay.Board], stack *caching.ArrayStack[WalkerBoardWIndex], bsize uint8) {
