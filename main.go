@@ -192,7 +192,7 @@ func main() {
 				walking.PauseWalkers(len(walkers))
 			}
 			cache.RLock()
-			p.Printf("\r[%s] final counts %d found %d explored %d repeated\n", time.Since(tstart), counter, explored, repeated)
+			p.Printf("\r[%s] final counts %d found %d explored %d repeated\n", prev_elapsed+time.Since(tstart), counter, explored, repeated)
 			vcounter := counter
 			vexplored := explored
 			vrepeated := repeated
