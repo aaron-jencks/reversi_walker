@@ -75,7 +75,7 @@ func SpiralHash(b Board) uint128.Uint128 {
 func SpiralUnhashBoard(size uint8, key uint128.Uint128) Board {
 	result := Board{
 		Size:  size,
-		Board: make([]uint8, (size*size)>>2),
+		Board: make([]uint8, size*size),
 	}
 
 	center := int8(size >> 1)
