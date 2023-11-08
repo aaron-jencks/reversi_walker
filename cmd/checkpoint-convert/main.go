@@ -17,10 +17,10 @@ func main() {
 	var hash_string string = "simple"
 	var unhash_string string = "simple"
 	var bsize uint = 8
-	flag.StringVar(&restore_file, "file", restore_file, "specifies the file to parse, defaults to ../../checkpoint.bin")
-	flag.StringVar(&hash_string, "hash", hash_string, "specifies which hash function to use for rehashing the boards, must be within (simple, spiral), defaults to simple")
-	flag.StringVar(&unhash_string, "unhash", unhash_string, "specifies which hash function to use for unhashing the boards, must be within (simple, spiral), defaults to simple")
-	flag.UintVar(&bsize, "size", bsize, "specifies the size of the board, defaults to 8")
+	flag.StringVar(&restore_file, "file", restore_file, "specifies the file to parse")
+	flag.StringVar(&hash_string, "hash", hash_string, "specifies which hash function to use for rehashing the boards, must be within (simple, spiral, linear)")
+	flag.StringVar(&unhash_string, "unhash", unhash_string, "specifies which hash function to use for unhashing the boards, must be within (simple, spiral, linear)")
+	flag.UintVar(&bsize, "size", bsize, "specifies the size of the board")
 	flag.Parse()
 
 	var hash gameplay.BoardHashFunc
@@ -31,6 +31,8 @@ func main() {
 		hash = gameplay.SimpleHash
 	case "spiral":
 		hash = gameplay.SpiralHash
+	case "linear":
+		hash = gameplay.LinearHash
 	default:
 		p.Printf("Unknown hash method: %s\n", hash_string)
 		return
@@ -41,6 +43,8 @@ func main() {
 		unhash = gameplay.SimpleUnhashBoard
 	case "spiral":
 		unhash = gameplay.SpiralUnhashBoard
+	case "linear":
+		unhash = gameplay.LinearUnhashBoard
 	default:
 		p.Printf("Unknown unhash method: %s\n", unhash_string)
 		return
