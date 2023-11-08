@@ -19,7 +19,7 @@ func LinearHash(b Board) uint128.Uint128 {
 	header += uint8(b.Get(center, ocenter)-1) << 3
 	header += uint8(b.Get(ocenter, center)-1) << 2
 	header += uint8(b.Get(ocenter, ocenter)-1) << 1
-	header += uint8(b.Get(center, ocenter) - 1)
+	header += uint8(b.Get(center, center) - 1)
 	header <<= 2
 
 	result := uint128.Uint128{
@@ -75,7 +75,7 @@ func LinearUnhashBoard(size uint8, key uint128.Uint128) Board {
 
 	bv := BoardValue((key.L & 1) + 1)
 	key = key.ShiftRight(1)
-	result.Put(center, ocenter, bv)
+	result.Put(center, center, bv)
 	bv = BoardValue((key.L & 1) + 1)
 	key = key.ShiftRight(1)
 	result.Put(ocenter, ocenter, bv)
@@ -84,7 +84,7 @@ func LinearUnhashBoard(size uint8, key uint128.Uint128) Board {
 	result.Put(ocenter, center, bv)
 	bv = BoardValue((key.L & 1) + 1)
 	key = key.ShiftRight(1)
-	result.Put(center, center, bv)
+	result.Put(center, ocenter, bv)
 
 	result.Player = BoardValue((key.L & 1) + 1)
 
