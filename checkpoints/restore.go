@@ -117,7 +117,7 @@ func RestoreSimulation(ctx context.Context, filename string, size uint8, procs u
 	boff := uint(0)
 	for wi := range walkers {
 		board_cache := caching.CreatePointerCache[gameplay.Board](5000, func() gameplay.Board {
-			return gameplay.CreateBoard(gameplay.BOARD_BLACK, size, size)
+			return gameplay.CreateBoard(gameplay.BOARD_BLACK, size)
 		})
 
 		stack := caching.CreateArrayStack[walking.WalkerBoardWIndex](1830)
