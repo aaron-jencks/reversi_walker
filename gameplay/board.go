@@ -9,6 +9,30 @@ import (
 var boardHash BoardHashFunc = SpiralHash
 var boardUnhash BoardUnhashFunc = SpiralUnhashBoard
 
+func SetBoardHashFunc(hfun string) {
+	fmt.Println("changing hash function to", hfun)
+	switch hfun {
+	case "simple":
+		boardHash = SimpleHash
+	case "spiral":
+		boardHash = SpiralHash
+	case "linear":
+		boardHash = LinearHash
+	}
+}
+
+func SetBoardUnHashFunc(hfun string) {
+	fmt.Println("changing unhash function to", hfun)
+	switch hfun {
+	case "simple":
+		boardUnhash = SimpleUnhashBoard
+	case "spiral":
+		boardUnhash = SpiralUnhashBoard
+	case "linear":
+		boardUnhash = LinearUnhashBoard
+	}
+}
+
 // Represents a reversi board
 type Board struct {
 	Player BoardValue // the current player
