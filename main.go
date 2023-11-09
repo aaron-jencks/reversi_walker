@@ -167,6 +167,7 @@ func main() {
 				Ready_chan:      rchans[wi],
 				Update_interval: cache_update_interval,
 				Purge_interval:  local_cache_purge_interval,
+				Enable_saving:   true,
 			}
 			go walkers[wi].Walk(ctx, ib)
 		}

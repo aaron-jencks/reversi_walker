@@ -37,6 +37,7 @@ type BoardWalker struct {
 	Finished_lock   *sync.RWMutex
 	Update_interval time.Duration
 	Purge_interval  time.Duration
+	Enable_saving   bool
 }
 
 func CreateWalkerFromMeta(identifier uint32, file_chan <-chan *os.File, ready_chan chan<- bool, meta WalkerMetaData) BoardWalker {
@@ -52,6 +53,7 @@ func CreateWalkerFromMeta(identifier uint32, file_chan <-chan *os.File, ready_ch
 		Finished_lock:   meta.Finished_lock,
 		Update_interval: meta.Update_interval,
 		Purge_interval:  meta.Purge_interval,
+		Enable_saving:   true,
 	}
 }
 
@@ -114,6 +116,14 @@ func (bw BoardWalker) Walk(ctx context.Context, starting_board gameplay.Board) {
 }
 
 func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.PointerCache[gameplay.Board], stack *caching.ArrayStack[WalkerBoardWIndex], bsize uint8) {
+	local_cache := visiting.CreateSimpleVisitedCache()
+	local_final_cache := visiting.CreateSimpleVisitedCache()
+	bw.WalkPrestackedPrecached(ctx, board_cache, stack, bsize, local_cache, local_final_cache)
+}
+
+func (bw BoardWalker) WalkPrestackedPrecached(ctx context.Context,
+	board_cache *caching.PointerCache[gameplay.Board], stack *caching.ArrayStack[WalkerBoardWIndex], bsize uint8,
+	local_cache visiting.VisitedCache, local_final_cache visiting.VisitedCache) {
 	// TODO can add a local visited cache to speed up repeated finds
 	// will make search much more efficient
 
@@ -128,8 +138,6 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 
 	neighbor_stack := caching.CreateArrayStack[gameplay.Coord](100)
 
-	local_cache := visiting.CreateSimpleVisitedCache()
-	local_final_cache := visiting.CreateSimpleVisitedCache()
 	var local_repeated uint64 = 0
 
 	exit_on_save := false
@@ -151,14 +159,19 @@ func (bw BoardWalker) WalkPrestacked(ctx context.Context, board_cache *caching.P
 					}
 				case <-ctx.Done():
 					exit_on_save = true
-				case fp := <-bw.File_chan:
-					err := bw.ToFile(fp, stack)
-					if err != nil {
-						fmt.Printf("failed to save walker %d: %s\n", bw.Identifier, err.Error())
-						bw.Ready_chan <- false
+					if !bw.Enable_saving {
 						break SearchLoop
 					}
-					fmt.Printf("saved processor %d\n", bw.Identifier)
+				case fp := <-bw.File_chan:
+					if bw.Enable_saving {
+						err := bw.ToFile(fp, stack)
+						if err != nil {
+							fmt.Printf("failed to save walker %d: %s\n", bw.Identifier, err.Error())
+							bw.Ready_chan <- false
+							break SearchLoop
+						}
+						fmt.Printf("saved processor %d\n", bw.Identifier)
+					}
 					bw.Ready_chan <- true
 					if exit_on_save {
 						break SearchLoop
