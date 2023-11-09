@@ -21,6 +21,8 @@ type VisitedCache interface {
 	// before this is called
 	Lock()
 	Unlock()
+	RLock()
+	RUnlock()
 
 	// ToFile stores the cache to the given file pointer
 	ToFile(*os.File) error
@@ -30,4 +32,7 @@ type VisitedCache interface {
 
 	// Keys returns a list containing all of the entries in this map
 	Keys() []uint128.Uint128
+
+	// Removes all entries from the cache
+	Clear()
 }
