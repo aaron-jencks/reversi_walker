@@ -89,13 +89,10 @@ func main() {
 		}()
 	}
 
-	// TODO final board state rate
-	// TODO overall board state rate
-	// TODO average hash and unhash rate
-
 	gameplay.SetBoardHashFunc(hashtype)
 	gameplay.SetBoardUnHashFunc(hashtype)
 
+	// TODO repeats only occur when more than one walker is used
 	p.Println("starting walking test")
 	frate, erate, rrate := runWalkingTest(cachetype, lcachetype, procs, purge_interval, walk_time)
 	p.Printf("walking test results: (final: %f b/s, explored: %f b/s, repeated: %f b/s)\n", frate, erate, rrate)
