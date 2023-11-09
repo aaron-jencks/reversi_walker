@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aaron-jencks/reversi/caching"
 	"github.com/aaron-jencks/reversi/gameplay"
 	"github.com/aaron-jencks/reversi/utils/uint128"
 	"github.com/aaron-jencks/reversi/visiting"
@@ -118,7 +119,7 @@ func main() {
 		boards[hi] = gameplay.CreateUnhashBoard(6, h)
 	}
 	elapsed = time.Since(tstart)
-	p.Printf("unhash throughput: elapsed: %s, rate: %f h/s\n", elapsed, float64(hash_count)/elapsed.Seconds())
+	p.Printf("unhash throughput: elapsed: %s, rate: %f uh/s\n", elapsed, float64(hash_count)/elapsed.Seconds())
 }
 
 func runWalkingTest(cachetype, lcachetype string, procs int, purge_interval, walk_time time.Duration) (float64, float64, float64) {
@@ -180,6 +181,9 @@ func runWalkingTest(cachetype, lcachetype string, procs int, purge_interval, wal
 				fdiff := final - prevfinal
 				ediff := explored - prevexplored
 				rdiff := repeated - prevrepeated
+				prevfinal = final
+				prevexplored = explored
+				prevrepeated = repeated
 				cache.RUnlock()
 				frates = append(frates, float64(fdiff)/poll_interval.Seconds())
 				erates = append(erates, float64(ediff)/poll_interval.Seconds())
@@ -204,12 +208,40 @@ func runWalkingTest(cachetype, lcachetype string, procs int, purge_interval, wal
 			break
 		}
 
+		board_cache := caching.CreatePointerCache[gameplay.Board](5000, func() gameplay.Board {
+			return gameplay.CreateBoard(gameplay.BOARD_BLACK, 6)
+		})
+
+		// TODO can add a local visited cache to speed up repeated finds
+		// will make search much more efficient
+
+		sbi, sb := board_cache.Get()
+		ib.CloneInto(sb)
+
+		stack := caching.CreateArrayStack[walking.WalkerBoardWIndex](1830)
+		stack.Push(walking.WalkerBoardWIndex{
+			Board: sb,
+			Index: sbi,
+		})
+
+		var local_cache visiting.VisitedCache
+		var local_final_cache visiting.VisitedCache
+		switch lcachetype {
+		case "simple":
+			local_cache = visiting.CreateSimpleVisitedCache()
+			local_final_cache = visiting.CreateSimpleVisitedCache()
+		default:
+			p.Println("unrecognized local cache type:", cachetype)
+			can()
+			return -1, -1, -1
+		}
+
 		fchans[wi] = make(chan *os.File)
 		rchans[wi] = make(chan bool)
 		walker := walking.CreateWalkerFromMeta(uint32(wi), fchans[wi], rchans[wi], wmeta)
 		walker.Enable_saving = false
 		walkers[wi] = &walker
-		go walkers[wi].Walk(ctx, ib)
+		go walkers[wi].WalkPrestackedPrecached(ctx, &board_cache, &stack, 6, local_cache, local_final_cache)
 	}
 
 	time.Sleep(walk_time)
