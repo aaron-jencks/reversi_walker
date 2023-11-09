@@ -73,3 +73,4 @@ report/report.toc
 
 cmd/checkpoint-stats/checkpoint-stats
 cmd/checkpoint-convert/checkpoint-convert
+cmd/performance-testing/performance-testing
