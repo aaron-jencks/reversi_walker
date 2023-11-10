@@ -6,8 +6,8 @@ import (
 	"github.com/aaron-jencks/reversi/utils/uint128"
 )
 
-var boardHash BoardHashFunc = SpiralHash
-var boardUnhash BoardUnhashFunc = SpiralUnhashBoard
+var boardHash BoardHashFunc = LinearHash
+var boardUnhash BoardUnhashFunc = LinearUnhashBoard
 
 func SetBoardHashFunc(hfun string) {
 	fmt.Println("changing hash function to", hfun)
